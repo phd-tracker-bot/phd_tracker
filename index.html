@@ -312,14 +312,15 @@
                 </div>
             </div>
 
-            <div id="module-ideas" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
+            <div class="col-span-1 lg:col-span-1 flex flex-col gap-6">
+            <div id="module-ideas" class="draggable-module rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-3 mb-4 mt-2"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-xl drop-shadow-md"></i><h2 class="text-xl font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-xs font-semibold bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
                 <div class="flex gap-2 mb-5 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="2" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-3 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 sm:px-6 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt text-lg"></i></button></div>
-                <div class="flex-1 overflow-y-auto pr-1 min-h-[150px]"><ul id="ideaList" class="space-y-3"></ul></div>
+                <div class="flex-1 overflow-y-auto pr-1 min-h-[100px] max-h-[200px]"><ul id="ideaList" class="space-y-3"></ul></div>
             </div>
 
-            <div id="module-mood-cal" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #F9C74F;">
+            <div id="module-mood-cal" class="draggable-module rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #F9C74F;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-yellow/30 pb-3 mb-4 mt-2">
                     <div class="flex items-center gap-2"><i class="far fa-smile text-dopamine-yellow text-xl"></i><h2 class="text-xl font-bold text-gray-800">龙体圣意月历</h2></div>
@@ -334,6 +335,7 @@
                 <div class="flex justify-center gap-4 mt-3 text-[10px] text-gray-400">
                     <span>😊 开心</span><span>😐 一般</span><span>😔 低落</span><span>⬜ 未记录</span>
                 </div>
+            </div>
             </div>
 
             <div id="module-calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #4D9DE0;">
@@ -415,7 +417,7 @@
     </div>
                     
         <div class="text-center text-gray-400 text-xs mt-8 pt-4 border-t border-dopamine-yellow/30 flex justify-center gap-3">
-            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> momo 改自 reed</span>
+            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> Reed制2026年4月9日</span>
         </div>
     </div>
 
@@ -1469,16 +1471,19 @@
         function toggleStatsCollapse() {
             const content = document.getElementById('statsContent');
             const icon = document.getElementById('statsCollapseIcon');
+            const header = icon.closest('.flex.items-center.justify-between');
             const collapsed = content.style.maxHeight === '0px';
             if (collapsed) {
                 content.style.maxHeight = content.scrollHeight + 'px';
                 content.style.opacity = '1';
                 icon.style.transform = 'rotate(0deg)';
+                if (header) { header.classList.add('mb-5', 'pb-3', 'border-b'); }
                 localStorage.setItem('phd_stats_collapsed', 'false');
             } else {
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
                 icon.style.transform = 'rotate(180deg)';
+                if (header) { header.classList.remove('mb-5', 'pb-3', 'border-b'); }
                 localStorage.setItem('phd_stats_collapsed', 'true');
             }
         }
@@ -1486,24 +1491,31 @@
             if (localStorage.getItem('phd_stats_collapsed') === 'true') {
                 const content = document.getElementById('statsContent');
                 const icon = document.getElementById('statsCollapseIcon');
+                const header = icon ? icon.closest('.flex.items-center.justify-between') : null;
                 if (content) { content.style.maxHeight = '0px'; content.style.opacity = '0'; }
                 if (icon) icon.style.transform = 'rotate(180deg)';
+                if (header) { header.classList.remove('mb-5', 'pb-3', 'border-b'); }
             }
         }
 
         function toggleRoutineCollapse() {
             const content = document.getElementById('routineContent');
             const icon = document.getElementById('routineCollapseIcon');
+            const header = icon.closest('.flex.items-center.justify-between');
             const collapsed = content.style.maxHeight === '0px';
             if (collapsed) {
                 content.style.maxHeight = content.scrollHeight + 'px';
                 content.style.opacity = '1';
+                content.style.marginTop = '';
                 icon.style.transform = 'rotate(0deg)';
+                if (header) { header.classList.add('mb-4', 'pb-2', 'border-b'); }
                 localStorage.setItem('phd_routine_collapsed', 'false');
             } else {
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
+                content.style.marginTop = '0';
                 icon.style.transform = 'rotate(180deg)';
+                if (header) { header.classList.remove('mb-4', 'pb-2', 'border-b'); }
                 localStorage.setItem('phd_routine_collapsed', 'true');
             }
         }
@@ -1511,8 +1523,10 @@
             if (localStorage.getItem('phd_routine_collapsed') === 'true') {
                 const content = document.getElementById('routineContent');
                 const icon = document.getElementById('routineCollapseIcon');
-                if (content) { content.style.maxHeight = '0px'; content.style.opacity = '0'; }
+                const header = icon ? icon.closest('.flex.items-center.justify-between') : null;
+                if (content) { content.style.maxHeight = '0px'; content.style.opacity = '0'; content.style.marginTop = '0'; }
                 if (icon) icon.style.transform = 'rotate(180deg)';
+                if (header) { header.classList.remove('mb-4', 'pb-2', 'border-b'); }
             }
         }
         function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
