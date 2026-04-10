@@ -105,6 +105,20 @@
         /* V3.0 气泡特效 */
         .guard-bubble-v3 { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border: 2px solid #E74C3C; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); color: #C0392B; }
 
+        /* ================= 手机适配 ================= */
+        @media (max-width: 640px) {
+            body { padding: 8px; padding-bottom: 140px; }
+            .modal-content { max-width: 95vw; width: 100%; max-height: 85vh; border-radius: 1.2rem; }
+            #floatingTimer { bottom: 10px; right: 10px; padding: 8px; }
+            #floatingCountdown { font-size: 1.5rem; }
+            #imperialGuardPet { transform: scale(0.7); transform-origin: bottom right; }
+            .smart-drawer.drawer-bottom { height: 70vh; }
+            .smart-drawer.drawer-left, .smart-drawer.drawer-right { width: 100%; max-width: 100vw; }
+            .mobile-toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
+            .mobile-toolbar > button, .mobile-toolbar > .flex { flex-shrink: 0; }
+            .mobile-hide-text span.btn-label { display: none; }
+        }
+
         /* 日历格子日程条 */
         .cal-event { font-size: 9px; line-height: 1.2; padding: 1px 3px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cal-event-ics { background: #E0F2FE; color: #0369A1; }
@@ -136,16 +150,16 @@
         <div class="flex flex-wrap justify-between items-center gap-4 mb-6 md:mb-8">
             <div class="flex items-center gap-4">
                 <div class="relative group cursor-pointer" onclick="document.getElementById('avatarInput').click()" title="点击更换头像">
-                    <img id="userAvatar" src="https://api.dicebear.com/7.x/notionists/svg?seed=PhD&backgroundColor=ffb8b8" class="w-16 h-16 rounded-full border-4 border-white shadow-md object-cover transition-transform group-hover:scale-105 bg-white">
+                    <img id="userAvatar" src="https://api.dicebear.com/7.x/notionists/svg?seed=PhD&backgroundColor=ffb8b8" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-white shadow-md object-cover transition-transform group-hover:scale-105 bg-white">
                     <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-camera text-white text-sm"></i></div>
                     <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
                 </div>
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-dopamine-orange to-dopamine-pink bg-clip-text text-transparent flex items-center gap-2">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-dopamine-orange to-dopamine-pink bg-clip-text text-transparent flex items-center gap-2">
                         <i class="fas fa-crown text-dopamine-orange"></i> <span id="appTitle" onclick="editTitle()" class="cursor-pointer hover:opacity-80 transition" title="点击修改名称">进步日记</span>
                         <span id="streakBadge" class="hidden bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm ml-2 items-center gap-1"><i class="fas fa-fire"></i> 连朝 <span id="streakCount">0</span> 天</span>
                     </h1>
-                    <p class="text-amber-600/80 text-sm mt-1 flex items-center gap-2"><i class="far fa-calendar-alt text-dopamine-sky"></i><span id="currentDate"></span><span class="w-1 h-1 bg-amber-300 rounded-full"></span><span>今日是否上朝科研，不开心就提早退朝！</span></p>
+                    <p class="text-amber-600/80 text-xs sm:text-sm mt-1 flex items-center gap-2 flex-wrap"><i class="far fa-calendar-alt text-dopamine-sky"></i><span id="currentDate"></span><span class="hidden sm:inline w-1 h-1 bg-amber-300 rounded-full"></span><span class="hidden sm:inline">今日是否上朝科研，不开心就提早退朝！</span></p>
                 </div>
             </div>
             
@@ -159,17 +173,17 @@
                     </div>
                     <button onclick="showMoodHistory()" class="bg-gradient-to-r from-dopamine-yellow to-dopamine-orange text-white text-xs px-2.5 py-1 rounded-full shadow-sm hover:shadow transition flex items-center gap-1"><i class="fas fa-history"></i> 史册</button>
                 </div>
-               <div class="flex gap-2">
-                    <button id="toggleGuardBtn" onclick="toggleGuard()" class="bg-white-200 hover:bg-black-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0">
-                        <i class="fas fa-user-secret"></i> 隐匿护卫</button>
-         <button id="layoutLockBtn" onclick="toggleLayoutLock()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0"><i class="fas fa-lock"></i> 阵法锁定</button>
-                    <button id="nightModeBtn" onclick="toggleNightMode()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs px-3 py-1.5 rounded-full border border-indigo-200 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-moon"></i> 夜巡</button>
-                    <button onclick="exportData()" class="bg-white hover:bg-amber-50 text-dopamine-orange text-xs px-3 py-1.5 rounded-full border border-dopamine-yellow/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-download"></i> 本地备份</button>
-                    <button onclick="document.getElementById('importInput').click()" class="bg-white hover:bg-green-50 text-dopamine-mint text-xs px-3 py-1.5 rounded-full border border-dopamine-mint/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-upload"></i> 本地恢复</button>
+               <div class="flex flex-wrap gap-2">
+                    <button id="toggleGuardBtn" onclick="toggleGuard()" class="bg-white-200 hover:bg-black-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap">
+                        <i class="fas fa-user-secret"></i> <span class="hidden sm:inline">隐匿护卫</span></button>
+         <button id="layoutLockBtn" onclick="toggleLayoutLock()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap"><i class="fas fa-lock"></i> <span class="hidden sm:inline">阵法锁定</span></button>
+                    <button id="nightModeBtn" onclick="toggleNightMode()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs px-3 py-1.5 rounded-full border border-indigo-200 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-moon"></i> <span class="hidden sm:inline">夜巡</span></button>
+                    <button onclick="exportData()" class="bg-white hover:bg-amber-50 text-dopamine-orange text-xs px-3 py-1.5 rounded-full border border-dopamine-yellow/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-download"></i> <span class="hidden sm:inline">本地备份</span></button>
+                    <button onclick="document.getElementById('importInput').click()" class="bg-white hover:bg-green-50 text-dopamine-mint text-xs px-3 py-1.5 rounded-full border border-dopamine-mint/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-upload"></i> <span class="hidden sm:inline">本地恢复</span></button>
                     <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
-                    <button onclick="document.getElementById('icsInput').click()" class="bg-white hover:bg-sky-50 text-dopamine-sky text-xs px-3 py-1.5 rounded-full border border-dopamine-sky/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-calendar-plus"></i> 导入日历</button>
+                    <button onclick="document.getElementById('icsInput').click()" class="bg-white hover:bg-sky-50 text-dopamine-sky text-xs px-3 py-1.5 rounded-full border border-dopamine-sky/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-calendar-plus"></i> <span class="hidden sm:inline">导入日历</span></button>
                     <input type="file" id="icsInput" accept=".ics,.ical" class="hidden" onchange="importICS(event)" multiple>
-                    <button onclick="syncCalendar()" id="syncCalBtn" class="bg-gradient-to-r from-dopamine-sky to-blue-500 hover:brightness-110 text-white text-xs px-3 py-1.5 rounded-full transition flex items-center gap-1 shadow-sm font-bold"><i class="fas fa-sync-alt"></i> 同步日历</button>
+                    <button onclick="syncCalendar()" id="syncCalBtn" class="bg-gradient-to-r from-dopamine-sky to-blue-500 hover:brightness-110 text-white text-xs px-3 py-1.5 rounded-full transition flex items-center gap-1 shadow-sm font-bold"><i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">同步日历</span></button>
                     <button onclick="document.getElementById('icsUrlModal').classList.add('active')" class="bg-white hover:bg-sky-50 text-gray-500 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center justify-center shadow-sm" title="设置日历订阅链接"><i class="fas fa-cog"></i></button>
                     <button id="gcalLoginBtn" onclick="handleGCalAuth()" class="bg-white hover:bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-full border border-red-200 transition flex items-center gap-1 shadow-sm font-bold whitespace-nowrap"><i class="fab fa-google"></i> <span id="gcalLoginText">登录日历</span></button>
                 </div>
@@ -198,8 +212,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="checkInModal" class="modal-overlay">
 
         <div id="scheduleModal" class="modal-overlay">
             <div class="modal-content p-5">
@@ -251,6 +263,8 @@
                 </div>
             </div>
         </div>
+
+        <div id="checkInModal" class="modal-overlay">
             <div class="modal-content p-5">
                 <div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-gray-800" id="checkModalTitle">📝 时段补录</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div>
                 <input type="hidden" id="checkModalPeriod">
@@ -272,7 +286,7 @@
                     <div class="bg-dopamine-yellow/10 px-6 py-3 rounded-2xl text-center"><span id="todayFocusMinutes" class="text-4xl md:text-5xl font-black text-dopamine-orange">0</span><span class="text-xl font-semibold text-dopamine-orange/80 ml-1">分钟</span></div>
                 </div>
                 <div class="mt-5 flex flex-wrap gap-4 items-center justify-between border-t border-dopamine-yellow/20 pt-4">
-                    <div class="flex gap-2 items-center w-full md:w-auto">
+                    <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
                         <select id="focusMode" class="px-3 py-2.5 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 focus:border-dopamine-orange outline-none text-sm text-gray-600 font-medium transition-colors"><option value="free">♾️ 自由理政</option><option value="25">🍅 25分钟番茄钟</option><option value="50">🧠 50分钟深度钟</option></select>
                         <button onclick="startFocus()" id="startFocusBtn" class="bg-dopamine-orange hover:bg-dopamine-orange/85 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-play-circle"></i> 开始审阅</button>
                         <button onclick="stopFocus()" id="stopFocusBtn" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium opacity-50 cursor-not-allowed" disabled><i class="fas fa-stop-circle"></i> 歇息片刻</button>
@@ -523,6 +537,9 @@
         const floatingWindow = document.getElementById("floatingTimer");
         let isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
         floatingWindow.addEventListener("mousedown", dragStart); document.addEventListener("mouseup", dragEnd); document.addEventListener("mousemove", drag);
+        floatingWindow.addEventListener("touchstart", e => { const t = e.touches[0]; dragStart({clientX: t.clientX, clientY: t.clientY, target: e.target}); }, {passive: false});
+        document.addEventListener("touchend", dragEnd);
+        document.addEventListener("touchmove", e => { const t = e.touches[0]; drag({clientX: t.clientX, clientY: t.clientY, preventDefault: () => e.preventDefault()}); }, {passive: false});
         function dragStart(e) { if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return; initialX = e.clientX - xOffset; initialY = e.clientY - yOffset; if (e.target === floatingWindow || floatingWindow.contains(e.target)) isDragging = true; }
         function dragEnd() { initialX = currentX; initialY = currentY; isDragging = false; }
         function drag(e) { if (isDragging) { e.preventDefault(); currentX = e.clientX - initialX; currentY = e.clientY - initialY; xOffset = currentX; yOffset = currentY; floatingWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`; } }
