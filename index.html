@@ -595,27 +595,75 @@
                 const data = snapshot.val();
                 if (data && data.appData) {
                     const remoteData = JSON.parse(data.appData);
-                    const localLastSave = parseInt(localStorage.getItem('phd_last_save_time') || '0');
-                    const remoteLastSync = data.lastSync || 0;
-                    
-                    if (remoteLastSync > localLastSave) {
-                        // Cloud is newer, use it
-                        appData = { ...appData, ...remoteData };
-                        localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
-                        localStorage.setItem('phd_last_save_time', remoteLastSync.toString());
-                        renderAll();
-                        console.log('✅ 已从云端同步数据（云端更新）');
-                    } else {
-                        // Local is newer, push to cloud
-                        saveDataToFirebase();
-                        console.log('✅ 已将本地数据上传云端（本地更新）');
-                    }
+                    mergeAppData(remoteData);
+                    localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+                    renderAll();
+                    saveDataToFirebase(); // Push merged result back
+                    console.log('✅ 数据已合并同步');
                 } else {
-                    // No cloud data yet, upload local
                     saveDataToFirebase();
                     console.log('✅ 首次上传本地数据到云端');
                 }
             }).catch(e => console.error('Firebase load error:', e));
+        }
+
+        function mergeAppData(remote) {
+            // Merge focusSessions: combine by startTimestamp (unique key)
+            if (remote.focusSessions) {
+                const existing = new Set(appData.focusSessions.map(s => s.startTimestamp));
+                remote.focusSessions.forEach(s => { if (!existing.has(s.startTimestamp)) appData.focusSessions.push(s); });
+            }
+
+            // Merge tasks: combine by id
+            if (remote.tasks) {
+                const existing = new Set(appData.tasks.map(t => t.id));
+                remote.tasks.forEach(t => {
+                    if (!existing.has(t.id)) {
+                        appData.tasks.push(t);
+                    } else {
+                        // If task exists, use the one that's completed (or more recently updated)
+                        const local = appData.tasks.find(lt => lt.id === t.id);
+                        if (local && t.status === '已完成' && local.status !== '已完成') {
+                            Object.assign(local, t);
+                        }
+                    }
+                });
+            }
+
+            // Merge ideas: combine by text + time
+            if (remote.ideas) {
+                const existing = new Set(appData.ideas.map(i => i.text + '|' + i.time));
+                remote.ideas.forEach(i => { if (!existing.has(i.text + '|' + i.time)) appData.ideas.push(i); });
+            }
+
+            // Merge checkRecords: combine by date, keep the one with more data
+            if (remote.checkRecords) {
+                Object.entries(remote.checkRecords).forEach(([date, rec]) => {
+                    if (!appData.checkRecords[date]) {
+                        appData.checkRecords[date] = rec;
+                    } else {
+                        // Merge each period
+                        ['morning', 'afternoon', 'evening', 'night'].forEach(p => {
+                            if (rec[p] && rec[p].start && (!appData.checkRecords[date][p] || !appData.checkRecords[date][p].start)) {
+                                appData.checkRecords[date][p] = rec[p];
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Merge moodHistory: keep the one that exists
+            if (remote.moodHistory) {
+                Object.entries(remote.moodHistory).forEach(([date, mood]) => {
+                    if (!appData.moodHistory[date]) appData.moodHistory[date] = mood;
+                });
+            }
+
+            // Merge calendarEvents: combine by summary + dateStr + startTime
+            if (remote.calendarEvents) {
+                const existing = new Set((appData.calendarEvents || []).map(e => e.summary + '|' + e.dateStr + '|' + e.startTime));
+                remote.calendarEvents.forEach(e => { if (!existing.has(e.summary + '|' + e.dateStr + '|' + e.startTime)) appData.calendarEvents.push(e); });
+            }
         }
         function loadData() {
             const stored = localStorage.getItem("phd_pro_v2");
@@ -697,13 +745,22 @@
         // 番茄钟期间切换标签/app时的恐怖警告
         let focusLeaveCount = 0;
         let isShowingAlert = false;
+        let leaveTimestamp = 0;
         function onFocusVisibilityChange() {
             if (activeFocusStart === null) return;
-            if (isShowingAlert) return; // Ignore visibility changes from alert dialogs
+            if (isShowingAlert) return;
             if (document.hidden) {
                 focusLeaveCount++;
+                leaveTimestamp = Date.now();
             } else {
-                if (focusLeaveCount > 0) showScaryWarning();
+                // Only warn for quick switches (under 30 seconds = likely app/tab switch)
+                // Longer absence = screen lock or legitimate break, skip warning
+                const awaySeconds = (Date.now() - leaveTimestamp) / 1000;
+                if (focusLeaveCount > 0 && awaySeconds < 30) {
+                    showScaryWarning();
+                } else if (awaySeconds >= 30) {
+                    focusLeaveCount--; // Don't count screen locks
+                }
             }
         }
         function showScaryWarning() {
@@ -791,7 +848,7 @@
             } else {
                 remainingSeconds = parseInt(currentFocusMode) * 60; document.getElementById("countdownDisplay").classList.remove("hidden"); updateCountdownDisplay(); 
                 document.getElementById("focusActiveState").innerHTML = `<i class="fas fa-spinner fa-pulse"></i> 🍅 ${parseInt(currentFocusMode)}分钟理政中...`;
-                focusTimerInterval = setInterval(() => { remainingSeconds--; updateCountdownDisplay(); if (remainingSeconds <= 0) { clearInterval(focusTimerInterval); isShowingAlert = true; alert(`🎉 陛下圣明！完成了理政！`); isShowingAlert = false; saveFocusSession(parseInt(currentFocusMode)); resetFocusUI(); } }, 1000);
+                focusTimerInterval = setInterval(() => { remainingSeconds--; updateCountdownDisplay(); if (remainingSeconds <= 0) { clearInterval(focusTimerInterval); showPomodoroComplete(parseInt(currentFocusMode)); saveFocusSession(parseInt(currentFocusMode)); resetFocusUI(); } }, 1000);
             }
         }
         function stopFocus() { 
@@ -1969,6 +2026,61 @@
                 }
                 localStorage.setItem('phd_prev_rank', myRank.toString());
             });
+        }
+
+        function showPomodoroComplete(minutes) {
+            isShowingAlert = true;
+            const nickname = localStorage.getItem('phd_nickname') || localStorage.getItem('phd_app_title') || '陛下';
+            const totalToday = getTodayFocusMinutes() + minutes;
+            
+            const praises = [
+                { title: '龙威大振！', text: '天下臣民皆仰望陛下之勤勉！' },
+                { title: '文治武功！', text: '史官已将此功绩载入史册！' },
+                { title: '千古一帝！', text: '如此勤政，堪比秦皇汉武！' },
+                { title: '国泰民安！', text: '陛下理政有方，四海升平！' },
+                { title: '万世流芳！', text: '后人必将传颂陛下今日之功！' },
+                { title: '圣明天子！', text: '日理万机，龙体康健！' },
+            ];
+            const praise = praises[Math.floor(Math.random() * praises.length)];
+
+            const overlay = document.createElement('div');
+            overlay.id = 'pomodoroCompleteOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(80,50,0,0.95) 0%,rgba(20,10,0,0.98) 100%);animation:scaryFadeIn 0.5s;cursor:pointer;overflow:hidden;';
+            overlay.innerHTML = `
+                <div id="completeParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+                <div style="position:relative;z-index:10;text-align:center;animation:coronationZoom 0.8s ease-out;">
+                    <div style="font-size:80px;margin-bottom:10px;">🎊</div>
+                    <h1 style="font-size:2rem;font-weight:900;color:#FFD700;margin-bottom:8px;letter-spacing:0.15em;">恭喜陛下 · 贺喜陛下</h1>
+                    <p style="font-size:2.5rem;font-weight:900;background:linear-gradient(to right,#FFD700,#FF8C42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;">${praise.title}</p>
+                    <p style="font-size:1.2rem;color:#F9C74F;margin-bottom:24px;">${praise.text}</p>
+                    <div style="background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.3);border-radius:16px;padding:16px 32px;margin-bottom:24px;display:inline-block;">
+                        <div style="font-size:0.8rem;color:#D4AF37;margin-bottom:4px;">本次理政</div>
+                        <div style="font-size:3rem;font-weight:900;color:#FFD700;">${minutes} <span style="font-size:1.2rem;">分钟</span></div>
+                        <div style="font-size:0.75rem;color:#B8860B;margin-top:4px;">今日累计 ${totalToday} 分钟</div>
+                    </div>
+                    <div style="font-size:3rem;margin-bottom:16px;">🎆🏮🎇🏮🎆</div>
+                    <p style="font-size:1.5rem;color:#FFD700;font-weight:900;letter-spacing:0.2em;text-shadow:0 0 15px rgba(253,224,71,0.5);">可以称帝了！</p>
+                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:20px;">点击任意处退朝歇息</p>
+                </div>
+            `;
+            overlay.onclick = () => { overlay.remove(); isShowingAlert = false; };
+            document.body.appendChild(overlay);
+
+            // 烟花粒子
+            const particles = document.getElementById('completeParticles');
+            for (let i = 0; i < 60; i++) {
+                const p = document.createElement('div');
+                const size = Math.random() * 6 + 3;
+                const x = Math.random() * 100;
+                const delay = Math.random() * 2;
+                const dur = Math.random() * 3 + 2;
+                const colors = ['#FFD700', '#FF8C42', '#FF6B8B', '#F9C74F', '#43AA8B'];
+                p.style.cssText = `position:absolute;left:${x}%;top:-10px;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:50%;opacity:${Math.random()*0.8+0.2};animation:coronationFall ${dur}s ${delay}s infinite linear;`;
+                particles.appendChild(p);
+            }
+
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+            setTimeout(() => { if (document.getElementById('pomodoroCompleteOverlay')) { overlay.remove(); isShowingAlert = false; } }, 15000);
         }
 
         function showCoronation() {
