@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>皇帝的贴身史官</title>
+    <title>皇帝养成日记</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1267,7 +1267,7 @@
             
             const event = {
                 summary: `🍅 专注理政 ${minutes}分钟`,
-                description: `模式: ${modeLabel}\n来源: 皇帝的贴身史官`,
+                description: `模式: ${modeLabel}\n来源: 皇帝养成日记`,
                 start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 colorId: '6',
@@ -1446,7 +1446,7 @@
                         headers: { 'Authorization': `Bearer ${gcalAccessToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             summary: `📝 ${block.name}`,
-                            description: '来源: 皇帝的贴身史官 · 智能排程',
+                            description: '来源: 皇帝养成日记 · 智能排程',
                             start: { dateTime: block.start.toISOString(), timeZone: tz },
                             end: { dateTime: block.end.toISOString(), timeZone: tz },
                             colorId: '3',
