@@ -574,7 +574,8 @@
         function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function formatDateToYMD(timestamp) { const d = new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function saveData() { 
-            localStorage.setItem("phd_pro_v2", JSON.stringify(appData)); 
+            localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+            localStorage.setItem('phd_last_save_time', Date.now().toString());
             saveDataToFirebase();
         }
         let firebaseSaveTimer = null;
@@ -594,20 +595,20 @@
                 const data = snapshot.val();
                 if (data && data.appData) {
                     const remoteData = JSON.parse(data.appData);
-                    // Compare: use whichever has more focus sessions (more data = more complete)
-                    const localSessions = appData.focusSessions ? appData.focusSessions.length : 0;
-                    const remoteSessions = remoteData.focusSessions ? remoteData.focusSessions.length : 0;
+                    const localLastSave = parseInt(localStorage.getItem('phd_last_save_time') || '0');
+                    const remoteLastSync = data.lastSync || 0;
                     
-                    if (remoteSessions > localSessions) {
-                        // Remote has more data, use it
+                    if (remoteLastSync > localLastSave) {
+                        // Cloud is newer, use it
                         appData = { ...appData, ...remoteData };
                         localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+                        localStorage.setItem('phd_last_save_time', remoteLastSync.toString());
                         renderAll();
-                        console.log('✅ 已从云端同步数据（云端更完整）');
-                    } else if (localSessions > remoteSessions) {
-                        // Local has more data, push to cloud
+                        console.log('✅ 已从云端同步数据（云端更新）');
+                    } else {
+                        // Local is newer, push to cloud
                         saveDataToFirebase();
-                        console.log('✅ 已将本地数据上传云端（本地更完整）');
+                        console.log('✅ 已将本地数据上传云端（本地更新）');
                     }
                 } else {
                     // No cloud data yet, upload local
@@ -695,13 +696,14 @@
 
         // 番茄钟期间切换标签/app时的恐怖警告
         let focusLeaveCount = 0;
+        let isShowingAlert = false;
         function onFocusVisibilityChange() {
             if (activeFocusStart === null) return;
+            if (isShowingAlert) return; // Ignore visibility changes from alert dialogs
             if (document.hidden) {
                 focusLeaveCount++;
             } else {
-                // 回来时弹出全屏警告
-                showScaryWarning();
+                if (focusLeaveCount > 0) showScaryWarning();
             }
         }
         function showScaryWarning() {
@@ -789,14 +791,16 @@
             } else {
                 remainingSeconds = parseInt(currentFocusMode) * 60; document.getElementById("countdownDisplay").classList.remove("hidden"); updateCountdownDisplay(); 
                 document.getElementById("focusActiveState").innerHTML = `<i class="fas fa-spinner fa-pulse"></i> 🍅 ${parseInt(currentFocusMode)}分钟理政中...`;
-                focusTimerInterval = setInterval(() => { remainingSeconds--; updateCountdownDisplay(); if (remainingSeconds <= 0) { clearInterval(focusTimerInterval); alert(`🎉 陛下圣明！完成了理政！`); saveFocusSession(parseInt(currentFocusMode)); resetFocusUI(); } }, 1000);
+                focusTimerInterval = setInterval(() => { remainingSeconds--; updateCountdownDisplay(); if (remainingSeconds <= 0) { clearInterval(focusTimerInterval); isShowingAlert = true; alert(`🎉 陛下圣明！完成了理政！`); isShowingAlert = false; saveFocusSession(parseInt(currentFocusMode)); resetFocusUI(); } }, 1000);
             }
         }
         function stopFocus() { 
             if (activeFocusStart === null) return;
             const actualMinutes = Math.floor((Date.now() - activeFocusStart) / 60000); 
-            if (currentFocusMode !== 'free' && remainingSeconds > 0) { if (!confirm("⚠️ 番茄钟尚未结束，确定退朝吗？（满1分钟才会记录）")) return; }
+            isShowingAlert = true;
+            if (currentFocusMode !== 'free' && remainingSeconds > 0) { if (!confirm("⚠️ 番茄钟尚未结束，确定退朝吗？（满1分钟才会记录）")) { isShowingAlert = false; return; } }
             if (actualMinutes > 0) { saveFocusSession(actualMinutes); alert(`✅ 退朝！记录了 ${actualMinutes} 分钟。`); } 
+            isShowingAlert = false;
             resetFocusUI(); 
         }
         function saveFocusSession(minutes) { 
