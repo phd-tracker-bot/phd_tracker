@@ -64,6 +64,9 @@
         .animate-bowing { animation: bowing 1.2s ease-in-out infinite; }
         @keyframes scaryFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaryShake { 0%,100%{ transform: translateX(0); } 20%{ transform: translateX(-20px); } 40%{ transform: translateX(20px); } 60%{ transform: translateX(-10px); } 80%{ transform: translateX(10px); } }
+        @keyframes coronationZoom { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes coronationCrown { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-15px) rotate(-5deg); } 75% { transform: translateY(-15px) rotate(5deg); } }
+        @keyframes coronationFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         .court-active { display: flex !important; opacity: 1 !important; }
 
         /* 悬浮窗样式 */
@@ -1835,7 +1838,52 @@
                 }).join('');
 
                 document.getElementById('leaderboardList').innerHTML = html;
+
+                // 登基动画：检测是否新晋皇帝
+                const myRank = users.findIndex(u => u.uid === myUid);
+                const prevRank = parseInt(localStorage.getItem('phd_prev_rank') || '-1');
+                if (myRank === 0 && prevRank !== 0) {
+                    showCoronation();
+                }
+                localStorage.setItem('phd_prev_rank', myRank.toString());
             });
+        }
+
+        function showCoronation() {
+            const nickname = localStorage.getItem('phd_nickname') || '陛下';
+            const overlay = document.createElement('div');
+            overlay.id = 'coronationOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(100,30,0,0.95) 0%,rgba(0,0,0,0.98) 100%);animation:scaryFadeIn 0.5s;cursor:pointer;overflow:hidden;';
+            overlay.innerHTML = `
+                <div id="coronationParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+                <div style="position:relative;z-index:10;text-align:center;animation:coronationZoom 1s ease-out;">
+                    <div style="font-size:100px;margin-bottom:10px;animation:coronationCrown 2s ease-in-out infinite;">👑</div>
+                    <h1 style="font-size:3rem;font-weight:900;background:linear-gradient(to bottom,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:0.2em;text-shadow:0 0 30px rgba(255,215,0,0.5);">登 基 大 典</h1>
+                    <p style="font-size:1.5rem;color:#FFD700;font-weight:bold;margin-bottom:8px;">${escapeHtml(nickname)} 荣登榜首</p>
+                    <p style="font-size:1.2rem;color:#FF8C42;margin-bottom:24px;">万民朝拜，四海归心</p>
+                    <div style="font-size:4rem;margin-bottom:20px;animation:bowing 1.2s ease-in-out infinite;">🙇‍♂️ 🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️</div>
+                    <div style="font-size:3rem;margin-bottom:30px;animation:bowing 1.2s ease-in-out infinite;animation-delay:0.3s;opacity:0.7;">🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️ 🙇🏿‍♂️</div>
+                    <p style="font-size:2rem;color:#FFD700;font-weight:900;letter-spacing:0.3em;text-shadow:0 0 20px rgba(253,224,71,0.6);">吾皇万岁万万岁</p>
+                    <p style="font-size:0.8rem;color:rgba(255,255,255,0.3);margin-top:30px;">点击任意处退朝</p>
+                </div>
+            `;
+            overlay.onclick = () => overlay.remove();
+            document.body.appendChild(overlay);
+
+            // 金色粒子特效
+            const particles = document.getElementById('coronationParticles');
+            for (let i = 0; i < 50; i++) {
+                const p = document.createElement('div');
+                const size = Math.random() * 8 + 4;
+                const x = Math.random() * 100;
+                const delay = Math.random() * 3;
+                const dur = Math.random() * 3 + 2;
+                p.style.cssText = `position:absolute;left:${x}%;top:-10px;width:${size}px;height:${size}px;background:${Math.random()>0.5?'#FFD700':'#FF8C42'};border-radius:50%;opacity:${Math.random()*0.7+0.3};animation:coronationFall ${dur}s ${delay}s infinite linear;`;
+                particles.appendChild(p);
+            }
+
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+            setTimeout(() => { if (document.getElementById('coronationOverlay')) overlay.remove(); }, 10000);
         }
 
       function init() { 
