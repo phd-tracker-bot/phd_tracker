@@ -60,6 +60,8 @@
 
         @keyframes bowing { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(20px) scaleY(0.75); } }
         .animate-bowing { animation: bowing 1.2s ease-in-out infinite; }
+        @keyframes scaryFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaryShake { 0%,100%{ transform: translateX(0); } 20%{ transform: translateX(-20px); } 40%{ transform: translateX(20px); } 60%{ transform: translateX(-10px); } 80%{ transform: translateX(10px); } }
         .court-active { display: flex !important; opacity: 1 !important; }
 
         /* 悬浮窗样式 */
@@ -627,14 +629,69 @@
             if (activeFocusStart !== null) { startBtn.disabled = true; startBtn.classList.add("opacity-50", "cursor-not-allowed"); stopBtn.disabled = false; stopBtn.classList.remove("opacity-50", "cursor-not-allowed"); modeSelect.disabled = true; modeSelect.classList.add("opacity-50"); } 
             else { startBtn.disabled = false; startBtn.classList.remove("opacity-50", "cursor-not-allowed"); stopBtn.disabled = true; stopBtn.classList.add("opacity-50", "cursor-not-allowed"); modeSelect.disabled = false; modeSelect.classList.remove("opacity-50"); }
         }
+        function focusLeaveWarning(e) { e.preventDefault(); e.returnValue = ''; return ''; }
+
+        // 番茄钟期间切换标签/app时的恐怖警告
+        let focusLeaveCount = 0;
+        function onFocusVisibilityChange() {
+            if (activeFocusStart === null) return;
+            if (document.hidden) {
+                focusLeaveCount++;
+            } else {
+                // 回来时弹出全屏警告
+                showScaryWarning();
+            }
+        }
+        function showScaryWarning() {
+            const msgs = [
+                { title: '⚔️ 大胆！', text: '陛下擅离龙椅，锦衣卫已记录在案！', sub: `第 ${focusLeaveCount} 次离朝` },
+                { title: '🔥 龙颜大怒！', text: '谁允许你离开的？！番茄钟还在计时！', sub: `累计摸鱼 ${focusLeaveCount} 次` },
+                { title: '💀 御史弹劾！', text: '陛下心猿意马，朝纲不振！', sub: `摸鱼次数已达 ${focusLeaveCount} 次，史官如实记录` },
+                { title: '👁️ 朕看到你了', text: '以为切出去朕就不知道了？', sub: `锦衣卫密报：离朝 ${focusLeaveCount} 次` },
+                { title: '☠️ 斩立决？', text: '再敢摸鱼，番茄钟时长不算！', sub: `本次理政已开小差 ${focusLeaveCount} 次` },
+            ];
+            const msg = msgs[Math.min(focusLeaveCount - 1, msgs.length - 1)];
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'scaryOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;animation:scaryFadeIn 0.3s;';
+            overlay.style.background = focusLeaveCount >= 3 
+                ? 'radial-gradient(circle, rgba(139,0,0,0.97) 0%, rgba(0,0,0,0.99) 100%)' 
+                : 'radial-gradient(circle, rgba(100,30,0,0.95) 0%, rgba(0,0,0,0.98) 100%)';
+            
+            const shake = focusLeaveCount >= 3 ? 'animation: scaryShake 0.5s;' : '';
+            overlay.innerHTML = `
+                <div style="text-align:center;max-width:500px;padding:20px;${shake}">
+                    <div style="font-size:${focusLeaveCount >= 3 ? '120px' : '80px'};margin-bottom:20px;">${focusLeaveCount >= 4 ? '💀' : '⚔️'}</div>
+                    <h1 style="font-size:${focusLeaveCount >= 3 ? '3rem' : '2.5rem'};font-weight:900;color:#FF4444;margin-bottom:16px;text-shadow:0 0 30px rgba(255,0,0,0.5);">${msg.title}</h1>
+                    <p style="font-size:1.3rem;color:#FFD700;font-weight:bold;margin-bottom:12px;">${msg.text}</p>
+                    <p style="font-size:0.9rem;color:#FF6B6B;margin-bottom:30px;">${msg.sub}</p>
+                    <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:20px;">点击任意处回到理政</div>
+                </div>
+            `;
+            overlay.onclick = () => { overlay.remove(); };
+            
+            // Auto dismiss after a few seconds
+            setTimeout(() => { if (document.getElementById('scaryOverlay')) overlay.remove(); }, focusLeaveCount >= 3 ? 5000 : 3000);
+            
+            document.body.appendChild(overlay);
+            
+            // Vibrate on mobile if supported
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        }
+        document.addEventListener('visibilitychange', onFocusVisibilityChange);
+
         function resetFocusUI() { 
             activeFocusStart = null; if (focusTimerInterval) { clearInterval(focusTimerInterval); focusTimerInterval = null; } 
             document.getElementById("focusActiveState").innerHTML = '⏸️ 暂无专注'; document.getElementById("focusStatusBadge").classList.remove("timer-pulse");
             document.getElementById("countdownDisplay").classList.add("hidden"); document.getElementById("floatingTimer").classList.add("hidden");
+            window.removeEventListener('beforeunload', focusLeaveWarning);
             updateFocusButtons(); renderAll(); 
         }
         function startFocus() {
             if (activeFocusStart !== null) { alert("⚠️ 陛下已经在理政中！"); return; }
+            window.addEventListener('beforeunload', focusLeaveWarning);
+            focusLeaveCount = 0;
             const courtOverlay = document.getElementById('imperialCourtOverlay'); courtOverlay.classList.remove('hidden'); setTimeout(() => courtOverlay.classList.add('court-active'), 10); setTimeout(() => { courtOverlay.classList.remove('court-active'); setTimeout(() => courtOverlay.classList.add('hidden'), 500); }, 3000);
             if (focusTimerInterval) { clearInterval(focusTimerInterval); focusTimerInterval = null; }
             currentFocusMode = document.getElementById("focusMode").value; activeFocusStart = Date.now(); 
