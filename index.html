@@ -200,6 +200,57 @@
         </div>
 
         <div id="checkInModal" class="modal-overlay">
+
+        <div id="scheduleModal" class="modal-overlay">
+            <div class="modal-content p-5">
+                <div class="flex justify-between items-center border-b border-dopamine-purple/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-purple"><i class="fas fa-magic"></i> 智能排程</h3><button class="close-modal-btn text-gray-400 text-xl" onclick="document.getElementById('scheduleModal').classList.remove('active')">&times;</button></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">任务名称</label>
+                        <input type="text" id="schedTaskName" placeholder="例：写论文第三章" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:border-dopamine-purple">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">总时长（小时）</label>
+                            <input type="number" id="schedTotalHours" value="4" min="0.5" max="24" step="0.5" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">每块时长</label>
+                            <select id="schedBlockSize" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                                <option value="25">🍅 25分钟</option>
+                                <option value="50" selected>🧠 50分钟</option>
+                                <option value="90">💪 90分钟</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">排程范围（从）</label>
+                            <input type="date" id="schedDateFrom" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">排程范围（到）</label>
+                            <input type="date" id="schedDateTo" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">工作时段（开始）</label>
+                            <input type="time" id="schedWorkStart" value="09:00" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">工作时段（结束）</label>
+                            <input type="time" id="schedWorkEnd" value="21:00" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                        </div>
+                    </div>
+                    <div id="schedPreview" class="hidden bg-purple-50 rounded-xl p-3 max-h-40 overflow-y-auto text-sm space-y-1 border border-purple-100"></div>
+                    <div class="flex gap-2">
+                        <button onclick="previewSchedule()" class="flex-1 bg-dopamine-purple text-white py-2.5 rounded-xl font-bold shadow-sm hover:opacity-90 transition"><i class="fas fa-eye"></i> 预览排程</button>
+                        <button id="schedConfirmBtn" onclick="confirmSchedule()" class="flex-1 bg-dopamine-orange text-white py-2.5 rounded-xl font-bold shadow-sm hover:opacity-90 transition hidden"><i class="fas fa-calendar-plus"></i> 确认并创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
             <div class="modal-content p-5">
                 <div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-gray-800" id="checkModalTitle">📝 时段补录</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div>
                 <input type="hidden" id="checkModalPeriod">
@@ -225,6 +276,7 @@
                         <select id="focusMode" class="px-3 py-2.5 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 focus:border-dopamine-orange outline-none text-sm text-gray-600 font-medium transition-colors"><option value="free">♾️ 自由理政</option><option value="25">🍅 25分钟番茄钟</option><option value="50">🧠 50分钟深度钟</option></select>
                         <button onclick="startFocus()" id="startFocusBtn" class="bg-dopamine-orange hover:bg-dopamine-orange/85 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-play-circle"></i> 开始审阅</button>
                         <button onclick="stopFocus()" id="stopFocusBtn" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium opacity-50 cursor-not-allowed" disabled><i class="fas fa-stop-circle"></i> 歇息片刻</button>
+                        <button onclick="openScheduleModal()" class="bg-dopamine-purple hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-magic"></i> 智能排程</button>
                     </div>
                     <div class="flex items-center gap-3">
                         <div id="countdownDisplay" class="hidden text-2xl font-black text-dopamine-orange bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">25:00</div>
@@ -1116,6 +1168,179 @@
                     console.error('GCal push failed:', resp.status, await resp.text());
                 }
             } catch(e) { console.error('GCal push error:', e); }
+        }
+
+        // ================= 智能排程 =================
+        let scheduledBlocks = [];
+
+        function openScheduleModal() {
+            if (!gcalAccessToken) { alert('请先点击「登录日历」连接 Google Calendar'); return; }
+            // Set default dates: tomorrow to 7 days later
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+            const weekLater = new Date(); weekLater.setDate(weekLater.getDate() + 7);
+            document.getElementById('schedDateFrom').value = tomorrow.toISOString().slice(0, 10);
+            document.getElementById('schedDateTo').value = weekLater.toISOString().slice(0, 10);
+            document.getElementById('schedTaskName').value = '';
+            document.getElementById('schedTotalHours').value = '4';
+            document.getElementById('schedPreview').classList.add('hidden');
+            document.getElementById('schedConfirmBtn').classList.add('hidden');
+            scheduledBlocks = [];
+            document.getElementById('scheduleModal').classList.add('active');
+        }
+
+        async function previewSchedule() {
+            const name = document.getElementById('schedTaskName').value.trim();
+            if (!name) { alert('请输入任务名称'); return; }
+            const totalMinutes = parseFloat(document.getElementById('schedTotalHours').value) * 60;
+            const blockSize = parseInt(document.getElementById('schedBlockSize').value);
+            const dateFrom = document.getElementById('schedDateFrom').value;
+            const dateTo = document.getElementById('schedDateTo').value;
+            const workStart = document.getElementById('schedWorkStart').value;
+            const workEnd = document.getElementById('schedWorkEnd').value;
+
+            if (!dateFrom || !dateTo) { alert('请选择日期范围'); return; }
+
+            // Fetch busy times from Google Calendar
+            const timeMin = new Date(dateFrom + 'T00:00:00').toISOString();
+            const timeMax = new Date(dateTo + 'T23:59:59').toISOString();
+
+            let busySlots = [];
+            try {
+                const resp = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=200`,
+                    { headers: { 'Authorization': `Bearer ${gcalAccessToken}` } }
+                );
+                if (!resp.ok) { alert('获取日历失败，请重新登录'); return; }
+                const data = await resp.json();
+                busySlots = (data.items || []).filter(ev => ev.start.dateTime).map(ev => ({
+                    start: new Date(ev.start.dateTime),
+                    end: new Date(ev.end.dateTime)
+                }));
+            } catch(e) { alert('获取日历失败：' + e.message); return; }
+
+            // Parse work hours
+            const [wsH, wsM] = workStart.split(':').map(Number);
+            const [weH, weM] = workEnd.split(':').map(Number);
+            const workStartMin = wsH * 60 + wsM;
+            const workEndMin = weH * 60 + weM;
+
+            // Find free slots day by day
+            const blocks = [];
+            let remaining = totalMinutes;
+            const breakBetween = 10; // 10 min break between blocks
+
+            let currentDate = new Date(dateFrom);
+            const endDate = new Date(dateTo);
+
+            while (currentDate <= endDate && remaining > 0) {
+                const dayStr = currentDate.toISOString().slice(0, 10);
+                const dayStart = new Date(dayStr + 'T' + workStart + ':00');
+                const dayEnd = new Date(dayStr + 'T' + workEnd + ':00');
+
+                // Get busy slots for this day
+                const dayBusy = busySlots.filter(s => s.start < dayEnd && s.end > dayStart)
+                    .sort((a, b) => a.start - b.start);
+
+                // Find free windows
+                let cursor = new Date(dayStart);
+                for (const busy of dayBusy) {
+                    if (cursor < busy.start) {
+                        // Free window: cursor to busy.start
+                        let freeMinutes = (busy.start - cursor) / 60000;
+                        while (freeMinutes >= blockSize && remaining > 0) {
+                            const actualBlock = Math.min(blockSize, remaining);
+                            const blockStart = new Date(cursor);
+                            const blockEnd = new Date(cursor.getTime() + actualBlock * 60000);
+                            blocks.push({ start: blockStart, end: blockEnd, name });
+                            remaining -= actualBlock;
+                            cursor = new Date(blockEnd.getTime() + breakBetween * 60000);
+                            freeMinutes = (busy.start - cursor) / 60000;
+                        }
+                    }
+                    if (busy.end > cursor) cursor = new Date(busy.end.getTime() + breakBetween * 60000);
+                }
+                // After last busy slot, check remaining free time until work end
+                if (cursor < dayEnd && remaining > 0) {
+                    let freeMinutes = (dayEnd - cursor) / 60000;
+                    while (freeMinutes >= blockSize && remaining > 0) {
+                        const actualBlock = Math.min(blockSize, remaining);
+                        const blockStart = new Date(cursor);
+                        const blockEnd = new Date(cursor.getTime() + actualBlock * 60000);
+                        blocks.push({ start: blockStart, end: blockEnd, name });
+                        remaining -= actualBlock;
+                        cursor = new Date(blockEnd.getTime() + breakBetween * 60000);
+                        freeMinutes = (dayEnd - cursor) / 60000;
+                    }
+                }
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            scheduledBlocks = blocks;
+
+            // Show preview
+            const preview = document.getElementById('schedPreview');
+            const confirmBtn = document.getElementById('schedConfirmBtn');
+            if (blocks.length === 0) {
+                preview.innerHTML = '<div class="text-gray-500 text-center py-2">😔 在指定范围内找不到足够的空闲时段，试试扩大日期范围或缩短每块时长。</div>';
+                preview.classList.remove('hidden');
+                confirmBtn.classList.add('hidden');
+                return;
+            }
+
+            const scheduled = totalMinutes - remaining;
+            let html = `<div class="font-bold text-dopamine-purple mb-2">📋 已排 ${Math.round(scheduled)}/${Math.round(totalMinutes)} 分钟，共 ${blocks.length} 块：</div>`;
+            blocks.forEach((b, i) => {
+                const dayLabel = b.start.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+                const timeLabel = b.start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' → ' + b.end.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const dur = Math.round((b.end - b.start) / 60000);
+                html += `<div class="flex justify-between items-center py-1 border-b border-purple-100 last:border-0">
+                    <span class="text-gray-600">${dayLabel}</span>
+                    <span class="text-xs text-gray-500">${timeLabel}</span>
+                    <span class="text-xs font-bold text-dopamine-purple">${dur}min</span>
+                </div>`;
+            });
+            if (remaining > 0) {
+                html += `<div class="text-orange-500 text-xs mt-2">⚠️ 还剩 ${Math.round(remaining)} 分钟未安排，建议扩大日期范围</div>`;
+            }
+            preview.innerHTML = html;
+            preview.classList.remove('hidden');
+            confirmBtn.classList.remove('hidden');
+        }
+
+        async function confirmSchedule() {
+            if (!scheduledBlocks.length || !gcalAccessToken) return;
+            const btn = document.getElementById('schedConfirmBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 创建中...';
+            btn.disabled = true;
+
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            let success = 0;
+            for (const block of scheduledBlocks) {
+                try {
+                    const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${gcalAccessToken}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            summary: `📝 ${block.name}`,
+                            description: '来源: 皇帝的贴身史官 · 智能排程',
+                            start: { dateTime: block.start.toISOString(), timeZone: tz },
+                            end: { dateTime: block.end.toISOString(), timeZone: tz },
+                            colorId: '3',
+                            reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 5 }] }
+                        }),
+                    });
+                    if (resp.ok) success++;
+                } catch(e) { console.error('Schedule push error:', e); }
+            }
+
+            btn.innerHTML = '<i class="fas fa-calendar-plus"></i> 确认并创建';
+            btn.disabled = false;
+
+            // Refresh calendar
+            await pullEventsFromGCal();
+            document.getElementById('scheduleModal').classList.remove('active');
+            alert(`✅ 成功创建 ${success}/${scheduledBlocks.length} 个时间块到 Google Calendar！\n每块开始前5分钟会收到提醒。`);
         }
 
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
