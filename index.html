@@ -142,7 +142,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-dopamine-orange to-dopamine-pink bg-clip-text text-transparent flex items-center gap-2">
-                        <i class="fas fa-crown text-dopamine-orange"></i> Reed皇帝的进步日记
+                        <i class="fas fa-crown text-dopamine-orange"></i> <span id="appTitle" onclick="editTitle()" class="cursor-pointer hover:opacity-80 transition" title="点击修改名称">进步日记</span>
                         <span id="streakBadge" class="hidden bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm ml-2 items-center gap-1"><i class="fas fa-fire"></i> 连朝 <span id="streakCount">0</span> 天</span>
                     </h1>
                     <p class="text-amber-600/80 text-sm mt-1 flex items-center gap-2"><i class="far fa-calendar-alt text-dopamine-sky"></i><span id="currentDate"></span><span class="w-1 h-1 bg-amber-300 rounded-full"></span><span>今日是否上朝科研，不开心就提早退朝！</span></p>
@@ -817,6 +817,8 @@
         // ================= 其他及初始化 =================
         function handleAvatarUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { localStorage.setItem("phd_pro_avatar", e.target.result); document.getElementById("userAvatar").src = e.target.result; }; reader.readAsDataURL(file); }
         function loadAvatar() { const stored = localStorage.getItem("phd_pro_avatar"); if (stored) document.getElementById("userAvatar").src = stored; }
+        function editTitle() { const el = document.getElementById('appTitle'); const current = el.innerText; const newTitle = prompt('修改名称：', current); if (newTitle && newTitle.trim()) { el.innerText = newTitle.trim(); localStorage.setItem('phd_app_title', newTitle.trim()); } }
+        function loadTitle() { const stored = localStorage.getItem('phd_app_title'); if (stored) document.getElementById('appTitle').innerText = stored; }
         function exportData() { const blob = new Blob([JSON.stringify(appData)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `史库备份_${getTodayStr()}.json`; a.click(); }
         function importData(event) { const r = new FileReader(); r.onload = e => { appData = {...appData, ...JSON.parse(e.target.result)}; saveData(); renderAll(); }; r.readAsText(event.target.files[0]); }
 
@@ -1186,7 +1188,7 @@
         }
 
       function init() { 
-            loadData(); loadAvatar(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); bindEvents();
+            loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); bindEvents();
             setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
             document.getElementById("currentDate").innerText = new Date().toLocaleDateString(); 
             renderAll(); 
