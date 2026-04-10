@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
@@ -384,6 +386,20 @@
                 </div>
                 </div>
             </div>
+
+            <div id="module-leaderboard" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #9B5DE5; background: linear-gradient(135deg, #F8F0FF, #FFF5F8);">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between border-b border-dopamine-purple/30 pb-3 mb-4 mt-2">
+                    <div class="flex items-center gap-2"><i class="fas fa-trophy text-dopamine-yellow text-xl"></i><h2 class="text-xl font-bold text-gray-800">群臣排行榜</h2><span class="text-xs bg-dopamine-purple/20 text-dopamine-purple px-2 py-0.5 rounded-full ml-1">本周</span></div>
+                    <div class="flex items-center gap-2">
+                        <span id="myNickname" class="text-xs text-gray-500 cursor-pointer hover:text-dopamine-purple" onclick="changeNickname()" title="点击修改昵称"></span>
+                        <button onclick="syncToFirebase()" class="bg-dopamine-purple/10 hover:bg-dopamine-purple/20 text-dopamine-purple text-xs px-3 py-1.5 rounded-full transition flex items-center gap-1 font-bold"><i class="fas fa-sync-alt"></i> 刷新</button>
+                    </div>
+                </div>
+                <div id="leaderboardList" class="space-y-2">
+                    <div class="text-center text-gray-400 text-sm py-4"><i class="fas fa-spinner fa-pulse"></i> 加载中...</div>
+                </div>
+            </div>
   <div id="taskDrawer" class="smart-drawer drawer-bottom">
         <div class="drawer-toggle-btn" onclick="toggleTaskDrawer()">
             <i class="fas fa-chevron-up" id="drawerIcon"></i> <span>批阅奏折</span>
@@ -743,6 +759,8 @@
             saveData(); 
             // Auto push to Google Calendar if connected
             pushFocusToGCal(session.startTimestamp, session.endTimestamp, minutes);
+            // Sync to leaderboard
+            syncToFirebase();
         }
         function getTodayFocusMinutes() { return appData.focusSessions.filter(s => s.dateStr === getTodayStr()).reduce((sum, s) => sum + s.durationMinutes, 0); }
         function updateCountdownDisplay() { const timeStr = `${Math.floor(remainingSeconds / 60).toString().padStart(2, '0')}:${(remainingSeconds % 60).toString().padStart(2, '0')}`; document.getElementById("countdownDisplay").innerText = timeStr; document.getElementById("floatingCountdown").innerText = timeStr; }
@@ -794,7 +812,7 @@
 
         // ================= 作息打卡 =================
         function getCheckRecordsForToday() { const today = getTodayStr(); if (!appData.checkRecords[today]) appData.checkRecords[today] = { morning: {}, afternoon: {}, evening: {}, night: {} }; return appData.checkRecords[today]; }
-        function checkTime(period, type) { const recs = getCheckRecordsForToday(); recs[period][type] = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); saveData(); renderCheckDisplay(); updateStreakBadge(); }
+        function checkTime(period, type) { const recs = getCheckRecordsForToday(); recs[period][type] = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); saveData(); renderCheckDisplay(); updateStreakBadge(); syncToFirebase(); }
         function renderCheckDisplay() { 
             const rec = getCheckRecordsForToday(); 
             ["morning","afternoon","evening","night"].forEach(p => { 
@@ -1683,6 +1701,143 @@
             renderPieChart(); updateFocusButtons(); 
         }
 
+        // ================= Firebase 排行榜 =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIReQrkP36AmqT28RQBMW7OfCNw29WcCo",
+            authDomain: "phd-share.firebaseapp.com",
+            databaseURL: "https://phd-share-default-rtdb.firebaseio.com",
+            projectId: "phd-share",
+            storageBucket: "phd-share.firebasestorage.app",
+            messagingSenderId: "847786267879",
+            appId: "1:847786267879:web:d26f327d6da5b2d3057e42"
+        };
+        let fbApp = null, fbDb = null;
+
+        function initFirebase() {
+            try {
+                fbApp = firebase.initializeApp(firebaseConfig);
+                fbDb = firebase.database();
+                // Check nickname
+                if (!localStorage.getItem('phd_nickname')) {
+                    const name = prompt('👑 给自己起个名号吧（排行榜显示用）：', '无名侠客');
+                    if (name && name.trim()) localStorage.setItem('phd_nickname', name.trim());
+                    else localStorage.setItem('phd_nickname', '无名侠客');
+                }
+                updateNicknameDisplay();
+                syncToFirebase();
+                loadLeaderboard();
+            } catch(e) { console.error('Firebase init error:', e); }
+        }
+
+        function changeNickname() {
+            const current = localStorage.getItem('phd_nickname') || '';
+            const name = prompt('修改你的名号：', current);
+            if (name && name.trim()) {
+                localStorage.setItem('phd_nickname', name.trim());
+                updateNicknameDisplay();
+                syncToFirebase();
+            }
+        }
+
+        function updateNicknameDisplay() {
+            const el = document.getElementById('myNickname');
+            const name = localStorage.getItem('phd_nickname');
+            if (el && name) el.innerText = `👤 ${name}`;
+        }
+
+        function getMyFirebaseId() {
+            let id = localStorage.getItem('phd_firebase_uid');
+            if (!id) {
+                id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                localStorage.setItem('phd_firebase_uid', id);
+            }
+            return id;
+        }
+
+        function getWeekStats() {
+            const now = new Date();
+            const wStart = new Date(now); 
+            wStart.setDate(now.getDate() - (now.getDay() || 7) + 1); 
+            wStart.setHours(0, 0, 0, 0);
+
+            const weekFocus = appData.focusSessions
+                .filter(fs => fs.startTimestamp >= wStart.getTime())
+                .reduce((sum, fs) => sum + fs.durationMinutes, 0);
+
+            let weekCheckDays = 0;
+            for (let d = new Date(wStart); d <= now; d.setDate(d.getDate() + 1)) {
+                const dStr = formatDateToYMD(d.getTime());
+                if (appData.checkRecords[dStr] && Object.values(appData.checkRecords[dStr]).some(v => v.start || v.end)) weekCheckDays++;
+            }
+
+            const weekTasks = appData.tasks.filter(t => t.status === "已完成" && t.completedAt >= wStart.getTime()).length;
+            const streak = calculateStreak();
+
+            return { weekFocus, weekCheckDays, weekTasks, streak };
+        }
+
+        function syncToFirebase() {
+            if (!fbDb) return;
+            const uid = getMyFirebaseId();
+            const nickname = localStorage.getItem('phd_nickname') || '无名侠客';
+            const stats = getWeekStats();
+
+            fbDb.ref('leaderboard/' + uid).set({
+                nickname,
+                weekFocus: stats.weekFocus,
+                weekCheckDays: stats.weekCheckDays,
+                weekTasks: stats.weekTasks,
+                streak: stats.streak,
+                lastSync: Date.now()
+            }).catch(e => console.error('Firebase sync error:', e));
+        }
+
+        function loadLeaderboard() {
+            if (!fbDb) return;
+            fbDb.ref('leaderboard').orderByChild('weekFocus').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) { 
+                    document.getElementById('leaderboardList').innerHTML = '<div class="text-center text-gray-400 text-sm py-4">暂无数据，等朋友加入吧！</div>';
+                    return; 
+                }
+
+                const myUid = getMyFirebaseId();
+                const users = Object.entries(data)
+                    .map(([uid, d]) => ({ uid, ...d }))
+                    .sort((a, b) => b.weekFocus - a.weekFocus);
+
+                const medals = ['🥇', '🥈', '🥉'];
+                const rankTitles = ['👑 皇帝', '🗡️ 丞相', '🛡️ 大将军', '📜 御史大夫', '🏯 太守', '📚 翰林学士', '🔔 侍郎', '🧹 太监总管', '🪣 小太监', '🐴 马夫'];
+                const html = users.map((u, i) => {
+                    const isMe = u.uid === myUid;
+                    const medal = i < 3 ? medals[i] : `<span class="text-gray-400 text-xs w-6 inline-block text-center">${i + 1}</span>`;
+                    const rankTitle = rankTitles[Math.min(i, rankTitles.length - 1)];
+                    const bg = isMe ? 'bg-dopamine-purple/10 border-dopamine-purple/30' : (i === 0 ? 'bg-yellow-50/80 border-yellow-200' : 'bg-white/60 border-gray-100');
+                    const nameStyle = i === 0 ? 'font-black text-dopamine-orange' : (isMe ? 'font-bold text-dopamine-purple' : 'text-gray-700');
+                    const ago = u.lastSync ? Math.round((Date.now() - u.lastSync) / 60000) : 0;
+                    const agoText = ago < 1 ? '刚刚' : ago < 60 ? `${ago}分钟前` : ago < 1440 ? `${Math.round(ago/60)}小时前` : `${Math.round(ago/1440)}天前`;
+
+                    return `<div class="flex items-center gap-3 p-3 rounded-xl border ${bg} transition hover:shadow-sm">
+                        <span class="text-xl w-8 text-center flex-shrink-0">${medal}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="${nameStyle} text-sm truncate">${escapeHtml(u.nickname)}${isMe ? ' (我)' : ''}</span>
+                                ${u.streak >= 3 ? '<span class="text-[10px] bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded-full">🔥' + u.streak + '天</span>' : ''}
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${rankTitle} · ${agoText}同步</div>
+                        </div>
+                        <div class="flex gap-4 text-xs flex-shrink-0">
+                            <div class="text-center"><div class="font-black text-dopamine-orange text-lg">${u.weekFocus}</div><div class="text-gray-400">分钟</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-sky text-lg">${u.weekCheckDays}</div><div class="text-gray-400">天</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-mint text-lg">${u.weekTasks}</div><div class="text-gray-400">奏折</div></div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                document.getElementById('leaderboardList').innerHTML = html;
+            });
+        }
+
       function init() { 
             loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); loadRoutineCollapse(); bindEvents();
             setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
@@ -1692,7 +1847,9 @@
             loadLayout(); 
             initDrawer(); // <--- 加上这一行，激活智能抽屉的位置记忆！
             applyGuardState();
-            setInterval(() => renderAll(), 60000); 
+            initFirebase();
+            setInterval(() => renderAll(), 60000);
+            setInterval(() => syncToFirebase(), 300000); // Auto sync every 5 min
             requestAnimationFrame(patrolGuard); 
         }
         
