@@ -926,6 +926,20 @@
         }
 
         async function syncCalendar() {
+            // If Google Calendar is connected, use API directly
+            if (gcalAccessToken) {
+                const btn = document.getElementById('syncCalBtn');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 同步中...';
+                btn.disabled = true;
+                await pullEventsFromGCal();
+                btn.innerHTML = original;
+                btn.disabled = false;
+                alert(`✅ 已从 Google Calendar 同步 ${appData.calendarEvents.length} 条日程。`);
+                return;
+            }
+
+            // Fallback: ICS URL approach
             const url = localStorage.getItem('phd_ics_url');
             if (!url) { document.getElementById('icsUrlModal').classList.add('active'); return; }
 
@@ -974,7 +988,7 @@
 
         // ================= Google Calendar API 集成 =================
         const GCAL_CLIENT_ID = '747124411986-66lnp8m0ekokb27h44qj753bfhdj3iiq.apps.googleusercontent.com';
-        const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+        const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
         let gcalTokenClient = null;
         let gcalAccessToken = null;
 
@@ -983,11 +997,13 @@
                 gcalTokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GCAL_CLIENT_ID,
                     scope: GCAL_SCOPES,
-                    callback: (response) => {
+                    callback: async (response) => {
                         if (response.error) { console.error('GCal auth error:', response); return; }
                         gcalAccessToken = response.access_token;
                         updateGCalButton(true);
-                        alert('✅ Google 日历已连接！番茄钟结束后将自动同步。');
+                        // 登录成功后自动拉取日程
+                        await pullEventsFromGCal();
+                        alert('✅ Google 日历已连接！\n• 日程已自动同步到江山社稷图\n• 番茄钟结束后将自动上传到日历');
                     },
                 });
             } catch(e) { console.log('Google Identity Services not loaded yet'); }
@@ -995,7 +1011,6 @@
 
         function handleGCalAuth() {
             if (gcalAccessToken) {
-                // Already logged in, offer to disconnect
                 if (confirm('已连接 Google 日历。\n点「确定」断开连接。')) {
                     google.accounts.oauth2.revoke(gcalAccessToken);
                     gcalAccessToken = null;
@@ -1021,8 +1036,54 @@
             }
         }
 
+        // ===== 从 Google Calendar 拉取日程 =====
+        async function pullEventsFromGCal() {
+            if (!gcalAccessToken) return;
+            
+            // 拉取前后3个月的日程
+            const now = new Date();
+            const timeMin = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString();
+            const timeMax = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
+
+            try {
+                const resp = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=500`,
+                    { headers: { 'Authorization': `Bearer ${gcalAccessToken}` } }
+                );
+                
+                if (resp.status === 401) {
+                    gcalAccessToken = null;
+                    updateGCalButton(false);
+                    return;
+                }
+                
+                if (!resp.ok) { console.error('GCal pull failed:', resp.status); return; }
+                
+                const data = await resp.json();
+                const events = (data.items || []).map(ev => {
+                    const start = ev.start.dateTime ? new Date(ev.start.dateTime) : new Date(ev.start.date);
+                    const end = ev.end.dateTime ? new Date(ev.end.dateTime) : new Date(ev.end.date);
+                    return {
+                        summary: ev.summary || '(无标题)',
+                        dateStr: `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`,
+                        startTime: ev.start.dateTime ? start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '全天',
+                        endTime: ev.end.dateTime ? end.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '',
+                        location: ev.location || '',
+                        description: ev.description || '',
+                        source: 'gcal'
+                    };
+                });
+                
+                appData.calendarEvents = events;
+                saveData();
+                renderCalendar();
+                console.log(`✅ 已从 Google Calendar 拉取 ${events.length} 条日程`);
+            } catch(e) { console.error('GCal pull error:', e); }
+        }
+
+        // ===== 番茄钟结束后上传到 Google Calendar =====
         async function pushFocusToGCal(startTimestamp, endTimestamp, minutes) {
-            if (!gcalAccessToken) return; // Not connected, skip silently
+            if (!gcalAccessToken) return;
             
             const start = new Date(startTimestamp);
             const end = new Date(endTimestamp);
@@ -1033,7 +1094,7 @@
                 description: `模式: ${modeLabel}\n来源: 皇帝的贴身史官`,
                 start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-                colorId: '6', // 橙色
+                colorId: '6',
             };
 
             try {
@@ -1044,11 +1105,11 @@
                 });
                 if (resp.ok) {
                     console.log('✅ Focus session pushed to Google Calendar');
+                    // 上传后自动刷新日程显示
+                    await pullEventsFromGCal();
                 } else if (resp.status === 401) {
-                    // Token expired, re-auth
                     gcalAccessToken = null;
                     updateGCalButton(false);
-                    console.log('GCal token expired, need re-auth');
                 } else {
                     console.error('GCal push failed:', resp.status, await resp.text());
                 }
