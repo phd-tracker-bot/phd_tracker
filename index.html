@@ -643,14 +643,40 @@
             }
         }
         function showScaryWarning() {
-            const msgs = [
-                { title: '⚔️ 大胆！', text: '陛下擅离龙椅，锦衣卫已记录在案！', sub: `第 ${focusLeaveCount} 次离朝` },
-                { title: '🔥 龙颜大怒！', text: '谁允许你离开的？！番茄钟还在计时！', sub: `累计摸鱼 ${focusLeaveCount} 次` },
-                { title: '💀 御史弹劾！', text: '陛下心猿意马，朝纲不振！', sub: `摸鱼次数已达 ${focusLeaveCount} 次，史官如实记录` },
-                { title: '👁️ 朕看到你了', text: '以为切出去朕就不知道了？', sub: `锦衣卫密报：离朝 ${focusLeaveCount} 次` },
-                { title: '☠️ 斩立决？', text: '再敢摸鱼，番茄钟时长不算！', sub: `本次理政已开小差 ${focusLeaveCount} 次` },
+            const mild = [
+                { title: '⚔️ 大胆！', text: '陛下擅离龙椅，锦衣卫已记录在案！' },
+                { title: '👁️ 朕看到你了', text: '以为切出去朕就不知道了？' },
+                { title: '🐟 摸鱼被抓！', text: '御书房的金鱼都比你专注！' },
+                { title: '📢 太监传旨', text: '皇上！您的番茄钟还在转呢！' },
+                { title: '🦅 东厂密报', text: '陛下刚才的小动作，厂公都看在眼里！' },
+                { title: '🔔 龙钟长鸣', text: '番茄钟怒了！它说你对不起它！' },
+                { title: '😾 御猫不悦', text: '连朕的猫都在专注抓老鼠，你呢？' },
             ];
-            const msg = msgs[Math.min(focusLeaveCount - 1, msgs.length - 1)];
+            const medium = [
+                { title: '🔥 龙颜大怒！', text: '谁允许你离开的？！番茄钟还在计时！' },
+                { title: '💀 御史弹劾！', text: '陛下心猿意马，朝纲不振！' },
+                { title: '⛓️ 打入冷宫！', text: '再摸鱼就把你的番茄钟关进冷宫！' },
+                { title: '🗡️ 尚方宝剑', text: '朕赐你一把剑，斩断你的摸鱼之心！' },
+                { title: '📜 罪己诏', text: '陛下须下罪己诏，向天下臣民检讨摸鱼行为！' },
+                { title: '🏴 黑旗高悬', text: '摸鱼警报！全城戒严！锦衣卫出动！' },
+                { title: '👻 先帝显灵', text: '先帝托梦说：朕当年可没你这么懒！' },
+            ];
+            const severe = [
+                { title: '☠️ 斩立决？', text: '再敢摸鱼，番茄钟时长全部清零！' },
+                { title: '🌋 天崩地裂', text: '你的摸鱼已经引起了天象异变！' },
+                { title: '💣 社稷将倾', text: '国家都要亡了你还在刷手机？！' },
+                { title: '👹 阎王催命', text: '阎王说你的论文deadline到了！' },
+                { title: '🔥 焚书坑儒', text: '再不回来，朕把你的论文初稿都烧了！' },
+                { title: '⚡ 天雷劈下', text: '摸鱼遭雷劈！老天爷都看不下去了！' },
+            ];
+
+            let pool;
+            if (focusLeaveCount <= 2) pool = mild;
+            else if (focusLeaveCount <= 4) pool = medium;
+            else pool = severe;
+            
+            const msg = pool[Math.floor(Math.random() * pool.length)];
+            const sub = `第 ${focusLeaveCount} 次离朝 · 锦衣卫如实记录`;
             
             const overlay = document.createElement('div');
             overlay.id = 'scaryOverlay';
