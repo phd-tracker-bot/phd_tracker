@@ -301,12 +301,14 @@
 
             <div id="module-routine" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-left: 8px solid #43AA8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-sky flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange flex items-center justify-center cursor-grab"><i class="fas fa-grip-horizontal"></i></div></div>
-                <div class="flex items-center justify-between mb-4 pb-2 border-b border-dopamine-yellow/30 mt-2"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">作息起居 · 真实四段式</h2></div></div>
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-dopamine-yellow/30 mt-2"><div class="flex items-center gap-2 cursor-pointer" onclick="toggleRoutineCollapse()"><i class="fas fa-check-circle text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">作息起居 · 真实四段式</h2><i id="routineCollapseIcon" class="fas fa-chevron-up text-gray-400 text-sm ml-1 transition-transform"></i></div></div>
+                <div id="routineContent" class="transition-all duration-300 overflow-hidden">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-3 shadow-sm border border-orange-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-orange text-sm flex items-center gap-1"><i class="fas fa-sun"></i> 早朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('morning','start')" class="flex-1 bg-dopamine-orange text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('morning','end')" class="flex-1 bg-dopamine-sky text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('morning')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="morning" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
                     <div class="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-3 shadow-sm border border-sky-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-sky text-sm flex items-center gap-1"><i class="fas fa-cloud-sun"></i> 午朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('afternoon','start')" class="flex-1 bg-dopamine-sky text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('afternoon','end')" class="flex-1 bg-dopamine-purple text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('afternoon')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="afternoon" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
                     <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 shadow-sm border border-purple-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-purple text-sm flex items-center gap-1"><i class="fas fa-moon"></i> 晚朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('evening','start')" class="flex-1 bg-dopamine-purple text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('evening','end')" class="flex-1 bg-dopamine-pink text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('evening')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="evening" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
                     <div class="bg-gradient-to-br from-indigo-50 to-slate-50 rounded-xl p-3 shadow-sm border border-indigo-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-pink text-sm flex items-center gap-1">🧘‍♂️ 修仙</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('night','start')" class="flex-1 bg-indigo-400 text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('night','end')" class="flex-1 bg-slate-500 text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('night')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="night" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
+                </div>
                 </div>
             </div>
 
@@ -315,6 +317,23 @@
                 <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-3 mb-4 mt-2"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-xl drop-shadow-md"></i><h2 class="text-xl font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-xs font-semibold bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
                 <div class="flex gap-2 mb-5 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="2" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-3 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 sm:px-6 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt text-lg"></i></button></div>
                 <div class="flex-1 overflow-y-auto pr-1 min-h-[150px]"><ul id="ideaList" class="space-y-3"></ul></div>
+            </div>
+
+            <div id="module-mood-cal" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #F9C74F;">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between border-b border-dopamine-yellow/30 pb-3 mb-4 mt-2">
+                    <div class="flex items-center gap-2"><i class="far fa-smile text-dopamine-yellow text-xl"></i><h2 class="text-xl font-bold text-gray-800">龙体圣意月历</h2></div>
+                    <div class="flex items-center gap-2">
+                        <button id="moodCalPrev" class="text-gray-400 hover:text-dopamine-yellow transition p-1"><i class="fas fa-chevron-left"></i></button>
+                        <span id="moodCalMonthYear" class="font-bold text-gray-700 text-sm w-20 text-center"></span>
+                        <button id="moodCalNext" class="text-gray-400 hover:text-dopamine-yellow transition p-1"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-1"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                <div id="moodCalGrid" class="grid grid-cols-7 gap-1"></div>
+                <div class="flex justify-center gap-4 mt-3 text-[10px] text-gray-400">
+                    <span>😊 开心</span><span>😐 一般</span><span>😔 低落</span><span>⬜ 未记录</span>
+                </div>
             </div>
 
             <div id="module-calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #4D9DE0;">
@@ -756,8 +775,64 @@
         // ================= 统计视图与图表 =================
         function calculateStreak() { let streak = 0; let checkDate = new Date(); checkDate.setHours(0,0,0,0); const todayStr = getTodayStr(); let hasToday = Object.keys(appData.checkRecords[todayStr]||{}).some(k=>appData.checkRecords[todayStr][k].start); if(!hasToday) checkDate.setDate(checkDate.getDate()-1); for(let i=0;i<365;i++){ const dStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}-${String(checkDate.getDate()).padStart(2,'0')}`; if(appData.checkRecords[dStr] && Object.keys(appData.checkRecords[dStr]).some(k=>appData.checkRecords[dStr][k].start)){ streak++; checkDate.setDate(checkDate.getDate()-1); } else break; } return streak; }
         function updateStreakBadge() { const streak = calculateStreak(); const badge = document.getElementById("streakBadge"); if(streak>0){ badge.style.display="inline-flex"; document.getElementById("streakCount").innerText=streak; }else badge.style.display="none"; }
-        function setMood(m) { appData.moodHistory[getTodayStr()] = m; saveData(); updateMoodUI(); }
+        function setMood(m) { appData.moodHistory[getTodayStr()] = m; saveData(); updateMoodUI(); renderMoodCalendar(); }
         function updateMoodUI() { const m = appData.moodHistory[getTodayStr()]; document.querySelectorAll('.mood-emoji').forEach(el => { el.classList.remove('mood-active'); if (el.getAttribute('data-mood') === m) el.classList.add('mood-active'); }); }
+
+        // ================= 龙体圣意月历 =================
+        let moodCalDate = new Date();
+        function renderMoodCalendar() {
+            const y = moodCalDate.getFullYear(); const m = moodCalDate.getMonth();
+            const el = document.getElementById('moodCalMonthYear');
+            if (!el) return;
+            el.innerText = `${y}年${m + 1}月`;
+            const grid = document.getElementById('moodCalGrid');
+            grid.innerHTML = '';
+            
+            // Empty cells for first day offset
+            for (let i = 0; i < new Date(y, m, 1).getDay(); i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+            
+            const moodEmoji = { happy: '😊', neutral: '😐', sad: '😔' };
+            const today = getTodayStr();
+            
+            for (let day = 1; day <= new Date(y, m + 1, 0).getDate(); day++) {
+                const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const mood = appData.moodHistory[dStr];
+                const isToday = dStr === today;
+                const isFuture = new Date(dStr) > new Date();
+                
+                const cell = document.createElement('div');
+                cell.className = `aspect-square rounded-lg flex items-center justify-center text-lg cursor-pointer transition-all hover:scale-110 ${isToday ? 'ring-2 ring-dopamine-yellow bg-yellow-50' : 'bg-gray-50'}`;
+                
+                if (isFuture) {
+                    cell.className = 'aspect-square rounded-lg flex items-center justify-center text-xs text-gray-300';
+                    cell.innerText = day;
+                } else if (mood) {
+                    cell.innerText = moodEmoji[mood] || '❓';
+                    cell.title = `${dStr}: ${mood === 'happy' ? '开心' : mood === 'neutral' ? '一般' : '低落'}`;
+                } else {
+                    cell.innerText = day;
+                    cell.className = `aspect-square rounded-lg flex items-center justify-center text-xs text-gray-400 bg-gray-50 cursor-pointer hover:bg-yellow-50 transition`;
+                    cell.title = '点击记录心情';
+                }
+                
+                // Allow clicking past/today cells to set mood
+                if (!isFuture) {
+                    cell.onclick = () => {
+                        const moods = ['happy', 'neutral', 'sad'];
+                        const current = appData.moodHistory[dStr];
+                        const nextIdx = current ? (moods.indexOf(current) + 1) % moods.length : 0;
+                        appData.moodHistory[dStr] = moods[nextIdx];
+                        saveData();
+                        renderMoodCalendar();
+                        updateMoodUI();
+                    };
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
         function showMoodHistory() { document.getElementById("moodHistoryList").innerHTML = Object.entries(appData.moodHistory).map(([date, mood]) => `<div class="bg-amber-50 p-2 rounded mb-1 flex justify-between"><span>${date}</span><span>${mood==='happy'?'😊':(mood==='neutral'?'😐':'😔')}</span></div>`).join(''); document.getElementById("moodHistoryModal").classList.add("active"); }
         function showTaskHistory() { document.getElementById("taskHistoryList").innerHTML = appData.tasks.filter(t=>t.status==="已完成").map(t => `<div class="bg-pink-50 p-2 rounded mb-1">✅ ${escapeHtml(t.name)}</div>`).join(''); document.getElementById("taskHistoryModal").classList.add("active"); }
         function showIdeaHistory() { document.getElementById("ideaHistoryList").innerHTML = appData.ideas.map(i => `<div class="bg-green-50 p-2 rounded mb-1">${escapeHtml(i.text)}</div>`).join(''); document.getElementById("ideaHistoryModal").classList.add("active"); }
@@ -1061,7 +1136,7 @@
         const GCAL_CLIENT_ID = '747124411986-66lnp8m0ekokb27h44qj753bfhdj3iiq.apps.googleusercontent.com';
         const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
         let gcalTokenClient = null;
-        let gcalAccessToken = null;
+        let gcalAccessToken = localStorage.getItem('phd_gcal_token') || null;
 
         function initGCalAuth() {
             try {
@@ -1071,13 +1146,39 @@
                     callback: async (response) => {
                         if (response.error) { console.error('GCal auth error:', response); return; }
                         gcalAccessToken = response.access_token;
+                        localStorage.setItem('phd_gcal_token', gcalAccessToken);
                         updateGCalButton(true);
-                        // 登录成功后自动拉取日程
                         await pullEventsFromGCal();
                         alert('✅ Google 日历已连接！\n• 日程已自动同步到江山社稷图\n• 番茄钟结束后将自动上传到日历');
                     },
                 });
+                // If we have a stored token, verify it's still valid
+                if (gcalAccessToken) {
+                    updateGCalButton(true);
+                    verifyGCalToken();
+                }
             } catch(e) { console.log('Google Identity Services not loaded yet'); }
+        }
+
+        async function verifyGCalToken() {
+            try {
+                const resp = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
+                    headers: { 'Authorization': `Bearer ${gcalAccessToken}` }
+                });
+                if (resp.ok) {
+                    console.log('✅ GCal token still valid');
+                    await pullEventsFromGCal();
+                } else {
+                    // Token expired
+                    gcalAccessToken = null;
+                    localStorage.removeItem('phd_gcal_token');
+                    updateGCalButton(false);
+                }
+            } catch(e) {
+                gcalAccessToken = null;
+                localStorage.removeItem('phd_gcal_token');
+                updateGCalButton(false);
+            }
         }
 
         function handleGCalAuth() {
@@ -1085,6 +1186,7 @@
                 if (confirm('已连接 Google 日历。\n点「确定」断开连接。')) {
                     google.accounts.oauth2.revoke(gcalAccessToken);
                     gcalAccessToken = null;
+                    localStorage.removeItem('phd_gcal_token');
                     updateGCalButton(false);
                 }
             } else {
@@ -1124,6 +1226,7 @@
                 
                 if (resp.status === 401) {
                     gcalAccessToken = null;
+                    localStorage.removeItem('phd_gcal_token');
                     updateGCalButton(false);
                     return;
                 }
@@ -1180,6 +1283,7 @@
                     await pullEventsFromGCal();
                 } else if (resp.status === 401) {
                     gcalAccessToken = null;
+                    localStorage.removeItem('phd_gcal_token');
                     updateGCalButton(false);
                 } else {
                     console.error('GCal push failed:', resp.status, await resp.text());
@@ -1386,6 +1490,31 @@
                 if (icon) icon.style.transform = 'rotate(180deg)';
             }
         }
+
+        function toggleRoutineCollapse() {
+            const content = document.getElementById('routineContent');
+            const icon = document.getElementById('routineCollapseIcon');
+            const collapsed = content.style.maxHeight === '0px';
+            if (collapsed) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.opacity = '1';
+                icon.style.transform = 'rotate(0deg)';
+                localStorage.setItem('phd_routine_collapsed', 'false');
+            } else {
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                icon.style.transform = 'rotate(180deg)';
+                localStorage.setItem('phd_routine_collapsed', 'true');
+            }
+        }
+        function loadRoutineCollapse() {
+            if (localStorage.getItem('phd_routine_collapsed') === 'true') {
+                const content = document.getElementById('routineContent');
+                const icon = document.getElementById('routineCollapseIcon');
+                if (content) { content.style.maxHeight = '0px'; content.style.opacity = '0'; }
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        }
         function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
         
         function toggleNightMode() {
@@ -1420,17 +1549,19 @@
             document.querySelectorAll('.mood-emoji').forEach(el => el.onclick = () => setMood(el.getAttribute('data-mood')));
             document.getElementById("prevMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); };
             document.getElementById("nextMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); };
+            document.getElementById("moodCalPrev").onclick = () => { moodCalDate.setMonth(moodCalDate.getMonth() - 1); renderMoodCalendar(); };
+            document.getElementById("moodCalNext").onclick = () => { moodCalDate.setMonth(moodCalDate.getMonth() + 1); renderMoodCalendar(); };
         }
 
         function renderAll() { 
             document.getElementById("todayFocusMinutes").innerText = getTodayFocusMinutes(); 
             renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
-            updateMoodUI(); updateStreakBadge(); renderCalendar(); renderTrendChart(); 
+            updateMoodUI(); updateStreakBadge(); renderCalendar(); renderMoodCalendar(); renderTrendChart(); 
             renderPieChart(); updateFocusButtons(); 
         }
 
       function init() { 
-            loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); bindEvents();
+            loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); loadRoutineCollapse(); bindEvents();
             setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
             document.getElementById("currentDate").innerText = new Date().toLocaleDateString(); 
             renderAll(); 
