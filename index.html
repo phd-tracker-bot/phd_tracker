@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>皇帝的贴身史官</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dopamine: {
+                            orange: '#FF8C42', pink: '#FF6B8B', yellow: '#F9C74F', mint: '#43AA8B',
+                            sky: '#4D9DE0', purple: '#9B5DE5', coral: '#F48C6E', lime: '#A7C957',
+                        },
+                    },
+                    fontFamily: { 'sans': ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'], },
+                    boxShadow: { 'colorful': '0 10px 20px -5px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,140,66,0.1)', },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: linear-gradient(145deg, #FFF7E8 0%, #FFFAF0 100%); min-height: 100vh; padding-bottom: 160px; overflow-x: hidden; }
+        .hover-rainbow:hover { transform: translateY(-2px); filter: brightness(1.02); transition: all 0.2s ease; }
+        button:not(:disabled):active { transform: scale(0.97); }
+        .mood-emoji { transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1); cursor: pointer; display: inline-block; }
+        .mood-emoji:hover { transform: scale(1.3); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .mood-active { transform: scale(1.25); filter: drop-shadow(0 0 8px #F9C74F); }
+        ::-webkit-scrollbar { width: 6px; height: 6px;}
+        ::-webkit-scrollbar-track { background: #FFE8D6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #FF8C42; border-radius: 10px; }
+        .timer-pulse { animation: pulseGlow 1.2s infinite; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 140, 66, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 140, 66, 0); } }
+        
+        /* 模态框 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: visibility 0.2s, opacity 0.2s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-content { background: white; border-radius: 2rem; max-width: 90vw; width: 420px; max-height: 80vh; overflow-y: auto; box-shadow: 0 25px 40px rgba(0,0,0,0.2); border-top: 6px solid #FF8C42; }
+        
+        /* 拖拽阵法 */
+        .draggable-module { position: relative; transition: all 0.3s ease; background: white; min-height: 200px; min-width: 280px; }
+        .module-controls { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .edit-mode .module-controls { opacity: 1; pointer-events: auto; }
+        .edit-mode .draggable-module { outline: 2px dashed rgba(255, 140, 66, 0.3); outline-offset: 4px; }
+        .drag-handle:active { cursor: grabbing !important; }
+        .drop-target { outline: 3px dashed #FF8C42 !important; outline-offset: -4px; opacity: 0.6; }
+
+        @keyframes bowing { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(20px) scaleY(0.75); } }
+        .animate-bowing { animation: bowing 1.2s ease-in-out infinite; }
+        .court-active { display: flex !important; opacity: 1 !important; }
+
+        /* 悬浮窗样式 */
+        #floatingTimer { position: fixed; bottom: 20px; right: 20px; z-index: 1000; cursor: grab; user-select: none; transition: opacity 0.2s; }
+        #floatingTimer:active { cursor: grabbing; }
+        
+/* ================= 智能奏折抽屉 V2 (加宽、防遮挡、横竖排版优化) ================= */
+        .smart-drawer { position: fixed; z-index: 900; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: white; box-shadow: 0 0 40px rgba(0,0,0,0.15); display: flex; flex-direction: column;}
+        .night-mode .smart-drawer { background-color: #2D3748 !important; border-color: #4A5568 !important; }
+        
+        /* 底部停靠 (高度适当增加) */
+        .drawer-bottom { bottom: 0; left: 50%; width: 100%; max-width: 80rem; height: 60vh; border-radius: 24px 24px 0 0; border-top: 4px solid #FF8C42; transform: translate(-50%, 100%); }
+        .drawer-bottom.open { transform: translate(-50%, 0); }
+        .drawer-bottom .drawer-toggle-btn { top: -48px; left: 50%; transform: translateX(-50%); height: 48px; padding: 0 36px; border-radius: 24px 24px 0 0; border-bottom: none; flex-direction: row; }
+
+        /* 左侧停靠 (宽度加宽至 500px，防止内容挤压) */
+        .drawer-left { top: 0; left: 0; width: 500px; max-width: 90vw; height: 100vh; border-radius: 0 24px 24px 0; border-right: 4px solid #FF8C42; transform: translateX(-100%); }
+        .drawer-left.open { transform: translateX(0); }
+        .drawer-left .drawer-toggle-btn { right: -48px; top: 15%; width: 48px; padding: 36px 0; border-radius: 0 24px 24px 0; border-left: none; flex-direction: row; writing-mode: vertical-rl; text-orientation: upright; }
+
+        /* 右侧停靠 (宽度加宽至 500px) */
+        .drawer-right { top: 0; right: 0; width: 500px; max-width: 90vw; height: 100vh; border-radius: 24px 0 0 24px; border-left: 4px solid #FF8C42; transform: translateX(100%); }
+        .drawer-right.open { transform: translateX(0); }
+        .drawer-right .drawer-toggle-btn { left: -48px; top: 15%; width: 48px; padding: 36px 0; border-radius: 24px 0 0 24px; border-right: none; flex-direction: row; writing-mode: vertical-rl; text-orientation: upright; }
+
+        /* 按钮通用：强制高宽，绝对外挂，永不遮挡内务，内部完全居中 */
+        .drawer-toggle-btn { position: absolute; background: linear-gradient(135deg, #FF8C42, #FF6B8B); color: white; cursor: pointer; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; transition: filter 0.3s; border: 2px solid white; display: flex; align-items: center; justify-content: center; text-align: center; gap: 8px; box-shadow: 0 0 20px rgba(255, 107, 139, 0.4); z-index: 901; }
+        .drawer-toggle-btn:hover { filter: brightness(1.1); }
+        
+        /* ================= 真实比例锦衣卫特效 ================= */
+        .guard-bubble-v4 { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border: 2px solid #8B0000; box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3); color: #8B0000; }
+        .night-mode .guard-bubble-v4 { background: rgba(30, 30, 30, 0.95); border: 2px solid #E74C3C; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2); color: #F1948A; }
+        @keyframes guardBreathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .animate-guard-breathe { animation: guardBreathe 1.5s ease-in-out infinite; }
+
+        /* 夜巡（暗黑）模式样式 */
+        body.night-mode { background: linear-gradient(145deg, #1A202C 0%, #2D3748 100%); color: #E2E8F0; }
+        .night-mode .draggable-module, .night-mode .bg-white, .night-mode .modal-content, .night-mode .bottom-drawer { background-color: #2D3748 !important; border-color: #4A5568 !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important; }
+        .night-mode .bg-white\/80, .night-mode .bg-white\/60 { background-color: rgba(45, 55, 72, 0.95) !important; border-color: #4A5568 !important; backdrop-filter: blur(8px); }
+        .night-mode .text-gray-800, .night-mode .text-gray-700, .night-mode .text-gray-600, .night-mode h1, .night-mode h2, .night-mode h3, .night-mode h4 { color: #F7FAFC !important; }
+        .night-mode .text-gray-500, .night-mode .text-gray-400 { color: #A0AEC0 !important; }
+        .night-mode [class*="text-dopamine-"], .night-mode [class*="text-blue-"], .night-mode [class*="text-indigo-"] { filter: brightness(1.25) drop-shadow(0 0 2px rgba(255,255,255,0.15)); }
+        .night-mode .bg-gray-50, .night-mode .bg-gray-100 { background-color: #4A5568 !important; border-color: #4A5568 !important; }
+        .night-mode input, .night-mode select, .night-mode textarea { background-color: #1A202C !important; color: #E2E8F0 !important; border-color: #4A5568 !important; }
+        .night-mode .bg-gradient-to-br:not(.bg-clip-text), .night-mode .bg-gradient-to-r:not(.bg-clip-text) { background: #2D3748 !important; border: 1px solid #4A5568 !important; }
+
+  
+
+        /* V3.0 气泡特效 */
+        .guard-bubble-v3 { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border: 2px solid #E74C3C; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); color: #C0392B; }
+
+        /* 日历格子日程条 */
+        .cal-event { font-size: 9px; line-height: 1.2; padding: 1px 3px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .cal-event-ics { background: #E0F2FE; color: #0369A1; }
+        .cal-event-task { background: #DCFCE7; color: #15803D; }
+        .cal-event-focus { background: #FFF7ED; color: #C2410C; }
+        .night-mode .cal-event-ics { background: #1E3A5F; color: #7DD3FC; }
+        .night-mode .cal-event-task { background: #14532D; color: #86EFAC; }
+        .night-mode .cal-event-focus { background: #431407; color: #FDBA74; }
+        .night-mode .guard-bubble-v3 { background: rgba(45, 55, 72, 0.95); border: 2px solid #E74C3C; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2); color: #F1948A; }
+    </style>
+</head>
+<body class="font-sans p-4 md:p-6 lg:p-8 relative">
+    
+    <div id="imperialCourtOverlay" class="fixed inset-0 z-[9999] pointer-events-none flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 hidden" style="background: radial-gradient(circle, rgba(100,30,0,0.9) 0%, rgba(0,0,0,0.95) 100%);">
+        <div class="relative z-10 text-center flex flex-col items-center">
+            <h1 class="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 mb-12 tracking-[0.2em] drop-shadow-[0_0_20px_rgba(253,224,71,0.6)]" style="font-family: '楷体', 'STKaiti', serif; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">吾皇万岁万万岁</h1>
+            <div class="text-6xl md:text-8xl flex justify-center gap-6 animate-bowing">🙇‍♂️ 🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️</div>
+            <div class="text-5xl md:text-7xl flex justify-center gap-8 mt-6 opacity-80 animate-bowing" style="animation-delay: 0.3s;">🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️ 🙇🏿‍♂️</div>
+        </div>
+    </div>
+
+    <div id="floatingTimer" class="hidden bg-white/95 backdrop-blur-md border-2 border-dopamine-orange rounded-2xl shadow-2xl p-4 flex flex-col items-center gap-2">
+        <div class="text-xs text-gray-500 font-bold flex items-center gap-1"><i class="fas fa-crown text-dopamine-orange"></i> 陛下理政中</div>
+        <div id="floatingCountdown" class="text-3xl font-black text-dopamine-orange font-mono">25:00</div>
+        <button onclick="stopFocus()" class="bg-dopamine-mint text-white text-xs px-4 py-2 rounded-xl shadow-md hover:bg-green-500 transition w-full font-bold"><i class="fas fa-stop-circle"></i> 退朝</button>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6 md:mb-8">
+            <div class="flex items-center gap-4">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('avatarInput').click()" title="点击更换头像">
+                    <img id="userAvatar" src="https://api.dicebear.com/7.x/notionists/svg?seed=PhD&backgroundColor=ffb8b8" class="w-16 h-16 rounded-full border-4 border-white shadow-md object-cover transition-transform group-hover:scale-105 bg-white">
+                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-camera text-white text-sm"></i></div>
+                    <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                </div>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-dopamine-orange to-dopamine-pink bg-clip-text text-transparent flex items-center gap-2">
+                        <i class="fas fa-crown text-dopamine-orange"></i> Reed皇帝的进步日记
+                        <span id="streakBadge" class="hidden bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm ml-2 items-center gap-1"><i class="fas fa-fire"></i> 连朝 <span id="streakCount">0</span> 天</span>
+                    </h1>
+                    <p class="text-amber-600/80 text-sm mt-1 flex items-center gap-2"><i class="far fa-calendar-alt text-dopamine-sky"></i><span id="currentDate"></span><span class="w-1 h-1 bg-amber-300 rounded-full"></span><span>今日是否上朝科研，不开心就提早退朝！</span></p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 items-end">
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md px-3 py-2 flex items-center gap-2 border border-dopamine-yellow/40">
+                    <span class="text-sm font-bold text-dopamine-orange flex items-center gap-1"><i class="far fa-smile-wink"></i> 龙体圣意</span>
+                    <div class="flex gap-2 text-2xl">
+                        <span data-mood="happy" class="mood-emoji">😊</span>
+                        <span data-mood="neutral" class="mood-emoji">😐</span>
+                        <span data-mood="sad" class="mood-emoji">😔</span>
+                    </div>
+                    <button onclick="showMoodHistory()" class="bg-gradient-to-r from-dopamine-yellow to-dopamine-orange text-white text-xs px-2.5 py-1 rounded-full shadow-sm hover:shadow transition flex items-center gap-1"><i class="fas fa-history"></i> 史册</button>
+                </div>
+               <div class="flex gap-2">
+                    <button id="toggleGuardBtn" onclick="toggleGuard()" class="bg-white-200 hover:bg-black-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0">
+                        <i class="fas fa-user-secret"></i> 隐匿护卫</button>
+         <button id="layoutLockBtn" onclick="toggleLayoutLock()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0"><i class="fas fa-lock"></i> 阵法锁定</button>
+                    <button id="nightModeBtn" onclick="toggleNightMode()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs px-3 py-1.5 rounded-full border border-indigo-200 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-moon"></i> 夜巡</button>
+                    <button onclick="exportData()" class="bg-white hover:bg-amber-50 text-dopamine-orange text-xs px-3 py-1.5 rounded-full border border-dopamine-yellow/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-download"></i> 本地备份</button>
+                    <button onclick="document.getElementById('importInput').click()" class="bg-white hover:bg-green-50 text-dopamine-mint text-xs px-3 py-1.5 rounded-full border border-dopamine-mint/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-upload"></i> 本地恢复</button>
+                    <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
+                    <button onclick="document.getElementById('icsInput').click()" class="bg-white hover:bg-sky-50 text-dopamine-sky text-xs px-3 py-1.5 rounded-full border border-dopamine-sky/50 transition flex items-center gap-1 shadow-sm font-medium"><i class="fas fa-calendar-plus"></i> 导入日历</button>
+                    <input type="file" id="icsInput" accept=".ics,.ical" class="hidden" onchange="importICS(event)" multiple>
+                    <button onclick="syncCalendar()" id="syncCalBtn" class="bg-gradient-to-r from-dopamine-sky to-blue-500 hover:brightness-110 text-white text-xs px-3 py-1.5 rounded-full transition flex items-center gap-1 shadow-sm font-bold"><i class="fas fa-sync-alt"></i> 同步日历</button>
+                    <button onclick="document.getElementById('icsUrlModal').classList.add('active')" class="bg-white hover:bg-sky-50 text-gray-500 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center justify-center shadow-sm" title="设置日历订阅链接"><i class="fas fa-cog"></i></button>
+                    <button id="gcalLoginBtn" onclick="handleGCalAuth()" class="bg-white hover:bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-full border border-red-200 transition flex items-center gap-1 shadow-sm font-bold whitespace-nowrap"><i class="fab fa-google"></i> <span id="gcalLoginText">登录日历</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="moodHistoryModal" class="modal-overlay"><div class="modal-content p-5"><div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-orange"><i class="far fa-smile"></i> 圣意起居注</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div><div id="moodHistoryList" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div></div></div>
+        <div id="taskHistoryModal" class="modal-overlay"><div class="modal-content p-5"><div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-pink"><i class="fas fa-check-circle"></i> 已批奏折归档</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div><div id="taskHistoryList" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div></div></div>
+        <div id="ideaHistoryModal" class="modal-overlay"><div class="modal-content p-5"><div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-mint"><i class="fas fa-lightbulb"></i> 天恩闪念历史</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div><div id="ideaHistoryList" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1"></div></div></div>
+        <div id="dayDetailModal" class="modal-overlay"><div class="modal-content p-5"><div class="flex justify-between items-center border-b border-dopamine-sky/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-sky flex items-center gap-2"><i class="far fa-calendar-check"></i> <span id="dayDetailTitle"></span></h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div><div class="space-y-4"><div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3 flex justify-between items-center shadow-sm"><span class="text-sm font-bold text-dopamine-orange">专注时长</span><span id="detailFocusTime" class="font-black text-2xl text-dopamine-orange">0 min</span></div><div><h4 class="text-xs font-bold text-gray-500 mb-2">这一天完成的任务</h4><div id="detailCompletedTasks" class="space-y-2 max-h-32 overflow-y-auto text-sm pr-1"></div></div><div><h4 class="text-xs font-bold text-dopamine-sky mb-2 flex items-center gap-1"><i class="fas fa-calendar-alt"></i> 外部日程</h4><div id="detailICSEvents" class="space-y-2 max-h-32 overflow-y-auto text-sm pr-1"></div></div></div></div></div>
+
+        <div id="icsUrlModal" class="modal-overlay">
+            <div class="modal-content p-5">
+                <div class="flex justify-between items-center border-b border-dopamine-sky/30 pb-2 mb-3"><h3 class="text-lg font-bold text-dopamine-sky"><i class="fas fa-calendar-alt"></i> 日历订阅设置</h3><button class="close-modal-btn text-gray-400 text-xl" onclick="document.getElementById('icsUrlModal').classList.remove('active')">&times;</button></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">ICS 订阅链接</label>
+                        <input type="url" id="icsUrlInput" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:border-dopamine-sky">
+                        <p class="text-[10px] text-gray-400 mt-1.5 leading-relaxed">支持 Google Calendar / Notion Calendar / Apple Calendar 的 ICS 订阅链接。<br>Google: 日历设置 → Integrate calendar → Secret address in iCal format<br>Notion Calendar: 日历旁 ⋯ → Get shareable link</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="saveICSUrl()" class="flex-1 bg-dopamine-sky text-white py-2.5 rounded-xl font-bold shadow-sm hover:bg-blue-500 transition"><i class="fas fa-save"></i> 保存并同步</button>
+                        <button onclick="clearICSUrl()" class="bg-gray-100 text-gray-500 px-4 py-2.5 rounded-xl font-bold hover:bg-red-50 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div id="icsUrlStatus" class="text-xs text-gray-400 text-center hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="checkInModal" class="modal-overlay">
+            <div class="modal-content p-5">
+                <div class="flex justify-between items-center border-b border-dopamine-yellow/30 pb-2 mb-3"><h3 class="text-lg font-bold text-gray-800" id="checkModalTitle">📝 时段补录</h3><button class="close-modal-btn text-gray-400 text-xl">&times;</button></div>
+                <input type="hidden" id="checkModalPeriod">
+                <div class="space-y-4">
+                    <div class="flex gap-4"><div class="flex-1"><label class="text-xs font-bold text-gray-500">上朝时间</label><input type="time" id="checkModalStart" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none text-sm"></div><div class="flex-1"><label class="text-xs font-bold text-gray-500">退朝时间</label><input type="time" id="checkModalEnd" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none text-sm"></div></div>
+                    <div><label class="text-xs font-bold text-gray-500">精力评估</label><div class="flex gap-2 mt-1"><button type="button" class="energy-btn flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-bold bg-gray-50" data-energy="🔥 龙威浩荡">🔥 龙威</button><button type="button" class="energy-btn flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-bold bg-gray-50" data-energy="😫 圣体违和">😫 违和</button><button type="button" class="energy-btn flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-bold bg-gray-50" data-energy="👥 朝堂纷争">👥 杂政</button></div><input type="hidden" id="checkModalEnergy"></div>
+                    <div><label class="text-xs font-bold text-gray-500">碎碎念</label><textarea id="checkModalNote" rows="2" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none resize-none text-sm"></textarea></div>
+                    <button onclick="saveCheckModal()" class="w-full bg-dopamine-orange text-white py-2.5 rounded-xl font-bold shadow-sm hover:bg-orange-500 transition">💾 载入史册</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div id="module-focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #FF6B8B;">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-dopamine-sky/20 text-gray-500 flex items-center justify-center" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex flex-wrap items-center justify-between gap-4 mt-2">
+                    <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-dopamine-yellow/20 flex items-center justify-center"><i class="fas fa-hourglass-half text-dopamine-orange text-2xl"></i></div><div><h2 class="text-xl font-bold text-gray-800">今日理政时间</h2><p class="text-gray-500 text-xs">番茄工作法 · 累积能量</p></div></div>
+                    <div class="bg-dopamine-yellow/10 px-6 py-3 rounded-2xl text-center"><span id="todayFocusMinutes" class="text-4xl md:text-5xl font-black text-dopamine-orange">0</span><span class="text-xl font-semibold text-dopamine-orange/80 ml-1">分钟</span></div>
+                </div>
+                <div class="mt-5 flex flex-wrap gap-4 items-center justify-between border-t border-dopamine-yellow/20 pt-4">
+                    <div class="flex gap-2 items-center w-full md:w-auto">
+                        <select id="focusMode" class="px-3 py-2.5 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 focus:border-dopamine-orange outline-none text-sm text-gray-600 font-medium transition-colors"><option value="free">♾️ 自由理政</option><option value="25">🍅 25分钟番茄钟</option><option value="50">🧠 50分钟深度钟</option></select>
+                        <button onclick="startFocus()" id="startFocusBtn" class="bg-dopamine-orange hover:bg-dopamine-orange/85 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-play-circle"></i> 开始审阅</button>
+                        <button onclick="stopFocus()" id="stopFocusBtn" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium opacity-50 cursor-not-allowed" disabled><i class="fas fa-stop-circle"></i> 歇息片刻</button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="countdownDisplay" class="hidden text-2xl font-black text-dopamine-orange bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">25:00</div>
+                        <div id="focusStatusBadge" class="text-sm bg-dopamine-lime/10 text-dopamine-mint px-3 py-1.5 rounded-full flex items-center gap-2"><i class="fas fa-info-circle"></i> <span id="focusActiveState">⏸️ 暂无专注</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="module-routine" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-left: 8px solid #43AA8B;">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-sky flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange flex items-center justify-center cursor-grab"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-dopamine-yellow/30 mt-2"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">作息起居 · 真实四段式</h2></div></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-3 shadow-sm border border-orange-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-orange text-sm flex items-center gap-1"><i class="fas fa-sun"></i> 早朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('morning','start')" class="flex-1 bg-dopamine-orange text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('morning','end')" class="flex-1 bg-dopamine-sky text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('morning')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="morning" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
+                    <div class="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-3 shadow-sm border border-sky-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-sky text-sm flex items-center gap-1"><i class="fas fa-cloud-sun"></i> 午朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('afternoon','start')" class="flex-1 bg-dopamine-sky text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('afternoon','end')" class="flex-1 bg-dopamine-purple text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('afternoon')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="afternoon" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 shadow-sm border border-purple-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-purple text-sm flex items-center gap-1"><i class="fas fa-moon"></i> 晚朝</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('evening','start')" class="flex-1 bg-dopamine-purple text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('evening','end')" class="flex-1 bg-dopamine-pink text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('evening')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="evening" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
+                    <div class="bg-gradient-to-br from-indigo-50 to-slate-50 rounded-xl p-3 shadow-sm border border-indigo-100/50"><div class="flex items-center justify-between mb-2"><h3 class="font-bold text-dopamine-pink text-sm flex items-center gap-1">🧘‍♂️ 修仙</h3></div><div class="flex gap-1.5 mb-2"><button onclick="checkTime('night','start')" class="flex-1 bg-indigo-400 text-white py-1 rounded text-xs font-bold shadow-sm">上朝</button><button onclick="checkTime('night','end')" class="flex-1 bg-slate-500 text-white py-1 rounded text-xs font-bold shadow-sm">退朝</button><button onclick="openCheckModal('night')" class="bg-white text-gray-400 px-2 py-1 rounded text-xs shadow-sm border"><i class="fas fa-edit"></i></button></div><div id="night" class="text-[11px] bg-white rounded p-1.5 text-gray-600 font-mono border min-h-[44px]"></div></div>
+                </div>
+            </div>
+
+            <div id="module-ideas" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-3 mb-4 mt-2"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-xl drop-shadow-md"></i><h2 class="text-xl font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-xs font-semibold bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
+                <div class="flex gap-2 mb-5 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="2" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-3 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 sm:px-6 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt text-lg"></i></button></div>
+                <div class="flex-1 overflow-y-auto pr-1 min-h-[150px]"><ul id="ideaList" class="space-y-3"></ul></div>
+            </div>
+
+            <div id="module-calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #4D9DE0;">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between border-b border-dopamine-sky/30 pb-3 mb-4 mt-2">
+                    <div class="flex items-center gap-2"><i class="fas fa-map-marked-alt text-dopamine-sky text-xl"></i><h2 class="text-xl font-bold text-gray-800">江山社稷图</h2><span class="text-xs bg-dopamine-sky/20 text-dopamine-sky px-2 py-0.5 rounded-full ml-1">热力日历</span><span id="icsCountBadge" class="hidden text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full ml-1 cursor-pointer" onclick="if(confirm('清除所有导入的外部日程？')){appData.calendarEvents=[];saveData();renderCalendar();}" title="点击清除外部日程">📅 <span id="icsCount">0</span>条日程 ×</span></div>
+                    <div class="flex items-center gap-3 relative z-0"><button id="prevMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-left"></i></button><span id="calendarMonthYear" class="font-bold text-gray-700 text-sm w-20 text-center"></span><button id="nextMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-right"></i></button></div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-xs font-bold text-gray-400 mb-2"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+            </div>
+
+            <div id="module-stats" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col relative" style="background: linear-gradient(135deg, #FFF9F0, #FFF5E6);">
+                <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
+                <div class="flex items-center justify-between border-b border-dopamine-yellow/40 pb-3 mb-5 mt-2">
+                    <div class="flex items-center gap-2 cursor-pointer" onclick="toggleStatsCollapse()"><i class="fas fa-chart-pie text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">司天监 · 统计看板</h2><span class="text-xs bg-dopamine-lime/30 text-dopamine-mint px-2 py-0.5 rounded-full ml-1">汇总</span><i id="statsCollapseIcon" class="fas fa-chevron-up text-gray-400 text-sm ml-1 transition-transform"></i></div>
+                    <button id="reportBtn" onclick="generateReport()" class="bg-gradient-to-r from-dopamine-orange to-dopamine-pink text-white text-xs px-3 py-1.5 rounded-full shadow-md hover:shadow-lg transition flex items-center gap-1 font-bold z-0">
+                        <i class="fas fa-scroll"></i> 颁布诏书
+                    </button>
+                </div>
+                
+                <div id="statsContent" class="transition-all duration-300 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gradient-to-br from-dopamine-orange/10 to-dopamine-yellow/10 rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-dopamine-orange mb-3"><i class="fas fa-calendar-week"></i><h3 class="font-bold text-lg">本周</h3></div><div class="space-y-2 text-sm"><div class="flex justify-between"><span>✅ 批阅:</span><span id="weekTasks" class="font-bold text-dopamine-orange">0</span></div><div class="flex justify-between"><span>⏱️ 时长:</span><span id="weekFocus" class="font-bold text-dopamine-orange">0 min</span></div><div class="flex justify-between"><span>📅 上朝:</span><span id="weekCheckDays" class="font-bold text-dopamine-orange">0 天</span></div></div></div>
+                    <div class="bg-gradient-to-br from-dopamine-mint/10 to-dopamine-sky/10 rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-dopamine-mint mb-3"><i class="fas fa-calendar-alt"></i><h3 class="font-bold text-lg">本月</h3></div><div class="space-y-2 text-sm"><div class="flex justify-between"><span>✅ 批阅:</span><span id="monthTasks" class="font-bold text-dopamine-mint">0</span></div><div class="flex justify-between"><span>⏱️ 时长:</span><span id="monthFocus" class="font-bold text-dopamine-mint">0 min</span></div><div class="flex justify-between"><span>📅 上朝:</span><span id="monthCheckDays" class="font-bold text-dopamine-mint">0 天</span></div></div></div>
+                    <div class="bg-gradient-to-br from-dopamine-pink/10 to-dopamine-purple/10 rounded-xl p-4 shadow-sm"><div class="flex items-center gap-2 text-dopamine-purple mb-3"><i class="fas fa-chart-line"></i><h3 class="font-bold text-lg">本年</h3></div><div class="space-y-2 text-sm"><div class="flex justify-between"><span>✅ 批阅:</span><span id="yearTasks" class="font-bold text-dopamine-purple">0</span></div><div class="flex justify-between"><span>⏱️ 时长:</span><span id="yearFocus" class="font-bold text-dopamine-purple">0 min</span></div><div class="flex justify-between"><span>📅 上朝:</span><span id="yearCheckDays" class="font-bold text-dopamine-purple">0 天</span></div></div></div>
+                </div>
+                
+                <div class="mt-6 border-t border-dopamine-yellow/20 pt-5 w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <h3 class="text-sm font-bold text-gray-600 mb-3 flex items-center gap-2"><i class="fas fa-chart-area text-dopamine-sky"></i> 近7天理政趋势</h3>
+                        <div class="relative h-48 w-full"><canvas id="trendChart"></canvas></div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <h3 class="text-sm font-bold text-gray-600 mb-3 flex items-center gap-2"><i class="fas fa-chart-pie text-dopamine-pink"></i> 奏折分布 (已批)</h3>
+                        <div class="relative h-48 w-full"><canvas id="taskPieChart"></canvas></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+  <div id="taskDrawer" class="smart-drawer drawer-bottom">
+        <div class="drawer-toggle-btn" onclick="toggleTaskDrawer()">
+            <i class="fas fa-chevron-up" id="drawerIcon"></i> <span>批阅奏折</span>
+        </div>
+        <div class="p-5 md:p-6 flex flex-col h-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between border-b border-dopamine-yellow/30 pb-4 mb-4 mt-2 gap-4">
+                <div class="flex items-center gap-2"><i class="fas fa-tasks text-dopamine-pink text-xl"></i><h2 class="text-xl font-bold text-gray-800">奏折管理</h2></div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="bg-gray-100 rounded-lg p-1 flex gap-1 shadow-inner border border-gray-200/50">
+                        <button onclick="changeDrawerPosition('left')" class="px-3 py-1.5 rounded text-gray-500 hover:bg-white hover:text-dopamine-orange hover:shadow transition text-xs font-bold" title="停靠左侧"><i class="fas fa-arrow-left"></i> 左</button>
+                        <button onclick="changeDrawerPosition('bottom')" class="px-3 py-1.5 rounded text-gray-500 hover:bg-white hover:text-dopamine-orange hover:shadow transition text-xs font-bold" title="停靠底部"><i class="fas fa-arrow-down"></i> 底</button>
+                        <button onclick="changeDrawerPosition('right')" class="px-3 py-1.5 rounded text-gray-500 hover:bg-white hover:text-dopamine-orange hover:shadow transition text-xs font-bold" title="停靠右侧">右 <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <button onclick="showTaskHistory()" class="text-dopamine-pink border border-pink-100 bg-pink-50 px-4 py-2 rounded-xl flex items-center gap-1 shadow-sm text-xs font-semibold hover:bg-dopamine-pink hover:text-white transition"><i class="fas fa-history"></i> 查看历史</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-3 mb-5">
+                <div class="relative w-full"><i class="fas fa-pen absolute left-3 top-1/2 -translate-y-1/2 text-dopamine-orange/50 text-sm"></i><input id="taskInput" type="text" placeholder="写论文(回车直接添加)..." class="w-full pl-9 pr-3 py-3 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 outline-none text-sm focus:border-dopamine-orange shadow-inner"></div>
+                <div class="flex gap-2 w-full">
+                    <select id="taskCategory" class="flex-1 px-2 py-2.5 rounded-xl border border-dopamine-sky/50 bg-sky-50/30 outline-none text-xs font-medium"><option value="📚">📚文献</option><option value="🔬">🔬实验</option><option value="✍️">✍️写作</option><option value="💻">💻绘图</option><option value="📝">📝日常</option></select>
+                    <select id="taskPriority" class="flex-1 px-2 py-2.5 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 outline-none text-xs font-medium"><option value="high">🔴紧急</option><option value="medium" selected>🟡重要</option><option value="low">🟢日常</option></select>
+                    <button onclick="addTask()" class="bg-dopamine-pink text-white px-6 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition font-bold"><i class="fas fa-plus"></i> 呈递</button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 pb-10">
+                <ul id="taskList" class="space-y-3"></ul>
+                <div id="emptyTaskHint" class="text-center text-gray-400 text-sm py-10 hidden flex-col items-center gap-2"><i class="fas fa-clipboard-list text-4xl opacity-30"></i><span>✨ 案牍清空，四海升平</span></div>
+            </div>
+        </div>
+    </div>
+                   
+            <div class="flex-1 overflow-y-auto pr-1">
+                <ul id="taskList" class="space-y-3"></ul>
+                <div id="emptyTaskHint" class="text-center text-gray-400 text-sm py-6 hidden flex-col items-center gap-1"><i class="fas fa-clipboard-list text-3xl opacity-40"></i><span>✨ 暂无奏折</span></div>
+            </div>
+        </div>
+    </div>
+                    
+        <div class="text-center text-gray-400 text-xs mt-8 pt-4 border-t border-dopamine-yellow/30 flex justify-center gap-3">
+            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> Reed制2026年4月9日</span>
+        </div>
+    </div>
+
+   <div id="imperialGuardPet" class="fixed z-[950] flex flex-col items-center cursor-pointer transition-all duration-300 ease-out drop-shadow-2xl" style="right: 20px; bottom: 80px;" onclick="interactWithGuard()">
+        
+        <div id="guardSpeechBubble" class="opacity-0 transition-opacity duration-300 absolute bottom-[100%] mb-4 guard-bubble-v4 text-xs font-bold px-4 py-2 rounded-xl max-w-[220px] pointer-events-none break-words text-center z-50">
+            北镇抚司在此！
+        </div>
+
+        <div id="guardCharacter" class="relative w-[120px] h-[150px] flex flex-col items-center animate-guard-breathe">
+            <svg width="120" height="150" viewBox="0 0 120 150" style="filter: drop-shadow(0 10px 8px rgba(0,0,0,0.3));">
+                <defs>
+                    <linearGradient id="robeRed" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#A93226" /><stop offset="100%" stop-color="#641E16" /></linearGradient>
+                    <linearGradient id="robeGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4AF37" /><stop offset="100%" stop-color="#9A7D0A" /></linearGradient>
+                    <linearGradient id="metalDark" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#34495E" /><stop offset="100%" stop-color="#17202A" /></linearGradient>
+                </defs>
+                <path d="M 25 140 L 45 140 L 55 100 L 35 100 Z" fill="#111"/>
+                <path d="M 95 140 L 75 140 L 65 100 L 85 100 Z" fill="#111"/>
+                <ellipse cx="35" cy="140" rx="10" ry="4" fill="#ECF0F1"/><ellipse cx="85" cy="140" rx="10" ry="4" fill="#ECF0F1"/>
+                
+                <path d="M 15 135 Q 35 90 50 70 L 70 70 Q 85 90 105 135 Q 60 145 15 135 Z" fill="url(#robeRed)" stroke="#7B241C" stroke-width="2"/>
+                <path d="M 25 136 Q 40 90 55 70" stroke="url(#robeGold)" stroke-width="1.5" fill="none"/>
+                <path d="M 45 139 Q 50 90 60 70" stroke="url(#robeGold)" stroke-width="1.5" fill="none"/>
+                <path d="M 75 139 Q 70 90 60 70" stroke="url(#robeGold)" stroke-width="1.5" fill="none"/>
+                <path d="M 95 136 Q 80 90 65 70" stroke="url(#robeGold)" stroke-width="1.5" fill="none"/>
+                <path d="M 15 135 Q 60 145 105 135" stroke="url(#robeGold)" stroke-width="4" fill="none"/>
+
+                <rect x="45" y="65" width="30" height="8" rx="2" fill="url(#robeGold)" stroke="#000" stroke-width="1"/>
+                <rect x="54" y="63" width="12" height="12" rx="2" fill="url(#robeGold)" stroke="#000" stroke-width="1"/>
+                <rect x="35" y="70" width="12" height="18" rx="3" fill="#A04000" stroke="#641E16" stroke-width="1"/> <path d="M 50 70 L 70 70 L 75 40 L 45 40 Z" fill="url(#robeGold)" stroke="#000" stroke-width="1"/>
+                <circle cx="60" cy="55" r="8" fill="#1E8449" stroke="#fff" stroke-width="1"/> <path d="M 75 45 L 95 75 L 85 85 L 65 60 Z" fill="url(#robeRed)"/>
+                <path d="M 80 65 L 90 80 L 80 85 L 70 70 Z" fill="url(#robeGold)"/> <path d="M 70 80 L 30 100" stroke="#2C3E50" stroke-width="7" stroke-linecap="round"/> <path d="M 70 80 L 30 100" stroke="url(#robeGold)" stroke-width="1" stroke-dasharray="4,8" fill="none"/> <path d="M 45 45 L 20 30 L 12 40 L 40 60 Z" fill="url(#robeRed)"/>
+                <path d="M 25 35 L 12 25 L 8 32 L 20 42 Z" fill="url(#robeGold)"/> <path d="M 10 32 Q 25 -5 65 -15 L 62 -8 Q 28 0 16 35 Z" fill="#D5DBDB" stroke="#7F8C8D" stroke-width="1"/> <ellipse cx="10" cy="32" rx="4" ry="10" fill="url(#robeGold)" transform="rotate(50, 10, 32)"/> <path d="M 10 32 L -2 40" stroke="#111" stroke-width="4" stroke-linecap="round"/> <circle cx="60" cy="30" r="10" fill="#FAD7A1"/> <path d="M 52 28 Q 60 40 68 28 Z" fill="#111"/> <path d="M 45 20 C 45 0 75 0 75 20 Z" fill="url(#metalDark)"/> 
+                <path d="M 60 5 L 60 -5" stroke="url(#robeGold)" stroke-width="2"/> 
+                <circle cx="60" cy="-5" r="2.5" fill="url(#robeGold)"/>
+                <ellipse cx="60" cy="20" rx="30" ry="6" fill="url(#metalDark)" stroke="#111" stroke-width="1"/> 
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        let appData = { tasks: [], focusSessions: [], checkRecords: {}, ideas: [], moodHistory: {}, calendarEvents: [] };
+        let activeFocusStart = null; let focusTimerInterval = null; let remainingSeconds = 0; let currentFocusMode = 'free'; 
+        let currentCalendarDate = new Date(); let focusTrendChart = null; let isLayoutLocked = true;
+
+        // ================= V3.0 锦衣卫 AI 逻辑 =================
+        let guardPos = 0;
+        let guardDirection = 1; 
+        let guardSpeed = 1.0; 
+        let isGuardResting = false; 
+// ================= 锦衣卫隐匿/召唤逻辑 =================
+        let isGuardHidden = localStorage.getItem('phd_guard_hidden') === 'true';
+
+        function toggleGuard() {
+            isGuardHidden = !isGuardHidden;
+            localStorage.setItem('phd_guard_hidden', isGuardHidden); // 记忆陛下偏好
+            applyGuardState();
+        }
+
+        function applyGuardState() {
+            const pet = document.getElementById('imperialGuardPet');
+            const btn = document.getElementById('toggleGuardBtn');
+            if (!pet || !btn) return;
+
+            if (isGuardHidden) {
+                // 隐匿模式：隐藏宠物，按钮变成醒目的“召唤”状态
+                pet.classList.add('hidden');
+                btn.innerHTML = '<i class="fas fa-user-shield"></i> 召唤护卫';
+                btn.classList.replace('text-gray-600', 'text-dopamine-orange');
+                btn.classList.replace('bg-gray-100', 'bg-orange-50');
+                btn.classList.replace('border-gray-300', 'border-dopamine-orange');
+            } else {
+                // 巡逻模式：显示宠物，按钮恢复常规状态
+                pet.classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-user-secret"></i> 隐匿护卫';
+                btn.classList.replace('text-dopamine-orange', 'text-gray-600');
+                btn.classList.replace('bg-orange-50', 'bg-gray-100');
+                btn.classList.replace('border-dopamine-orange', 'border-gray-300');
+            }
+        }
+        function patrolGuard() {
+            if (isGuardResting) { requestAnimationFrame(patrolGuard); return; }
+            const guardEl = document.getElementById('imperialGuardPet');
+            const characterEl = document.getElementById('guardCharacter');
+            if (!guardEl || !characterEl) return;
+            const screenWidth = window.innerWidth;
+            const guardWidth = 100; 
+
+            guardPos += guardSpeed * guardDirection;
+            if (guardPos > screenWidth - guardWidth) {
+                guardDirection = -1; characterEl.style.transform = 'scaleX(-1)'; 
+            } else if (guardPos < 0) {
+                guardDirection = 1; characterEl.style.transform = 'scaleX(1)'; 
+            }
+            guardEl.style.left = guardPos + 'px';
+            
+            const bounce = Math.sin(Date.now() / 150) * 5;
+            guardEl.style.bottom = (20 + Math.abs(bounce)) + 'px'; 
+            requestAnimationFrame(patrolGuard);
+        }
+
+        function interactWithGuard() {
+            const bubble = document.getElementById('guardSpeechBubble');
+            const head = document.getElementById('guardHead');
+            const messages = [
+                "⚔️ 锦衣卫在此，已斩断四周科研刺客！", 
+                "🛡️ 龙甲御盾护体，陛下请安心理政！", 
+                "📖 前方发现论文瓶颈？臣这就去劈碎它！", 
+                "👀 臣日夜兼程，绝不让史册遗失一字！", 
+                "🍅 陛下龙体要紧，番茄钟响切记退朝！",
+                "🐉 皇恩浩荡，锦衣卫誓死追随陛下！"
+            ];
+            bubble.innerText = messages[Math.floor(Math.random() * messages.length)];
+            bubble.classList.remove('opacity-0');
+            isGuardResting = true;
+            document.getElementById('imperialGuardPet').style.bottom = '20px';
+            if(head) head.style.transform = 'translateY(-4px)';
+            setTimeout(() => {
+                bubble.classList.add('opacity-0');
+                if(head) head.style.transform = 'translateY(0)';
+                isGuardResting = false;
+            }, 3000);
+        }
+
+        // ================= 基础工具 =================
+        function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function formatDateToYMD(timestamp) { const d = new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function saveData() { localStorage.setItem("phd_pro_v2", JSON.stringify(appData)); }
+        function loadData() {
+            const stored = localStorage.getItem("phd_pro_v2");
+            if (stored) { try { const parsed = JSON.parse(stored); appData = {...appData, ...parsed}; } catch(e) {} }
+            if (appData.tasks.some(t => !t.id)) appData.tasks.forEach((t, idx) => { if(!t.id) t.id = Date.now() + idx; });
+            appData.tasks.forEach(t => { if(!t.createdAt) t.createdAt = Date.now(); });
+            saveData();
+        }
+
+        // ================= 悬浮窗与抽屉 =================
+        const floatingWindow = document.getElementById("floatingTimer");
+        let isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+        floatingWindow.addEventListener("mousedown", dragStart); document.addEventListener("mouseup", dragEnd); document.addEventListener("mousemove", drag);
+        function dragStart(e) { if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return; initialX = e.clientX - xOffset; initialY = e.clientY - yOffset; if (e.target === floatingWindow || floatingWindow.contains(e.target)) isDragging = true; }
+        function dragEnd() { initialX = currentX; initialY = currentY; isDragging = false; }
+        function drag(e) { if (isDragging) { e.preventDefault(); currentX = e.clientX - initialX; currentY = e.clientY - initialY; xOffset = currentX; yOffset = currentY; floatingWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`; } }
+       // ================= 智能抽屉逻辑 (防弹版) =================
+        let drawerPosition = 'bottom'; // 全局默认变量
+
+        // 1. 负责页面加载时读取您的偏好位置
+        function initDrawer() {
+            drawerPosition = localStorage.getItem('phd_drawer_pos') || 'bottom';
+            const drawer = document.getElementById('taskDrawer');
+            if(drawer) {
+                drawer.classList.remove('drawer-bottom', 'drawer-left', 'drawer-right');
+                drawer.classList.add(`drawer-${drawerPosition}`);
+            }
+            updateDrawerIcon();
+        }
+
+        // 2. 负责开关抽屉
+        function toggleTaskDrawer() {
+            const drawer = document.getElementById('taskDrawer');
+            if(drawer) {
+                drawer.classList.toggle('open');
+                updateDrawerIcon();
+            }
+        }
+
+        // 3. 负责丝滑切换位置（使用了更安全的 classList 操作）
+        function changeDrawerPosition(pos) {
+            drawerPosition = pos;
+            localStorage.setItem('phd_drawer_pos', pos); // 存入史库，下次自动记住
+            const drawer = document.getElementById('taskDrawer');
+            if(drawer) {
+                // 安全地移除旧位置，保留其他状态
+                drawer.classList.remove('drawer-bottom', 'drawer-left', 'drawer-right');
+                drawer.classList.add(`drawer-${pos}`);
+                // 切换位置时自动帮陛下打开，方便直接批阅
+                drawer.classList.add('open');
+            }
+            updateDrawerIcon();
+        }
+
+        // 4. 根据当前位置动态调整箭头方向
+        function updateDrawerIcon() {
+            const drawer = document.getElementById('taskDrawer');
+            const icon = document.getElementById('drawerIcon');
+            if(!icon || !drawer) return;
+            
+            const isOpen = drawer.classList.contains('open');
+            icon.className = ''; 
+            if (drawerPosition === 'bottom') icon.className = isOpen ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+            else if (drawerPosition === 'left') icon.className = isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right';
+            else if (drawerPosition === 'right') icon.className = isOpen ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+        }
+
+        // ================= 专注计时 =================
+        function updateFocusButtons() {
+            const startBtn = document.getElementById("startFocusBtn"), stopBtn = document.getElementById("stopFocusBtn"), modeSelect = document.getElementById("focusMode");
+            if (activeFocusStart !== null) { startBtn.disabled = true; startBtn.classList.add("opacity-50", "cursor-not-allowed"); stopBtn.disabled = false; stopBtn.classList.remove("opacity-50", "cursor-not-allowed"); modeSelect.disabled = true; modeSelect.classList.add("opacity-50"); } 
+            else { startBtn.disabled = false; startBtn.classList.remove("opacity-50", "cursor-not-allowed"); stopBtn.disabled = true; stopBtn.classList.add("opacity-50", "cursor-not-allowed"); modeSelect.disabled = false; modeSelect.classList.remove("opacity-50"); }
+        }
+        function resetFocusUI() { 
+            activeFocusStart = null; if (focusTimerInterval) { clearInterval(focusTimerInterval); focusTimerInterval = null; } 
+            document.getElementById("focusActiveState").innerHTML = '⏸️ 暂无专注'; document.getElementById("focusStatusBadge").classList.remove("timer-pulse");
+            document.getElementById("countdownDisplay").classList.add("hidden"); document.getElementById("floatingTimer").classList.add("hidden");
+            updateFocusButtons(); renderAll(); 
+        }
+        function startFocus() {
+            if (activeFocusStart !== null) { alert("⚠️ 陛下已经在理政中！"); return; }
+            const courtOverlay = document.getElementById('imperialCourtOverlay'); courtOverlay.classList.remove('hidden'); setTimeout(() => courtOverlay.classList.add('court-active'), 10); setTimeout(() => { courtOverlay.classList.remove('court-active'); setTimeout(() => courtOverlay.classList.add('hidden'), 500); }, 3000);
+            if (focusTimerInterval) { clearInterval(focusTimerInterval); focusTimerInterval = null; }
+            currentFocusMode = document.getElementById("focusMode").value; activeFocusStart = Date.now(); 
+            document.getElementById("focusStatusBadge").classList.add("timer-pulse"); document.getElementById("floatingTimer").classList.remove("hidden"); updateFocusButtons(); 
+            if (currentFocusMode === 'free') { 
+                document.getElementById("focusActiveState").innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 🔥 自由理政中...'; document.getElementById("countdownDisplay").classList.add("hidden"); document.getElementById("floatingCountdown").innerText = "无极";
+            } else {
+                remainingSeconds = parseInt(currentFocusMode) * 60; document.getElementById("countdownDisplay").classList.remove("hidden"); updateCountdownDisplay(); 
+                document.getElementById("focusActiveState").innerHTML = `<i class="fas fa-spinner fa-pulse"></i> 🍅 ${parseInt(currentFocusMode)}分钟理政中...`;
+                focusTimerInterval = setInterval(() => { remainingSeconds--; updateCountdownDisplay(); if (remainingSeconds <= 0) { clearInterval(focusTimerInterval); alert(`🎉 陛下圣明！完成了理政！`); saveFocusSession(parseInt(currentFocusMode)); resetFocusUI(); } }, 1000);
+            }
+        }
+        function stopFocus() { 
+            if (activeFocusStart === null) return;
+            const actualMinutes = Math.floor((Date.now() - activeFocusStart) / 60000); 
+            if (currentFocusMode !== 'free' && remainingSeconds > 0) { if (!confirm("⚠️ 番茄钟尚未结束，确定退朝吗？（满1分钟才会记录）")) return; }
+            if (actualMinutes > 0) { saveFocusSession(actualMinutes); alert(`✅ 退朝！记录了 ${actualMinutes} 分钟。`); } 
+            resetFocusUI(); 
+        }
+        function saveFocusSession(minutes) { 
+            const session = { startTimestamp: activeFocusStart, endTimestamp: Date.now(), durationMinutes: minutes, dateStr: formatDateToYMD(activeFocusStart) };
+            appData.focusSessions.push(session); 
+            saveData(); 
+            // Auto push to Google Calendar if connected
+            pushFocusToGCal(session.startTimestamp, session.endTimestamp, minutes);
+        }
+        function getTodayFocusMinutes() { return appData.focusSessions.filter(s => s.dateStr === getTodayStr()).reduce((sum, s) => sum + s.durationMinutes, 0); }
+        function updateCountdownDisplay() { const timeStr = `${Math.floor(remainingSeconds / 60).toString().padStart(2, '0')}:${(remainingSeconds % 60).toString().padStart(2, '0')}`; document.getElementById("countdownDisplay").innerText = timeStr; document.getElementById("floatingCountdown").innerText = timeStr; }
+
+        // ================= 拖拽布局 =================
+        let dragSrcEl = null;
+        function toggleLayoutLock() { 
+            isLayoutLocked = !isLayoutLocked; 
+            const btn = document.getElementById('layoutLockBtn'), container = document.getElementById('dashboard-container'); 
+            if (isLayoutLocked) { 
+                btn.innerHTML = '<i class="fas fa-lock"></i> 阵法已锁定'; 
+                btn.className = "bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0"; 
+                container.classList.remove('edit-mode'); 
+                saveLayout();
+            } else { 
+                btn.innerHTML = '<i class="fas fa-unlock text-dopamine-orange"></i> 阵法调整中...'; 
+                btn.className = "bg-orange-50 hover:bg-orange-100 text-dopamine-orange text-xs px-3 py-1.5 rounded-full border border-dopamine-orange/50 transition flex items-center gap-1 shadow-sm font-medium animate-pulse whitespace-nowrap flex-shrink-0"; 
+                container.classList.add('edit-mode'); 
+            } 
+        }
+        function toggleModuleSize(btnElement) { if (isLayoutLocked) return; const moduleEl = btnElement.closest('.draggable-module'); if (moduleEl.classList.contains('lg:col-span-2')) { moduleEl.classList.remove('lg:col-span-2'); moduleEl.classList.add('lg:col-span-1'); saveLayout();} else { moduleEl.classList.remove('lg:col-span-1'); moduleEl.classList.add('lg:col-span-2'); saveLayout(); } }
+        function saveLayout() { const layoutData = { locked: isLayoutLocked, modules: Array.from(document.getElementById('dashboard-container').children).map(el => ({ id: el.id, isFullWidth: el.classList.contains('lg:col-span-2') })) }; localStorage.setItem('phd_pro_layout_v3', JSON.stringify(layoutData)); }
+        function loadLayout() {
+            const storedOrder = localStorage.getItem('phd_pro_layout_v3');
+            if (storedOrder) {
+                try {
+                    const parsed = JSON.parse(storedOrder); isLayoutLocked = parsed.locked !== undefined ? parsed.locked : true;
+                    const container = document.getElementById('dashboard-container');
+                    if (parsed.modules && Array.isArray(parsed.modules)) { 
+                        parsed.modules.forEach(m => { 
+                            const el = document.getElementById(m.id); 
+                            if (el) { 
+                                container.appendChild(el); 
+                                if(m.isFullWidth) { el.classList.remove('lg:col-span-1'); el.classList.add('lg:col-span-2'); } 
+                                else { el.classList.remove('lg:col-span-2'); el.classList.add('lg:col-span-1'); } 
+                            } 
+                        }); 
+                    }
+                } catch(e) {}
+            }
+            const btn = document.getElementById('layoutLockBtn'); const container = document.getElementById('dashboard-container');
+            if (isLayoutLocked) { 
+                btn.innerHTML = '<i class="fas fa-lock"></i> 阵法已锁定'; btn.className = "bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-medium whitespace-nowrap flex-shrink-0"; container.classList.remove('edit-mode'); 
+            } else { 
+                btn.innerHTML = '<i class="fas fa-unlock text-dopamine-orange"></i> 阵法调整中...'; btn.className = "bg-orange-50 hover:bg-orange-100 text-dopamine-orange text-xs px-3 py-1.5 rounded-full border border-dopamine-orange/50 transition flex items-center gap-1 shadow-sm font-medium animate-pulse whitespace-nowrap flex-shrink-0"; container.classList.add('edit-mode'); 
+            }
+        }
+        function initDragAndDrop() { const container = document.getElementById('dashboard-container'), modules = document.querySelectorAll('.draggable-module'), handles = document.querySelectorAll('.drag-handle'); handles.forEach(handle => { handle.addEventListener('mousedown', (e) => { if(isLayoutLocked) return; const card = e.target.closest('.draggable-module'); if(card) card.setAttribute('draggable', 'true'); }); handle.addEventListener('mouseup', (e) => { const card = e.target.closest('.draggable-module'); if(card) card.setAttribute('draggable', 'false'); }); }); modules.forEach(module => { module.addEventListener('dragstart', function(e) { if(isLayoutLocked) { e.preventDefault(); return; } dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => this.style.opacity = '0.4', 0); }); module.addEventListener('dragover', function(e) { if(isLayoutLocked) return true; e.preventDefault(); return false; }); module.addEventListener('dragenter', function(e) { if(isLayoutLocked) return; e.preventDefault(); this.classList.add('drop-target'); }); module.addEventListener('dragleave', function(e) { if(isLayoutLocked) return; this.classList.remove('drop-target'); }); module.addEventListener('drop', function(e) { if(isLayoutLocked) return; e.preventDefault(); e.stopPropagation(); this.classList.remove('drop-target'); if (dragSrcEl !== this) { const allItems = Array.from(container.children); if (allItems.indexOf(dragSrcEl) < allItems.indexOf(this)) this.after(dragSrcEl); else this.before(dragSrcEl);saveLayout(); } return false; }); module.addEventListener('dragend', function(e) { this.style.opacity = '1'; modules.forEach(m => { m.classList.remove('drop-target'); m.setAttribute('draggable', 'false'); }); }); }); }
+
+        // ================= 作息打卡 =================
+        function getCheckRecordsForToday() { const today = getTodayStr(); if (!appData.checkRecords[today]) appData.checkRecords[today] = { morning: {}, afternoon: {}, evening: {}, night: {} }; return appData.checkRecords[today]; }
+        function checkTime(period, type) { const recs = getCheckRecordsForToday(); recs[period][type] = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); saveData(); renderCheckDisplay(); updateStreakBadge(); }
+        function renderCheckDisplay() { 
+            const rec = getCheckRecordsForToday(); 
+            ["morning","afternoon","evening","night"].forEach(p => { 
+                const d = rec[p] || {}; 
+                const el = document.getElementById(p); 
+                if (el) { 
+                    let html = `<div class="flex justify-between text-gray-500"><span>始:${d.start ? d.start.slice(0,5) : "-"}</span><span>终:${d.end ? d.end.slice(0,5) : "-"}</span></div>`;
+                    if (d.energy || d.note) {
+                        html += `<div class="mt-1 pt-1 border-t border-gray-100 text-gray-600 line-clamp-2 leading-tight">`;
+                        if (d.energy) {
+                            let color = d.energy.includes("龙威") ? "text-orange-500" : (d.energy.includes("违和") ? "text-blue-500" : "text-green-500");
+                            html += `<span class="font-bold ${color} mr-1" title="${d.energy}">${d.energy.split(" ")[0]}</span>`;
+                        }
+                        if (d.note) html += `<span class="text-[10px]">${escapeHtml(d.note)}</span>`;
+                        html += `</div>`;
+                    }
+                    el.innerHTML = html;
+                } 
+            }); 
+        }
+        function openCheckModal(period) {
+            const recs = getCheckRecordsForToday();
+            const data = recs[period] || {};
+            document.getElementById('checkModalPeriod').value = period;
+            const titleMap = { morning: "🌅 早朝", afternoon: "☕ 午朝", evening: "🌙 晚朝", night: "⚗️ 炼丹修仙" };
+            document.getElementById('checkModalTitle').innerHTML = `${titleMap[period]} 补录与复盘`;
+            const formatTimeForInput = (tStr) => { if (!tStr || tStr === '-') return ''; const m = tStr.match(/(\d+):(\d+)/); return m ? `${m[1].padStart(2,'0')}:${m[2].padStart(2,'0')}` : ''; };
+            document.getElementById('checkModalStart').value = formatTimeForInput(data.start); document.getElementById('checkModalEnd').value = formatTimeForInput(data.end); document.getElementById('checkModalNote').value = data.note || ''; document.getElementById('checkModalEnergy').value = data.energy || '';
+            document.querySelectorAll('.energy-btn').forEach(b => { b.classList.remove('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange'); b.classList.add('bg-gray-50', 'text-gray-600'); if (b.getAttribute('data-energy') === data.energy) { b.classList.remove('bg-gray-50', 'text-gray-600'); b.classList.add('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange'); } });
+            document.getElementById('checkInModal').classList.add('active');
+        }
+        function saveCheckModal() { const period = document.getElementById('checkModalPeriod').value; const recs = getCheckRecordsForToday(); recs[period].start = document.getElementById('checkModalStart').value || null; recs[period].end = document.getElementById('checkModalEnd').value || null; recs[period].energy = document.getElementById('checkModalEnergy').value; recs[period].note = document.getElementById('checkModalNote').value; saveData(); renderCheckDisplay(); updateStreakBadge(); document.getElementById('checkInModal').classList.remove('active'); }
+
+        // ================= 奏折与杂项 =================
+        function addTask() { const name = document.getElementById("taskInput").value.trim(); if (!name) return; appData.tasks.push({ id: Date.now(), name, priority: document.getElementById("taskPriority").value, category: document.getElementById("taskCategory").value, status: "未开始", createdAt: Date.now(), completedAt: null }); saveData(); document.getElementById("taskInput").value = ""; renderTasks(); updateStatistics(); renderPieChart(); }
+        function changeTaskStatus(id) { const t = appData.tasks.find(x => x.id === id); if (!t) return; if (t.status === "未开始") t.status = "进行中"; else if (t.status === "进行中") { t.status = "已完成"; t.completedAt = Date.now(); } else { t.status = "未开始"; t.completedAt = null; } saveData(); renderTasks(); updateStatistics(); renderPieChart(); }
+        function deleteTask(id) { if (confirm("陛下确定要抹去此奏折？")) { appData.tasks = appData.tasks.filter(t => t.id !== id); saveData(); renderTasks(); updateStatistics(); renderPieChart(); } }
+        function updateTaskTime(taskId, newTimeString) { const task = appData.tasks.find(t => t.id === taskId); if (task) { task.createdAt = new Date(newTimeString).getTime(); saveData(); } }
+       function renderTasks() {
+            const container = document.getElementById("taskList"), empty = document.getElementById("emptyTaskHint");
+            if (appData.tasks.length === 0) { container.innerHTML = ""; empty.classList.remove("hidden"); return; }
+            empty.classList.add("hidden"); container.innerHTML = ""; const weights = { high: 3, medium: 2, low: 1 };
+            const formatForInput = (timestamp) => { if(!timestamp) return ""; const d = new Date(timestamp); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16); };
+            
+            [...appData.tasks].sort((a, b) => (a.status === "已完成" ? 1 : 0) - (b.status === "已完成" ? 1 : 0) || weights[b.priority] - weights[a.priority]).forEach(t => {
+                const li = document.createElement("li"); 
+                // 优化列表框：自适应高度
+                li.className = "bg-gradient-to-r from-amber-50/40 to-white p-3 md:p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between shadow-sm border border-dopamine-yellow/20 gap-3 transition hover:border-dopamine-orange/40";
+                
+                // 核心修复：加入 break-words 和 whitespace-normal 确保长文本自动换行显示完全
+                li.innerHTML = `
+                    <div class="flex-1 text-sm flex items-start md:items-center gap-2 min-w-0">
+                        <span class="mt-0.5 md:mt-0">${t.status === "已完成" ? '✅' : (t.status==="进行中"?'⏳':'🔘')}</span>
+                        <span class="bg-blue-50 text-blue-500 text-[10px] px-1.5 py-0.5 rounded flex-shrink-0">${t.category}</span>
+                        <span class="text-[10px] flex-shrink-0">${t.priority === "high" ? '🔴' : (t.priority === "medium" ? '🟡' : '🟢')}</span>
+                        <span class="${t.status==='已完成'?'line-through text-gray-400':''} font-medium whitespace-normal break-words flex-1 leading-snug">${escapeHtml(t.name)}</span>
+                    </div>
+                    <div class="flex items-center gap-2 justify-end mt-2 md:mt-0 flex-shrink-0">
+                        <input type="datetime-local" value="${formatForInput(t.createdAt)}" onchange="updateTaskTime(${t.id}, this.value)" class="text-xs text-gray-500 bg-transparent border-b border-dashed border-gray-300 outline-none p-1 cursor-pointer hover:bg-gray-50 rounded" title="修改创建时间">
+                        <button onclick="changeTaskStatus(${t.id})" class="px-3 py-1 text-xs text-white rounded shadow-sm min-w-[60px] font-bold ${t.status==='未开始'?'bg-orange-400':(t.status==='进行中'?'bg-blue-400':'bg-green-400')}">${t.status}</button>
+                        <button onclick="deleteTask(${t.id})" class="text-red-400 px-2 py-1 hover:bg-red-50 rounded transition"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                container.appendChild(li);
+            });
+        }
+        function addIdea() { const txt = document.getElementById("ideaInput").value.trim(); if(!txt) return; appData.ideas.push({ text: txt, time: new Date().toLocaleString() }); saveData(); document.getElementById("ideaInput").value = ""; renderIdeas(); }
+        function renderIdeas() { const container = document.getElementById("ideaList"); if (!appData.ideas.length) { container.innerHTML = ""; return; } container.innerHTML = ""; [...appData.ideas].reverse().forEach((item) => { const li = document.createElement("li"); li.className = "bg-green-50/40 p-3 rounded-xl border-l-4 border-dopamine-mint text-sm text-gray-700"; li.innerHTML = `${escapeHtml(item.text)}<div class="text-[10px] text-gray-400 mt-1">${item.time}</div>`; container.appendChild(li); }); }
+        
+        // ================= 统计视图与图表 =================
+        function calculateStreak() { let streak = 0; let checkDate = new Date(); checkDate.setHours(0,0,0,0); const todayStr = getTodayStr(); let hasToday = Object.keys(appData.checkRecords[todayStr]||{}).some(k=>appData.checkRecords[todayStr][k].start); if(!hasToday) checkDate.setDate(checkDate.getDate()-1); for(let i=0;i<365;i++){ const dStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}-${String(checkDate.getDate()).padStart(2,'0')}`; if(appData.checkRecords[dStr] && Object.keys(appData.checkRecords[dStr]).some(k=>appData.checkRecords[dStr][k].start)){ streak++; checkDate.setDate(checkDate.getDate()-1); } else break; } return streak; }
+        function updateStreakBadge() { const streak = calculateStreak(); const badge = document.getElementById("streakBadge"); if(streak>0){ badge.style.display="inline-flex"; document.getElementById("streakCount").innerText=streak; }else badge.style.display="none"; }
+        function setMood(m) { appData.moodHistory[getTodayStr()] = m; saveData(); updateMoodUI(); }
+        function updateMoodUI() { const m = appData.moodHistory[getTodayStr()]; document.querySelectorAll('.mood-emoji').forEach(el => { el.classList.remove('mood-active'); if (el.getAttribute('data-mood') === m) el.classList.add('mood-active'); }); }
+        function showMoodHistory() { document.getElementById("moodHistoryList").innerHTML = Object.entries(appData.moodHistory).map(([date, mood]) => `<div class="bg-amber-50 p-2 rounded mb-1 flex justify-between"><span>${date}</span><span>${mood==='happy'?'😊':(mood==='neutral'?'😐':'😔')}</span></div>`).join(''); document.getElementById("moodHistoryModal").classList.add("active"); }
+        function showTaskHistory() { document.getElementById("taskHistoryList").innerHTML = appData.tasks.filter(t=>t.status==="已完成").map(t => `<div class="bg-pink-50 p-2 rounded mb-1">✅ ${escapeHtml(t.name)}</div>`).join(''); document.getElementById("taskHistoryModal").classList.add("active"); }
+        function showIdeaHistory() { document.getElementById("ideaHistoryList").innerHTML = appData.ideas.map(i => `<div class="bg-green-50 p-2 rounded mb-1">${escapeHtml(i.text)}</div>`).join(''); document.getElementById("ideaHistoryModal").classList.add("active"); }
+        
+        function updateStatistics() { 
+            const now = new Date(); const mStart = new Date(now.getFullYear(), now.getMonth(), 1); const yStart = new Date(now.getFullYear(), 0, 1);
+            const wStart = new Date(now); wStart.setDate(now.getDate() - (now.getDay()||7) + 1); wStart.setHours(0,0,0,0);
+            
+            document.getElementById("weekTasks").innerText = appData.tasks.filter(t=>t.status==="已完成" && t.completedAt>=wStart.getTime()).length; 
+            document.getElementById("monthTasks").innerText = appData.tasks.filter(t=>t.status==="已完成" && t.completedAt>=mStart.getTime()).length; 
+            document.getElementById("yearTasks").innerText = appData.tasks.filter(t=>t.status==="已完成" && t.completedAt>=yStart.getTime()).length; 
+            
+            document.getElementById("weekFocus").innerText = appData.focusSessions.filter(fs => fs.startTimestamp >= wStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0) + " min";
+            document.getElementById("monthFocus").innerText = appData.focusSessions.filter(fs => fs.startTimestamp >= mStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0) + " min";
+            document.getElementById("yearFocus").innerText = appData.focusSessions.filter(fs => fs.startTimestamp >= yStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0) + " min";
+
+            const countCheckDays = (startDate) => { let count = 0; for (let d = new Date(startDate); d <= now; d.setDate(d.getDate() + 1)) { const dStr = formatDateToYMD(d.getTime()); if (appData.checkRecords[dStr] && Object.values(appData.checkRecords[dStr]).some(v => v.start || v.end)) count++; } return count; };
+            document.getElementById("weekCheckDays").innerText = countCheckDays(wStart) + " 天"; document.getElementById("monthCheckDays").innerText = countCheckDays(mStart) + " 天"; document.getElementById("yearCheckDays").innerText = countCheckDays(yStart) + " 天";
+        }
+
+        // 恢复 0403 版精美热力日历与详情弹窗
+        function renderCalendar() {
+            const y = currentCalendarDate.getFullYear(); const m = currentCalendarDate.getMonth(); document.getElementById("calendarMonthYear").innerText = `${y}年${m + 1}月`;
+            const grid = document.getElementById("calendarGrid"); grid.innerHTML = "";
+            for (let i = 0; i < new Date(y, m, 1).getDay(); i++) { const empty = document.createElement("div"); empty.className = "min-h-[70px] md:min-h-[85px]"; grid.appendChild(empty); }
+            
+            for (let day = 1; day <= new Date(y, m + 1, 0).getDate(); day++) {
+                const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
+                const isToday = dStr === getTodayStr(); 
+                const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
+                const icsEvts = getCalendarEventsForDate(dStr);
+                
+                let bg = "bg-gray-50 text-gray-500"; 
+                if (mins > 180) bg = "bg-dopamine-orange text-white font-bold transform hover:scale-110 shadow-md"; 
+                else if (mins > 60) bg = "bg-orange-300 text-white font-bold"; 
+                else if (mins > 0) bg = "bg-orange-100 text-orange-700 font-bold";
+                
+                const cell = document.createElement("div"); 
+                cell.className = `min-h-[70px] md:min-h-[85px] rounded-xl flex flex-col items-stretch p-1 md:p-1.5 cursor-pointer transition-all border border-gray-100 ${bg} ${isToday?'ring-2 ring-dopamine-sky':''}`;
+                
+                // Day number row
+                let html = `<div class="text-center font-semibold text-xs leading-none mb-0.5">${day}</div>`;
+                
+                // Event items (max 3, then "+N more")
+                const items = [];
+                // Focus time
+                if (mins > 0) items.push(`<div class="cal-event cal-event-focus">⏱${mins}m</div>`);
+                // Completed tasks
+                tks.slice(0, 1).forEach(t => items.push(`<div class="cal-event cal-event-task" title="${escapeHtml(t.name)}">✅${escapeHtml(t.name)}</div>`));
+                // ICS events
+                icsEvts.slice(0, 2).forEach(ev => items.push(`<div class="cal-event cal-event-ics" title="${ev.startTime} ${escapeHtml(ev.summary)}">📅${escapeHtml(ev.summary)}</div>`));
+                
+                const maxShow = 3;
+                const totalExtra = (tks.length > 1 ? tks.length - 1 : 0) + (icsEvts.length > 2 ? icsEvts.length - 2 : 0);
+                html += items.slice(0, maxShow).join('');
+                if (items.length > maxShow || totalExtra > 0) {
+                    const moreCount = Math.max(0, items.length - maxShow) + totalExtra;
+                    if (moreCount > 0) html += `<div class="text-[8px] text-gray-400 text-center leading-none">+${moreCount}项</div>`;
+                }
+                
+                cell.innerHTML = html;
+                cell.onclick = () => showDayDetail(dStr, mins, tks, icsEvts); 
+                grid.appendChild(cell);
+            }
+            // Update ICS badge
+            const icsTotal = (appData.calendarEvents || []).length;
+            const badge = document.getElementById('icsCountBadge');
+            if (badge) { if (icsTotal > 0) { badge.classList.remove('hidden'); document.getElementById('icsCount').innerText = icsTotal; } else { badge.classList.add('hidden'); } }
+        }
+
+        function showDayDetail(dStr, mins, tks, icsEvts) {
+            icsEvts = icsEvts || getCalendarEventsForDate(dStr);
+            document.getElementById("dayDetailTitle").innerText = dStr; 
+            document.getElementById("detailFocusTime").innerText = `${mins} min`;
+            document.getElementById("detailCompletedTasks").innerHTML = tks.length ? tks.map(t => `<div class="bg-gray-50 p-2 rounded mb-1 text-gray-600">✅ ${escapeHtml(t.name)}</div>`).join("") : '<div class="text-xs text-gray-400">无</div>';
+            
+            // ICS events section
+            const icsHtml = icsEvts.length 
+                ? icsEvts.map(ev => `<div class="bg-sky-50 p-2 rounded mb-1 text-gray-700 border-l-3 border-dopamine-sky">
+                    <div class="font-medium text-sm">📅 ${escapeHtml(ev.summary)}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${ev.startTime}${ev.endTime ? ' → ' + ev.endTime : ''}${ev.location ? ' · 📍' + escapeHtml(ev.location) : ''}</div>
+                </div>`).join("") 
+                : '<div class="text-xs text-gray-400">无外部日程</div>';
+            document.getElementById("detailICSEvents").innerHTML = icsHtml;
+            
+            document.getElementById("dayDetailModal").classList.add("active");
+        }
+
+        function renderTrendChart() { const ctx = document.getElementById('trendChart'); if (!ctx) return; const labels=[], data=[]; const today=new Date(); today.setHours(0,0,0,0); for(let i=6;i>=0;i--){ const d=new Date(today); d.setDate(today.getDate()-i); labels.push(`${d.getMonth()+1}/${d.getDate()}`); data.push(appData.focusSessions.filter(s=>s.dateStr===formatDateToYMD(d.getTime())).reduce((sum,s)=>sum+s.durationMinutes,0)); } if(focusTrendChart){ focusTrendChart.data.labels=labels; focusTrendChart.data.datasets[0].data=data; focusTrendChart.update(); }else focusTrendChart=new Chart(ctx, {type:'line', data:{labels, datasets:[{label:'理政分钟', data, borderColor:'#FF8C42', fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false}}); }
+        
+        let taskPieChart = null;
+        function renderPieChart() {
+            const ctx = document.getElementById('taskPieChart'); 
+            if (!ctx) return; 
+            const completedTasks = appData.tasks.filter(t => t.status === "已完成"); 
+            const categoryCounts = {}; 
+            completedTasks.forEach(t => { categoryCounts[t.category] = (categoryCounts[t.category] || 0) + 1; });
+            
+            // 修复饼图文字丢失问题，建立图标全称映射
+            const catMap = { '📚': '📚 文献', '🔬': '🔬 实验', '✍️': '✍️ 写作', '💻': '💻 绘图', '📝': '📝 日常' };
+            const labels = Object.keys(categoryCounts).map(l => catMap[l] || l); 
+            const data = Object.values(categoryCounts); 
+            if (labels.length === 0) { labels.push('暂无奏折'); data.push(1); }
+            
+            const isNight = document.body.classList.contains('night-mode');
+            const textColor = isNight ? '#E2E8F0' : '#4B5563';
+            const borderColor = isNight ? '#2D3748' : '#FFFFFF';
+
+            if (taskPieChart) { 
+                taskPieChart.data.labels = labels; 
+                taskPieChart.data.datasets[0].data = data; 
+                taskPieChart.data.datasets[0].borderWidth = isNight ? 2 : 0;
+                taskPieChart.data.datasets[0].borderColor = borderColor;
+                taskPieChart.options.plugins.legend.labels.color = textColor;
+                taskPieChart.update(); 
+            } else { 
+                taskPieChart = new Chart(ctx, { 
+                    type: 'doughnut', 
+                    data: { labels, datasets: [{ data, backgroundColor: ['#FF8C42', '#FF6B8B', '#F9C74F', '#43AA8B', '#4D9DE0', '#9B5DE5'], borderWidth: isNight ? 2 : 0, borderColor: borderColor }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', layout: { padding: { left: 0, right: 10, top: 0, bottom: 0 } }, plugins: { legend: { position: 'right', align: 'center', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, color: textColor, font: { size: 12, weight: 'bold', family: "'Inter', sans-serif" } } }, tooltip: { bodyFont: { size: 13 }, padding: 12, boxPadding: 6 } } } 
+                }); 
+            }
+        }
+
+        // ================= 其他及初始化 =================
+        function handleAvatarUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { localStorage.setItem("phd_pro_avatar", e.target.result); document.getElementById("userAvatar").src = e.target.result; }; reader.readAsDataURL(file); }
+        function loadAvatar() { const stored = localStorage.getItem("phd_pro_avatar"); if (stored) document.getElementById("userAvatar").src = stored; }
+        function exportData() { const blob = new Blob([JSON.stringify(appData)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `史库备份_${getTodayStr()}.json`; a.click(); }
+        function importData(event) { const r = new FileReader(); r.onload = e => { appData = {...appData, ...JSON.parse(e.target.result)}; saveData(); renderAll(); }; r.readAsText(event.target.files[0]); }
+
+        // ================= ICS 日历导入 =================
+        function parseICSDate(str) {
+            if (!str) return null;
+            // Handle TZID format: DTSTART;TZID=Asia/Shanghai:20260410T090000
+            const tzMatch = str.match(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/);
+            if (tzMatch) return new Date(+tzMatch[1], +tzMatch[2]-1, +tzMatch[3], +tzMatch[4], +tzMatch[5], +tzMatch[6]);
+            // Handle date-only: 20260410
+            const dMatch = str.match(/(\d{4})(\d{2})(\d{2})$/);
+            if (dMatch) return new Date(+dMatch[1], +dMatch[2]-1, +dMatch[3]);
+            return null;
+        }
+
+        function parseICS(text) {
+            const events = [];
+            const blocks = text.split('BEGIN:VEVENT');
+            for (let i = 1; i < blocks.length; i++) {
+                const block = blocks[i].split('END:VEVENT')[0];
+                const get = (key) => {
+                    // Match both "KEY:value" and "KEY;....:value"
+                    const re = new RegExp('^' + key + '[;:](.*)$', 'mi');
+                    const m = block.match(re);
+                    if (!m) return '';
+                    // For date fields with TZID, the actual value is after the last ':'
+                    let val = m[1];
+                    if (val.includes(':')) val = val.split(':').pop();
+                    return val.trim();
+                };
+                const summary = get('SUMMARY') || '(无标题)';
+                const dtstart = parseICSDate(get('DTSTART'));
+                const dtend = parseICSDate(get('DTEND'));
+                const location = get('LOCATION');
+                const description = get('DESCRIPTION');
+                if (dtstart) {
+                    events.push({
+                        summary,
+                        dateStr: `${dtstart.getFullYear()}-${String(dtstart.getMonth()+1).padStart(2,'0')}-${String(dtstart.getDate()).padStart(2,'0')}`,
+                        startTime: dtstart.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                        endTime: dtend ? dtend.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '',
+                        location: location.replace(/\\,/g, ',').replace(/\\n/g, ' '),
+                        description: description.replace(/\\n/g, '\n').replace(/\\,/g, ','),
+                        source: 'ics'
+                    });
+                }
+            }
+            return events;
+        }
+
+        function importICS(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+            let pending = files.length;
+            let totalNew = 0;
+            Array.from(files).forEach(file => {
+                const r = new FileReader();
+                r.onload = e => {
+                    const events = parseICS(e.target.result);
+                    // Deduplicate by summary + dateStr + startTime
+                    const existingKeys = new Set(appData.calendarEvents.map(ev => `${ev.summary}|${ev.dateStr}|${ev.startTime}`));
+                    const newEvents = events.filter(ev => !existingKeys.has(`${ev.summary}|${ev.dateStr}|${ev.startTime}`));
+                    appData.calendarEvents.push(...newEvents);
+                    totalNew += newEvents.length;
+                    pending--;
+                    if (pending === 0) {
+                        saveData();
+                        renderCalendar();
+                        alert(`📅 已导入 ${totalNew} 条日程到江山社稷图！${totalNew === 0 ? '（无新日程，可能已存在）' : ''}`);
+                    }
+                };
+                r.readAsText(file);
+            });
+            event.target.value = ''; // reset so same file can be re-imported
+        }
+
+        function getCalendarEventsForDate(dStr) {
+            return (appData.calendarEvents || []).filter(ev => ev.dateStr === dStr);
+        }
+
+        // ================= ICS 在线同步 =================
+        function loadICSUrl() {
+            const url = localStorage.getItem('phd_ics_url') || '';
+            const input = document.getElementById('icsUrlInput');
+            if (input) input.value = url;
+            // grey out sync btn if no URL
+            const btn = document.getElementById('syncCalBtn');
+            if (btn && !url) { btn.classList.add('opacity-50'); btn.title = '请先设置订阅链接（点击⚙️）'; }
+            return url;
+        }
+        function saveICSUrl() {
+            const url = document.getElementById('icsUrlInput').value.trim();
+            if (!url) { alert('请输入 ICS 订阅链接'); return; }
+            localStorage.setItem('phd_ics_url', url);
+            const btn = document.getElementById('syncCalBtn');
+            if (btn) { btn.classList.remove('opacity-50'); btn.title = ''; }
+            document.getElementById('icsUrlModal').classList.remove('active');
+            syncCalendar();
+        }
+        function clearICSUrl() {
+            if (!confirm('确定清除订阅链接？（已导入的日程不会删除）')) return;
+            localStorage.removeItem('phd_ics_url');
+            document.getElementById('icsUrlInput').value = '';
+            const btn = document.getElementById('syncCalBtn');
+            if (btn) { btn.classList.add('opacity-50'); }
+            document.getElementById('icsUrlModal').classList.remove('active');
+        }
+
+        async function syncCalendar() {
+            const url = localStorage.getItem('phd_ics_url');
+            if (!url) { document.getElementById('icsUrlModal').classList.add('active'); return; }
+
+            const btn = document.getElementById('syncCalBtn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 同步中...';
+            btn.disabled = true;
+
+            // Try CORS proxies
+            const proxies = [
+                raw => `https://corsproxy.io/?${encodeURIComponent(raw)}`,
+                raw => `https://api.allorigins.win/raw?url=${encodeURIComponent(raw)}`,
+            ];
+
+            let icsText = null;
+            for (const proxy of proxies) {
+                try {
+                    const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+                    if (resp.ok) { icsText = await resp.text(); if (icsText.includes('BEGIN:VCALENDAR')) break; else icsText = null; }
+                } catch(e) { continue; }
+            }
+
+            btn.innerHTML = original;
+            btn.disabled = false;
+
+            if (icsText) {
+                // Online sync succeeded
+                const events = parseICS(icsText);
+                appData.calendarEvents = events;
+                saveData();
+                renderCalendar();
+                localStorage.setItem('phd_ics_last_sync', new Date().toLocaleString());
+                alert(`✅ 同步成功！共 ${events.length} 条日程已更新。`);
+            } else {
+                // Fallback: open URL to download, then prompt import
+                const doManual = confirm('⚠️ 在线同步受浏览器安全限制，自动同步暂不可用。\n\n点击「确定」将为您：\n1️⃣ 打开日历链接下载 .ics 文件\n2️⃣ 弹出导入框，选择刚下载的文件即可\n\n（这是纯前端应用的正常限制，不影响功能）');
+                if (doManual) {
+                    window.open(url, '_blank');
+                    setTimeout(() => {
+                        alert('📂 请在接下来的文件选择框中，选择刚才下载的 .ics 文件');
+                        document.getElementById('icsInput').click();
+                    }, 1500);
+                }
+            }
+        }
+
+        // ================= Google Calendar API 集成 =================
+        const GCAL_CLIENT_ID = '747124411986-66lnp8m0ekokb27h44qj753bfhdj3iiq.apps.googleusercontent.com';
+        const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+        let gcalTokenClient = null;
+        let gcalAccessToken = null;
+
+        function initGCalAuth() {
+            try {
+                gcalTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GCAL_CLIENT_ID,
+                    scope: GCAL_SCOPES,
+                    callback: (response) => {
+                        if (response.error) { console.error('GCal auth error:', response); return; }
+                        gcalAccessToken = response.access_token;
+                        updateGCalButton(true);
+                        alert('✅ Google 日历已连接！番茄钟结束后将自动同步。');
+                    },
+                });
+            } catch(e) { console.log('Google Identity Services not loaded yet'); }
+        }
+
+        function handleGCalAuth() {
+            if (gcalAccessToken) {
+                // Already logged in, offer to disconnect
+                if (confirm('已连接 Google 日历。\n点「确定」断开连接。')) {
+                    google.accounts.oauth2.revoke(gcalAccessToken);
+                    gcalAccessToken = null;
+                    updateGCalButton(false);
+                }
+            } else {
+                if (!gcalTokenClient) initGCalAuth();
+                if (gcalTokenClient) gcalTokenClient.requestAccessToken();
+            }
+        }
+
+        function updateGCalButton(connected) {
+            const btn = document.getElementById('gcalLoginBtn');
+            const text = document.getElementById('gcalLoginText');
+            if (connected) {
+                btn.classList.remove('text-red-500', 'border-red-200', 'hover:bg-red-50');
+                btn.classList.add('text-green-600', 'border-green-300', 'hover:bg-green-50');
+                text.innerText = '日历已连接';
+            } else {
+                btn.classList.remove('text-green-600', 'border-green-300', 'hover:bg-green-50');
+                btn.classList.add('text-red-500', 'border-red-200', 'hover:bg-red-50');
+                text.innerText = '登录日历';
+            }
+        }
+
+        async function pushFocusToGCal(startTimestamp, endTimestamp, minutes) {
+            if (!gcalAccessToken) return; // Not connected, skip silently
+            
+            const start = new Date(startTimestamp);
+            const end = new Date(endTimestamp);
+            const modeLabel = currentFocusMode === 'free' ? '自由理政' : `${currentFocusMode}分钟番茄钟`;
+            
+            const event = {
+                summary: `🍅 专注理政 ${minutes}分钟`,
+                description: `模式: ${modeLabel}\n来源: 皇帝的贴身史官`,
+                start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+                end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+                colorId: '6', // 橙色
+            };
+
+            try {
+                const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${gcalAccessToken}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(event),
+                });
+                if (resp.ok) {
+                    console.log('✅ Focus session pushed to Google Calendar');
+                } else if (resp.status === 401) {
+                    // Token expired, re-auth
+                    gcalAccessToken = null;
+                    updateGCalButton(false);
+                    console.log('GCal token expired, need re-auth');
+                } else {
+                    console.error('GCal push failed:', resp.status, await resp.text());
+                }
+            } catch(e) { console.error('GCal push error:', e); }
+        }
+
+        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+
+        function toggleStatsCollapse() {
+            const content = document.getElementById('statsContent');
+            const icon = document.getElementById('statsCollapseIcon');
+            const collapsed = content.style.maxHeight === '0px';
+            if (collapsed) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.opacity = '1';
+                icon.style.transform = 'rotate(0deg)';
+                localStorage.setItem('phd_stats_collapsed', 'false');
+            } else {
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                icon.style.transform = 'rotate(180deg)';
+                localStorage.setItem('phd_stats_collapsed', 'true');
+            }
+        }
+        function loadStatsCollapse() {
+            if (localStorage.getItem('phd_stats_collapsed') === 'true') {
+                const content = document.getElementById('statsContent');
+                const icon = document.getElementById('statsCollapseIcon');
+                if (content) { content.style.maxHeight = '0px'; content.style.opacity = '0'; }
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        }
+        function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+        
+        function toggleNightMode() {
+            document.body.classList.toggle('night-mode'); const isNight = document.body.classList.contains('night-mode'); localStorage.setItem('phd_pro_night_mode', isNight);
+            const btn = document.getElementById('nightModeBtn');
+            if(isNight) { btn.innerHTML = '<i class="fas fa-sun"></i> 昼临'; btn.classList.replace('text-indigo-600', 'text-amber-500'); btn.classList.replace('bg-indigo-50', 'bg-amber-50'); btn.classList.replace('border-indigo-200', 'border-amber-200'); } 
+            else { btn.innerHTML = '<i class="fas fa-moon"></i> 夜巡'; btn.classList.replace('text-amber-500', 'text-indigo-600'); btn.classList.replace('bg-amber-50', 'bg-indigo-50'); btn.classList.replace('border-amber-200', 'border-indigo-200'); }
+            if (typeof renderTrendChart === 'function') { setTimeout(renderTrendChart, 100); }
+            if (typeof renderPieChart === 'function') { setTimeout(renderPieChart, 100); }
+        }
+
+        function loadNightMode() {
+            const isNight = localStorage.getItem('phd_pro_night_mode') === 'true';
+            if (isNight) { document.body.classList.add('night-mode'); const btn = document.getElementById('nightModeBtn'); if(btn) { btn.innerHTML = '<i class="fas fa-sun"></i> 昼临'; btn.classList.replace('text-indigo-600', 'text-amber-500'); btn.classList.replace('bg-indigo-50', 'bg-amber-50'); btn.classList.replace('border-indigo-200', 'border-amber-200'); } }
+        }
+
+        function generateReport() {
+            const btn = document.getElementById('reportBtn'); const originalHTML = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 拟旨中...';
+            const targetNode = document.getElementById('module-stats'); const isNight = document.body.classList.contains('night-mode');
+            const controls = targetNode.querySelector('.module-controls'); if(controls) controls.style.display = 'none'; btn.style.display = 'none';
+            html2canvas(targetNode, { scale: 2, backgroundColor: isNight ? '#2D3748' : '#FFF7E8', borderRadius: 16 }).then(canvas => {
+                const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = `岁首诏书_${getTodayStr()}.png`; a.click();
+                if(controls) controls.style.display = ''; btn.style.display = 'flex'; btn.innerHTML = originalHTML; alert("📜 诏书已盖玉玺！陛下可将其发往朋友圈宣告天下！");
+            });
+        }
+
+        function bindEvents() {
+            document.getElementById("taskInput").addEventListener("keypress", (e) => { if(e.key === "Enter") addTask(); }); 
+            document.getElementById("ideaInput").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addIdea(); } });
+            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = closeModals);
+            document.querySelectorAll('.energy-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange')); e.target.classList.add('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange'); document.getElementById('checkModalEnergy').value = e.target.getAttribute('data-energy'); });
+            document.querySelectorAll('.mood-emoji').forEach(el => el.onclick = () => setMood(el.getAttribute('data-mood')));
+            document.getElementById("prevMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); };
+            document.getElementById("nextMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); };
+        }
+
+        function renderAll() { 
+            document.getElementById("todayFocusMinutes").innerText = getTodayFocusMinutes(); 
+            renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
+            updateMoodUI(); updateStreakBadge(); renderCalendar(); renderTrendChart(); 
+            renderPieChart(); updateFocusButtons(); 
+        }
+
+      function init() { 
+            loadData(); loadAvatar(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); bindEvents();
+            setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
+            document.getElementById("currentDate").innerText = new Date().toLocaleDateString(); 
+            renderAll(); 
+            initDragAndDrop(); 
+            loadLayout(); 
+            initDrawer(); // <--- 加上这一行，激活智能抽屉的位置记忆！
+            applyGuardState();
+            setInterval(() => renderAll(), 60000); 
+            requestAnimationFrame(patrolGuard); 
+        }
+        
+        // 陛下驾到，系统启动！
+        init();
+    </script>
+</body>
+</html>
