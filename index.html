@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://apis.google.com/js/api.js"></script>
@@ -1714,22 +1715,59 @@
             messagingSenderId: "847786267879",
             appId: "1:847786267879:web:d26f327d6da5b2d3057e42"
         };
-        let fbApp = null, fbDb = null;
+        let fbApp = null, fbDb = null, fbUser = null;
 
         function initFirebase() {
             try {
                 fbApp = firebase.initializeApp(firebaseConfig);
                 fbDb = firebase.database();
-                // Check nickname
-                if (!localStorage.getItem('phd_nickname')) {
-                    const name = prompt('👑 给自己起个名号吧（排行榜显示用）：', '无名侠客');
-                    if (name && name.trim()) localStorage.setItem('phd_nickname', name.trim());
-                    else localStorage.setItem('phd_nickname', '无名侠客');
-                }
-                updateNicknameDisplay();
-                syncToFirebase();
+                
+                // Listen for auth state
+                firebase.auth().onAuthStateChanged((user) => {
+                    fbUser = user;
+                    if (user) {
+                        // Check nickname
+                        if (!localStorage.getItem('phd_nickname')) {
+                            const name = prompt('👑 给自己起个名号吧（排行榜显示用）：', user.displayName || '无名侠客');
+                            localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                        }
+                        updateNicknameDisplay();
+                        syncToFirebase();
+                    }
+                    updateLeaderboardAuthUI();
+                });
+                
                 loadLeaderboard();
             } catch(e) { console.error('Firebase init error:', e); }
+        }
+
+        function firebaseLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider).catch(e => {
+                console.error('Firebase login error:', e);
+                alert('登录失败：' + e.message);
+            });
+        }
+
+        function firebaseLogout() {
+            if (confirm('确定退出排行榜登录？')) {
+                firebase.auth().signOut();
+                fbUser = null;
+                updateLeaderboardAuthUI();
+            }
+        }
+
+        function updateLeaderboardAuthUI() {
+            const el = document.getElementById('myNickname');
+            if (!el) return;
+            if (fbUser) {
+                const name = localStorage.getItem('phd_nickname') || fbUser.displayName || '无名侠客';
+                el.innerHTML = `<span class="text-green-600">👤 ${escapeHtml(name)}</span>`;
+                el.onclick = changeNickname;
+            } else {
+                el.innerHTML = `<button onclick="firebaseLogin()" class="bg-dopamine-purple text-white text-xs px-3 py-1 rounded-full font-bold hover:opacity-90 transition"><i class="fab fa-google"></i> 登录排行榜</button>`;
+                el.onclick = null;
+            }
         }
 
         function changeNickname() {
@@ -1737,24 +1775,15 @@
             const name = prompt('修改你的名号：', current);
             if (name && name.trim()) {
                 localStorage.setItem('phd_nickname', name.trim());
-                updateNicknameDisplay();
+                updateLeaderboardAuthUI();
                 syncToFirebase();
             }
         }
 
-        function updateNicknameDisplay() {
-            const el = document.getElementById('myNickname');
-            const name = localStorage.getItem('phd_nickname');
-            if (el && name) el.innerText = `👤 ${name}`;
-        }
+        function updateNicknameDisplay() { updateLeaderboardAuthUI(); }
 
         function getMyFirebaseId() {
-            let id = localStorage.getItem('phd_firebase_uid');
-            if (!id) {
-                id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-                localStorage.setItem('phd_firebase_uid', id);
-            }
-            return id;
+            return fbUser ? fbUser.uid : null;
         }
 
         function getWeekStats() {
@@ -1780,9 +1809,9 @@
         }
 
         function syncToFirebase() {
-            if (!fbDb) return;
-            const uid = getMyFirebaseId();
-            const nickname = localStorage.getItem('phd_nickname') || '无名侠客';
+            if (!fbDb || !fbUser) return;
+            const uid = fbUser.uid;
+            const nickname = localStorage.getItem('phd_nickname') || fbUser.displayName || '无名侠客';
             const stats = getWeekStats();
 
             fbDb.ref('leaderboard/' + uid).set({
@@ -1812,7 +1841,7 @@
                 const medals = ['🥇', '🥈', '🥉'];
                 const rankTitles = ['👑 皇帝', '🗡️ 丞相', '🛡️ 大将军', '📜 御史大夫', '🏯 太守', '📚 翰林学士', '🔔 侍郎', '🧹 太监总管', '🪣 小太监', '🐴 马夫'];
                 const html = users.map((u, i) => {
-                    const isMe = u.uid === myUid;
+                    const isMe = myUid && u.uid === myUid;
                     const medal = i < 3 ? medals[i] : `<span class="text-gray-400 text-xs w-6 inline-block text-center">${i + 1}</span>`;
                     const rankTitle = rankTitles[Math.min(i, rankTitles.length - 1)];
                     const bg = isMe ? 'bg-dopamine-purple/10 border-dopamine-purple/30' : (i === 0 ? 'bg-yellow-50/80 border-yellow-200' : 'bg-white/60 border-gray-100');
@@ -1840,7 +1869,7 @@
                 document.getElementById('leaderboardList').innerHTML = html;
 
                 // 登基动画：检测是否新晋皇帝
-                const myRank = users.findIndex(u => u.uid === myUid);
+                const myRank = myUid ? users.findIndex(u => u.uid === myUid) : -1;
                 const prevRank = parseInt(localStorage.getItem('phd_prev_rank') || '-1');
                 if (myRank === 0 && prevRank !== 0) {
                     showCoronation();
