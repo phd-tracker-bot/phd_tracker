@@ -573,7 +573,49 @@
         // ================= 基础工具 =================
         function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function formatDateToYMD(timestamp) { const d = new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-        function saveData() { localStorage.setItem("phd_pro_v2", JSON.stringify(appData)); }
+        function saveData() { 
+            localStorage.setItem("phd_pro_v2", JSON.stringify(appData)); 
+            saveDataToFirebase();
+        }
+        let firebaseSaveTimer = null;
+        function saveDataToFirebase() {
+            if (!fbDb || !fbUser) return;
+            if (firebaseSaveTimer) clearTimeout(firebaseSaveTimer);
+            firebaseSaveTimer = setTimeout(() => {
+                fbDb.ref('userData/' + fbUser.uid).set({
+                    appData: JSON.stringify(appData),
+                    lastSync: Date.now()
+                }).catch(e => console.error('Firebase data sync error:', e));
+            }, 2000); // Wait 2 seconds before syncing to batch rapid changes
+        }
+        function loadDataFromFirebase() {
+            if (!fbDb || !fbUser) return;
+            fbDb.ref('userData/' + fbUser.uid).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data && data.appData) {
+                    const remoteData = JSON.parse(data.appData);
+                    // Compare: use whichever has more focus sessions (more data = more complete)
+                    const localSessions = appData.focusSessions ? appData.focusSessions.length : 0;
+                    const remoteSessions = remoteData.focusSessions ? remoteData.focusSessions.length : 0;
+                    
+                    if (remoteSessions > localSessions) {
+                        // Remote has more data, use it
+                        appData = { ...appData, ...remoteData };
+                        localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+                        renderAll();
+                        console.log('✅ 已从云端同步数据（云端更完整）');
+                    } else if (localSessions > remoteSessions) {
+                        // Local has more data, push to cloud
+                        saveDataToFirebase();
+                        console.log('✅ 已将本地数据上传云端（本地更完整）');
+                    }
+                } else {
+                    // No cloud data yet, upload local
+                    saveDataToFirebase();
+                    console.log('✅ 首次上传本地数据到云端');
+                }
+            }).catch(e => console.error('Firebase load error:', e));
+        }
         function loadData() {
             const stored = localStorage.getItem("phd_pro_v2");
             if (stored) { try { const parsed = JSON.parse(stored); appData = {...appData, ...parsed}; } catch(e) {} }
@@ -1732,6 +1774,7 @@
                             localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
                         }
                         updateNicknameDisplay();
+                        loadDataFromFirebase();
                         syncToFirebase();
                     }
                     updateLeaderboardAuthUI();
@@ -1742,11 +1785,57 @@
         }
 
         function firebaseLogin() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider).catch(e => {
-                console.error('Firebase login error:', e);
-                alert('登录失败：' + e.message);
-            });
+            const choice = confirm('点「确定」用 Google 登录\n点「取消」用邮箱登录');
+            if (choice) {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider).catch(e => {
+                    console.error('Firebase login error:', e);
+                    alert('登录失败：' + e.message);
+                });
+            } else {
+                showEmailLoginModal();
+            }
+        }
+
+        function showEmailLoginModal() {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay active';
+            overlay.innerHTML = `<div class="modal-content p-5">
+                <div class="flex justify-between items-center border-b border-dopamine-purple/30 pb-2 mb-3">
+                    <h3 class="text-lg font-bold text-dopamine-purple"><i class="fas fa-envelope"></i> 邮箱登录</h3>
+                    <button class="text-gray-400 text-xl" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                </div>
+                <div class="space-y-3">
+                    <input type="email" id="fbEmailInput" placeholder="邮箱地址" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                    <input type="password" id="fbPasswordInput" placeholder="密码（至少6位）" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                    <div class="flex gap-2">
+                        <button onclick="emailLogin()" class="flex-1 bg-dopamine-purple text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">登录</button>
+                        <button onclick="emailRegister()" class="flex-1 bg-dopamine-sky text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">注册</button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 text-center">首次使用请先点「注册」</p>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        function emailLogin() {
+            const email = document.getElementById('fbEmailInput').value.trim();
+            const pass = document.getElementById('fbPasswordInput').value;
+            if (!email || !pass) { alert('请填写邮箱和密码'); return; }
+            firebase.auth().signInWithEmailAndPassword(email, pass).then(() => {
+                document.querySelector('.modal-overlay.active').remove();
+            }).catch(e => alert('登录失败：' + (e.code === 'auth/wrong-password' ? '密码错误' : e.code === 'auth/user-not-found' ? '账号不存在，请先注册' : e.message)));
+        }
+
+        function emailRegister() {
+            const email = document.getElementById('fbEmailInput').value.trim();
+            const pass = document.getElementById('fbPasswordInput').value;
+            if (!email || !pass) { alert('请填写邮箱和密码'); return; }
+            if (pass.length < 6) { alert('密码至少6位'); return; }
+            firebase.auth().createUserWithEmailAndPassword(email, pass).then(() => {
+                document.querySelector('.modal-overlay.active').remove();
+                alert('✅ 注册成功！');
+            }).catch(e => alert('注册失败：' + (e.code === 'auth/email-already-in-use' ? '该邮箱已注册，请直接登录' : e.message)));
         }
 
         function firebaseLogout() {
