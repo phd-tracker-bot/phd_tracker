@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>皇帝养成日记</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF8C42">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="养成日记">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -156,7 +162,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-dopamine-orange to-dopamine-pink bg-clip-text text-transparent flex items-center gap-2">
-                        <i class="fas fa-crown text-dopamine-orange"></i> <span id="appTitle" onclick="editTitle()" class="cursor-pointer hover:opacity-80 transition" title="点击修改名称">进步日记</span>
+                        <i class="fas fa-crown text-dopamine-orange"></i> <span id="appTitle" onclick="editTitle()" class="cursor-pointer hover:opacity-80 transition" title="点击修改名称">皇帝养成日记</span>
                         <span id="streakBadge" class="hidden bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm ml-2 items-center gap-1"><i class="fas fa-fire"></i> 连朝 <span id="streakCount">0</span> 天</span>
                     </h1>
                     <p class="text-amber-600/80 text-xs sm:text-sm mt-1 flex items-center gap-2 flex-wrap"><i class="far fa-calendar-alt text-dopamine-sky"></i><span id="currentDate"></span><span class="hidden sm:inline w-1 h-1 bg-amber-300 rounded-full"></span><span class="hidden sm:inline">今日是否上朝科研，不开心就提早退朝！</span></p>
@@ -417,7 +423,7 @@
     </div>
                     
         <div class="text-center text-gray-400 text-xs mt-8 pt-4 border-t border-dopamine-yellow/30 flex justify-center gap-3">
-            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> Reed制2026年4月9日</span>
+            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> mono edited from Reed</span>
         </div>
     </div>
 
@@ -1267,7 +1273,7 @@
             
             const event = {
                 summary: `🍅 专注理政 ${minutes}分钟`,
-                description: `模式: ${modeLabel}\n来源: 皇帝养成日记`,
+                description: `模式: ${modeLabel}\n来源: 皇帝的贴身史官`,
                 start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 colorId: '6',
@@ -1446,7 +1452,7 @@
                         headers: { 'Authorization': `Bearer ${gcalAccessToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             summary: `📝 ${block.name}`,
-                            description: '来源: 皇帝养成日记 · 智能排程',
+                            description: '来源: 皇帝的贴身史官 · 智能排程',
                             start: { dateTime: block.start.toISOString(), timeZone: tz },
                             end: { dateTime: block.end.toISOString(), timeZone: tz },
                             colorId: '3',
@@ -1460,10 +1466,30 @@
             btn.innerHTML = '<i class="fas fa-calendar-plus"></i> 确认并创建';
             btn.disabled = false;
 
+            // Add to task list
+            for (const block of scheduledBlocks) {
+                const dur = Math.round((block.end - block.start) / 60000);
+                const dayLabel = block.start.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                const timeLabel = block.start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                appData.tasks.push({
+                    id: Date.now() + Math.random(),
+                    name: `📝 ${block.name}（${dayLabel} ${timeLabel}，${dur}min）`,
+                    priority: 'medium',
+                    category: '📝',
+                    status: '未开始',
+                    createdAt: block.start.getTime(),
+                    completedAt: null
+                });
+            }
+            saveData();
+            renderTasks();
+            updateStatistics();
+            renderPieChart();
+
             // Refresh calendar
             await pullEventsFromGCal();
             document.getElementById('scheduleModal').classList.remove('active');
-            alert(`✅ 成功创建 ${success}/${scheduledBlocks.length} 个时间块到 Google Calendar！\n每块开始前5分钟会收到提醒。`);
+            alert(`✅ 成功创建 ${success}/${scheduledBlocks.length} 个时间块！\n已同步到 Google Calendar 和奏折列表。`);
         }
 
         function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
@@ -1589,6 +1615,11 @@
         
         // 陛下驾到，系统启动！
         init();
+        
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
     </script>
 </body>
 </html>
