@@ -381,27 +381,27 @@
             </div>
 
             <div class="col-span-1 lg:col-span-1 flex flex-col gap-6">
-            <div id="module-ideas" class="draggable-module rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
+            <div id="module-ideas" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
-                <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-3 mb-4 mt-2"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-xl drop-shadow-md"></i><h2 class="text-xl font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-xs font-semibold bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
-                <div class="flex gap-2 mb-5 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="2" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-3 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 sm:px-6 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt text-lg"></i></button></div>
-                <div class="flex-1 overflow-y-auto pr-1 min-h-[100px] max-h-[200px]"><ul id="ideaList" class="space-y-3"></ul></div>
+                <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-2 mb-3 mt-1"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-lg drop-shadow-md"></i><h2 class="text-lg font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-[10px] font-semibold bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
+                <div class="flex gap-2 mb-3 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="1" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-2 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none text-sm"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-3 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt"></i></button></div>
+                <div class="flex-1 overflow-y-auto pr-1 max-h-[120px]"><ul id="ideaList" class="space-y-2"></ul></div>
             </div>
 
-            <div id="module-mood-cal" class="draggable-module rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-bottom: 4px solid #F9C74F;">
+            <div id="module-mood-cal" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col" style="border-bottom: 4px solid #F9C74F;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
-                <div class="flex items-center justify-between border-b border-dopamine-yellow/30 pb-3 mb-4 mt-2">
-                    <div class="flex items-center gap-2"><i class="far fa-smile text-dopamine-yellow text-xl"></i><h2 class="text-xl font-bold text-gray-800">龙体圣意月历</h2></div>
+                <div class="flex items-center justify-between border-b border-dopamine-yellow/30 pb-2 mb-2 mt-1">
+                    <div class="flex items-center gap-2"><i class="far fa-smile text-dopamine-yellow text-lg"></i><h2 class="text-lg font-bold text-gray-800">龙体圣意月历</h2></div>
                     <div class="flex items-center gap-2">
                         <button id="moodCalPrev" class="text-gray-400 hover:text-dopamine-yellow transition p-1"><i class="fas fa-chevron-left"></i></button>
-                        <span id="moodCalMonthYear" class="font-bold text-gray-700 text-sm w-20 text-center"></span>
+                        <span id="moodCalMonthYear" class="font-bold text-gray-700 text-xs w-16 text-center"></span>
                         <button id="moodCalNext" class="text-gray-400 hover:text-dopamine-yellow transition p-1"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
-                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-1"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
-                <div id="moodCalGrid" class="grid grid-cols-7 gap-1"></div>
-                <div class="flex justify-center gap-4 mt-3 text-[10px] text-gray-400">
-                    <span>😊 开心</span><span>😐 一般</span><span>😔 低落</span><span>⬜ 未记录</span>
+                <div class="grid grid-cols-7 gap-0.5 text-center text-[9px] font-bold text-gray-400 mb-0.5"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                <div id="moodCalGrid" class="grid grid-cols-7 gap-0.5"></div>
+                <div class="flex justify-center gap-3 mt-2 text-[9px] text-gray-400">
+                    <span>😊 开心</span><span>😐 一般</span><span>😔 低落</span>
                 </div>
             </div>
             </div>
@@ -1124,17 +1124,17 @@
                 const isFuture = new Date(dStr) > new Date();
                 
                 const cell = document.createElement('div');
-                cell.className = `aspect-square rounded-lg flex items-center justify-center text-lg cursor-pointer transition-all hover:scale-110 ${isToday ? 'ring-2 ring-dopamine-yellow bg-yellow-50' : 'bg-gray-50'}`;
+                cell.className = `h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-all hover:scale-110 ${isToday ? 'ring-1 ring-dopamine-yellow bg-yellow-50' : 'bg-gray-50'}`;
                 
                 if (isFuture) {
-                    cell.className = 'aspect-square rounded-lg flex items-center justify-center text-xs text-gray-300';
+                    cell.className = 'h-8 rounded flex items-center justify-center text-[10px] text-gray-300';
                     cell.innerText = day;
                 } else if (mood) {
                     cell.innerText = moodEmoji[mood] || '❓';
                     cell.title = `${dStr}: ${mood === 'happy' ? '开心' : mood === 'neutral' ? '一般' : '低落'}`;
                 } else {
                     cell.innerText = day;
-                    cell.className = `aspect-square rounded-lg flex items-center justify-center text-xs text-gray-400 bg-gray-50 cursor-pointer hover:bg-yellow-50 transition`;
+                    cell.className = `h-8 rounded flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 cursor-pointer hover:bg-yellow-50 transition`;
                     cell.title = '点击记录心情';
                 }
                 
