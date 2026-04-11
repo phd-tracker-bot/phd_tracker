@@ -2478,13 +2478,15 @@
             }).catch(e => alert('注册失败：' + (e.code === 'auth/email-already-in-use' ? '该邮箱已注册，请直接登录' : e.message)));
         }
 
-        function firebaseLogout() {
-            if (confirm('确定退出排行榜登录？\n\n你的排名数据将从排行榜移除。')) {
-                // Remove leaderboard data
+        async function firebaseLogout() {
+            if (confirm('确定退出排行榜登录？\n\n你的排名将从排行榜移除，进度数据会保留。')) {
                 if (fbDb && fbUser) {
-                    fbDb.ref('leaderboard/' + fbUser.uid).remove();
+                    try {
+                        await fbDb.ref('leaderboard/' + fbUser.uid).remove();
+                        console.log('✅ 已从排行榜移除');
+                    } catch(e) { console.error('Delete error:', e); }
                 }
-                firebase.auth().signOut();
+                await firebase.auth().signOut();
                 fbUser = null;
                 localStorage.removeItem('phd_nickname');
                 localStorage.removeItem('phd_prev_rank');
