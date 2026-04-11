@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>皇帝养成日记 - 连接测试</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen p-4 md:p-8">
     <div class="max-w-lg mx-auto">
@@ -79,10 +79,10 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://wxgmicykqtgzzbsqgkef.supabase.co';
+        const SUPABASE_URL = 'https://supabase-proxy.lizifu666.workers.dev';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4Z21pY3lrcXRnenpic3Fna2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NjE2NzgsImV4cCI6MjA5MTQzNzY3OH0.kBAe3xIgIk0sQn5Z4pjtaDft_fTrV7dSoiYjAhTMGIs';
         
-        let supabase;
+        let sb = null;
         let currentUser = null;
 
         function log(msg, isError) {
@@ -92,14 +92,26 @@
             div.scrollTop = div.scrollHeight;
         }
 
-        // Init Supabase
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            log('✅ Supabase 客户端初始化成功');
+        // Init
+        window.addEventListener('load', function() {
+            log('🔄 正在加载 Supabase SDK...');
             
-            // Listen for auth changes
-            supabase.auth.onAuthStateChange((event, session) => {
-                log(`🔑 Auth event: ${event}`);
+            if (typeof window.supabase === 'undefined') {
+                log('❌ Supabase SDK 未加载，可能被网络拦截', true);
+                document.getElementById('authStatus').innerHTML = '<span class="text-red-500">❌ SDK 加载失败，请检查网络</span>';
+                return;
+            }
+
+            try {
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                log('✅ Supabase 客户端初始化成功');
+            } catch(e) {
+                log('❌ 初始化失败: ' + e.message, true);
+                return;
+            }
+            
+            sb.auth.onAuthStateChange((event, session) => {
+                log('🔑 Auth: ' + event);
                 if (session?.user) {
                     currentUser = session.user;
                     showLoggedIn();
@@ -110,19 +122,17 @@
                 }
             });
 
-            // Check existing session
-            supabase.auth.getSession().then(({ data }) => {
+            sb.auth.getSession().then(({ data }) => {
                 if (data.session?.user) {
                     currentUser = data.session.user;
                     showLoggedIn();
                     loadLeaderboard();
                     log('✅ 已恢复登录状态');
+                } else {
+                    log('ℹ️ 未登录，请注册或登录');
                 }
             });
-
-        } catch(e) {
-            log('❌ Supabase 初始化失败: ' + e.message, true);
-        }
+        });
 
         function showLoggedIn() {
             document.getElementById('authSection').classList.add('hidden');
@@ -147,7 +157,7 @@
             if (pass.length < 6) { alert('密码至少6位'); return; }
             
             log('📤 正在注册 ' + email + '...');
-            const { data, error } = await supabase.auth.signUp({ email, password: pass });
+            const { data, error } = await sb.auth.signUp({ email, password: pass });
             
             if (error) {
                 log('❌ 注册失败: ' + error.message, true);
@@ -164,7 +174,7 @@
             if (!email || !pass) { alert('请填写邮箱和密码'); return; }
             
             log('📤 正在登录 ' + email + '...');
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+            const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
             
             if (error) {
                 log('❌ 登录失败: ' + error.message, true);
@@ -175,7 +185,7 @@
         }
 
         async function doLogout() {
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             log('👋 已退出登录');
         }
 
@@ -187,7 +197,7 @@
             
             log('📤 提交排行榜: ' + nickname + ' / ' + focus + 'min');
             
-            const { error } = await supabase.from('leaderboard').upsert({
+            const { error } = await sb.from('leaderboard').upsert({
                 user_id: currentUser.id,
                 nickname,
                 week_focus: focus,
@@ -276,7 +286,7 @@ CREATE POLICY "Users write own" ON user_data FOR ALL USING (auth.uid() = user_id
             const text = document.getElementById('testDataInput').value;
             
             log('📤 保存数据到云端...');
-            const { error } = await supabase.from('user_data').upsert({
+            const { error } = await sb.from('user_data').upsert({
                 user_id: currentUser.id,
                 app_data: { test: text, saved_at: new Date().toISOString() },
                 last_sync: new Date().toISOString()
