@@ -710,15 +710,25 @@
         function saveDataToFirebase(immediate) {
             if (!fbDb || !fbUser) return;
             if (firebaseSaveTimer) clearTimeout(firebaseSaveTimer);
-            const doSave = () => {
-                fbDb.ref('userData/' + fbUser.uid).set({
-                    appData: JSON.stringify(appData),
-                    lastSync: Date.now()
-                }).then(() => console.log('✅ 云端同步成功'))
-                .catch(e => console.error('Firebase data sync error:', e));
+            const doSave = async () => {
+                try {
+                    // Read cloud data first, merge, then write
+                    const snap = await fbDb.ref('userData/' + fbUser.uid).once('value');
+                    const cloudData = snap.val();
+                    if (cloudData && cloudData.appData) {
+                        const remoteData = JSON.parse(cloudData.appData);
+                        mergeAppData(remoteData);
+                        localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+                    }
+                    await fbDb.ref('userData/' + fbUser.uid).set({
+                        appData: JSON.stringify(appData),
+                        lastSync: Date.now()
+                    });
+                    console.log('✅ 云端合并同步成功');
+                } catch(e) { console.error('Firebase data sync error:', e); }
             };
             if (immediate) { doSave(); } 
-            else { firebaseSaveTimer = setTimeout(doSave, 2000); }
+            else { firebaseSaveTimer = setTimeout(doSave, 3000); }
         }
         function loadDataFromFirebase() {
             if (!fbDb || !fbUser) return;
