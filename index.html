@@ -1127,12 +1127,14 @@
                 const d = rec[p] || {}; 
                 const el = document.getElementById(p); 
                 if (el) { 
-                    let html = `<div class="flex justify-between text-gray-500"><span>始:${d.start ? d.start.slice(0,5) : "-"}</span><span>终:${d.end ? d.end.slice(0,5) : "-"}</span></div>`;
+                    let html = `<div class="flex justify-between text-gray-500"><span>${currentLang==='en'?'In':'始'}:${d.start ? d.start.slice(0,5) : "-"}</span><span>${currentLang==='en'?'Out':'终'}:${d.end ? d.end.slice(0,5) : "-"}</span></div>`;
                     if (d.energy || d.note) {
                         html += `<div class="mt-1 pt-1 border-t border-gray-100 text-gray-600 line-clamp-2 leading-tight">`;
                         if (d.energy) {
                             let color = d.energy.includes("龙威") ? "text-orange-500" : (d.energy.includes("违和") ? "text-blue-500" : "text-green-500");
-                            html += `<span class="font-bold ${color} mr-1" title="${d.energy}">${d.energy.split(" ")[0]}</span>`;
+                            let label = d.energy.split(" ")[0];
+                            if (currentLang === 'en') label = d.energy.includes("龙威") ? "🔥" : (d.energy.includes("违和") ? "😫" : "👥");
+                            html += `<span class="font-bold ${color} mr-1" title="${d.energy}">${label}</span>`;
                         }
                         if (d.note) html += `<span class="text-[10px]">${escapeHtml(d.note)}</span>`;
                         html += `</div>`;
@@ -1191,7 +1193,7 @@
         
         // ================= 统计视图与图表 =================
         function calculateStreak() { let streak = 0; let checkDate = new Date(); checkDate.setHours(0,0,0,0); const todayStr = getTodayStr(); let hasToday = Object.keys(appData.checkRecords[todayStr]||{}).some(k=>appData.checkRecords[todayStr][k].start); if(!hasToday) checkDate.setDate(checkDate.getDate()-1); for(let i=0;i<365;i++){ const dStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}-${String(checkDate.getDate()).padStart(2,'0')}`; if(appData.checkRecords[dStr] && Object.keys(appData.checkRecords[dStr]).some(k=>appData.checkRecords[dStr][k].start)){ streak++; checkDate.setDate(checkDate.getDate()-1); } else break; } return streak; }
-        function updateStreakBadge() { const streak = calculateStreak(); const badge = document.getElementById("streakBadge"); if(streak>0){ badge.style.display="inline-flex"; document.getElementById("streakCount").innerText=streak; }else badge.style.display="none"; }
+        function updateStreakBadge() { const streak = calculateStreak(); const badge = document.getElementById("streakBadge"); if(!badge) return; if(streak>0){ badge.style.display="inline-flex"; const sc = document.getElementById("streakCount"); if(sc) sc.innerText=streak; }else badge.style.display="none"; }
         function setMood(m) { appData.moodHistory[getTodayStr()] = m; saveData(); updateMoodUI(); renderMoodCalendar(); }
         function updateMoodUI() { const m = appData.moodHistory[getTodayStr()]; document.querySelectorAll('.mood-emoji').forEach(el => { el.classList.remove('mood-active'); if (el.getAttribute('data-mood') === m) el.classList.add('mood-active'); }); }
 
@@ -3306,6 +3308,41 @@
             '皇帝的贴身史官': 'Personal Historian',
             '圣意起居注': 'Daily Log',
             '连朝': 'Streak',
+            '歇息片刻': 'Break',
+            '退朝': 'End',
+            '始': 'In',
+            '终': 'Out',
+            '龙钟长鸣': 'Timer Alert',
+            '开始': 'Start',
+            '今日是否上朝科研，不开心就提早退朝！': 'Ready to work? Take a break if you need!',
+            '退朝时间': 'End Time',
+            '上朝时间': 'Start Time',
+            '皇帝养成日记': 'Emperor Growth Diary',
+            '养成日记': 'Growth Diary',
+            '陛下理政中': 'Focusing...',
+            '理政分钟': 'min focus',
+            '分钟理政中': 'min focusing',
+            '停靠底部': 'Dock Bottom',
+            '停靠左侧': 'Dock Left',
+            '停靠右侧': 'Dock Right',
+            '奏折管理': 'Task Manager',
+            '已批奏折': 'Completed',
+            '点击修改昵称': 'Click to change nickname',
+            '点击修改名称': 'Click to change name',
+            '点击更换头像': 'Click to change avatar',
+            '同步成功！共': 'Synced! Total ',
+            '拟旨中': 'Adding...',
+            '例：写论文第三章': 'e.g. Write chapter 3',
+            '无标题': 'Untitled',
+            '前方发现论文瓶颈？臣这就去劈碎它！': 'Found a bottleneck? I will destroy it!',
+            '龙甲御盾护体，陛下请安心理政！': 'Shield activated, focus in peace!',
+            '锦衣卫在此，已斩断四周科研刺客！': 'Guard on duty, distractions eliminated!',
+            '皇恩浩荡，锦衣卫誓死追随陛下！': 'Your loyal guard is here!',
+            '臣日夜兼程，绝不让史册遗失一字！': 'Recording every moment faithfully!',
+            '万民朝拜，四海归心': 'All hail the Emperor!',
+            '吾皇万岁万万岁': 'Long live the Emperor!',
+            '荣登榜首': 'Ranked #1!',
+            '登 基 大 典': 'CORONATION',
         };
 
         const i18nReverse = {};
