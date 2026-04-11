@@ -242,7 +242,7 @@
                     <button onclick="syncCalendar()" id="syncCalBtn" class="bg-gradient-to-r from-dopamine-sky to-blue-500 hover:brightness-110 text-white text-xs px-3 py-1.5 rounded-full transition flex items-center gap-1 shadow-sm font-bold"><i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">同步日历</span></button>
                     <button onclick="document.getElementById('icsUrlModal').classList.add('active')" class="bg-white hover:bg-sky-50 text-gray-500 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center justify-center shadow-sm" title="设置日历订阅链接"><i class="fas fa-cog"></i></button>
                     <button id="gcalLoginBtn" onclick="handleGCalAuth()" class="bg-white hover:bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-full border border-red-200 transition flex items-center gap-1 shadow-sm font-bold whitespace-nowrap"><i class="fab fa-google"></i> <span id="gcalLoginText">登录日历</span></button>
-                    <button onclick="document.getElementById('ouraSettingsModal').classList.add('active')" class="bg-white hover:bg-green-50 text-green-600 text-xs px-2 py-1.5 rounded-full border border-green-300 transition flex items-center justify-center shadow-sm" title="Oura Ring 设置"><i class="fas fa-heartbeat"></i></button>
+                    <button onclick="toggleOuraModule()" class="text-green-500 text-xs px-1 py-1 transition hover:scale-125" title="龙体状况"><i class="fas fa-heart"></i></button>
                 </div>
             </div>
         </div>
@@ -273,11 +273,16 @@
         <div id="ouraSettingsModal" class="modal-overlay">
             <div class="modal-content p-5">
                 <div class="flex justify-between items-center border-b border-green-200 pb-2 mb-3"><h3 class="text-lg font-bold text-green-700"><i class="fas fa-heartbeat"></i> Oura Ring 设置</h3><button class="close-modal-btn text-gray-400 text-xl" onclick="document.getElementById('ouraSettingsModal').classList.remove('active')">&times;</button></div>
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div>
                         <label class="text-xs font-bold text-gray-500 block mb-1">Personal Access Token</label>
                         <input type="password" id="ouraTokenInput" placeholder="粘贴你的 Oura Token..." class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:border-green-500 font-mono">
-                        <p class="text-[10px] text-gray-400 mt-1.5 leading-relaxed">在 <a href="https://cloud.ouraring.com/personal-access-tokens" target="_blank" class="text-green-600 underline">cloud.ouraring.com</a> → Personal Access Tokens 获取</p>
+                        <p class="text-[10px] text-gray-400 mt-1">在 <a href="https://cloud.ouraring.com/personal-access-tokens" target="_blank" class="text-green-600 underline">cloud.ouraring.com</a> 获取</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">代理地址 (Worker URL)</label>
+                        <input type="url" id="ouraWorkerInput" placeholder="https://oura-proxy.xxx.workers.dev" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:border-green-500 font-mono">
+                        <p class="text-[10px] text-gray-400 mt-1">Cloudflare Worker 代理地址，解决浏览器跨域限制</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="saveOuraToken()" class="flex-1 bg-green-500 text-white py-2.5 rounded-xl font-bold shadow-sm hover:bg-green-600 transition"><i class="fas fa-save"></i> 保存并获取龙体数据</button>
@@ -378,7 +383,7 @@
                 <div id="decreesDisplay" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
             </div>
 
-            <div id="module-oura" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:2px solid #34D399;">
+            <div id="module-oura" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:2px solid #34D399;">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2"><span class="text-lg">🐲</span><h2 class="text-sm font-black text-green-800" style="font-family:'楷体','STKaiti',serif;">龙体状况</h2><span id="ouraDate" class="text-[10px] text-green-600"></span></div>
                     <div class="flex items-center gap-2">
@@ -2588,33 +2593,49 @@
 
         // ================= Oura Ring 龙体状况 =================
         function getOuraToken() { return localStorage.getItem('phd_oura_token') || ''; }
+        function getOuraWorker() { return localStorage.getItem('phd_oura_worker') || ''; }
+
+        function toggleOuraModule() {
+            const module = document.getElementById('module-oura');
+            if (!getOuraToken() || !getOuraWorker()) { document.getElementById('ouraSettingsModal').classList.add('active'); return; }
+            module.classList.toggle('hidden');
+            if (!module.classList.contains('hidden')) fetchOuraData();
+        }
         
         function saveOuraToken() {
             const token = document.getElementById('ouraTokenInput').value.trim();
+            const worker = document.getElementById('ouraWorkerInput').value.trim();
             if (!token) { alert('请输入 Token'); return; }
+            if (!worker) { alert('请输入代理地址（Worker URL）'); return; }
             localStorage.setItem('phd_oura_token', token);
+            localStorage.setItem('phd_oura_worker', worker.replace(/\/$/, '')); // remove trailing slash
             document.getElementById('ouraSettingsModal').classList.remove('active');
+            document.getElementById('module-oura').classList.remove('hidden');
             fetchOuraData();
         }
 
         function clearOuraToken() {
-            if (!confirm('确定清除 Oura Token？')) return;
+            if (!confirm('确定清除 Oura 设置？')) return;
             localStorage.removeItem('phd_oura_token');
+            localStorage.removeItem('phd_oura_worker');
             document.getElementById('ouraTokenInput').value = '';
-            document.getElementById('ouraDisplay').innerHTML = '<div id="ouraPlaceholder" class="text-center text-green-600 text-xs py-3 col-span-3 cursor-pointer" onclick="document.getElementById(\'ouraSettingsModal\').classList.add(\'active\')"><i class="fas fa-ring"></i> 点击设置 Oura Ring Token</div>';
+            document.getElementById('ouraWorkerInput').value = '';
+            document.getElementById('module-oura').classList.add('hidden');
             document.getElementById('ouraSettingsModal').classList.remove('active');
         }
 
         function loadOuraToken() {
             const token = getOuraToken();
-            const input = document.getElementById('ouraTokenInput');
-            if (input && token) input.value = token;
-            if (token) fetchOuraData();
+            const worker = getOuraWorker();
+            if (document.getElementById('ouraTokenInput') && token) document.getElementById('ouraTokenInput').value = '••••••••';
+            if (document.getElementById('ouraWorkerInput') && worker) document.getElementById('ouraWorkerInput').value = worker;
+            if (token && worker) fetchOuraData();
         }
 
         async function fetchOuraData() {
             const token = getOuraToken();
-            if (!token) return;
+            const worker = getOuraWorker();
+            if (!token || !worker) return;
             
             const today = getTodayStr();
             const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateToYMD(d.getTime()); })();
@@ -2623,20 +2644,15 @@
             display.innerHTML = '<div class="text-center text-green-600 text-xs py-3 col-span-3"><i class="fas fa-spinner fa-pulse"></i> 问诊太医中...</div>';
 
             try {
-                const headers = { 'Authorization': `Bearer ${token}` };
-                
+                const h = { 'X-Oura-Token': token };
                 const [sleepResp, readinessResp, activityResp] = await Promise.all([
-                    fetch(`https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${yesterday}&end_date=${today}`, { headers }),
-                    fetch(`https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${yesterday}&end_date=${today}`, { headers }),
-                    fetch(`https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${yesterday}&end_date=${today}`, { headers })
+                    fetch(`${worker}?path=${encodeURIComponent(`/v2/usercollection/daily_sleep?start_date=${yesterday}&end_date=${today}`)}`, { headers: h }),
+                    fetch(`${worker}?path=${encodeURIComponent(`/v2/usercollection/daily_readiness?start_date=${yesterday}&end_date=${today}`)}`, { headers: h }),
+                    fetch(`${worker}?path=${encodeURIComponent(`/v2/usercollection/daily_activity?start_date=${yesterday}&end_date=${today}`)}`, { headers: h }),
                 ]);
 
                 if (!sleepResp.ok) {
-                    if (sleepResp.status === 401) {
-                        display.innerHTML = '<div class="text-center text-red-500 text-xs py-3 col-span-3">❌ Token 无效，请重新设置</div>';
-                    } else {
-                        display.innerHTML = '<div class="text-center text-red-500 text-xs py-3 col-span-3">❌ 获取失败，请稍后重试</div>';
-                    }
+                    display.innerHTML = `<div class="text-center text-red-500 text-xs py-3 col-span-3">❌ ${sleepResp.status === 401 ? 'Token 无效' : '获取失败'}</div>`;
                     return;
                 }
 
@@ -2644,7 +2660,6 @@
                 const readinessData = await readinessResp.json();
                 const activityData = await activityResp.json();
 
-                // Get latest data (prefer today, fallback to yesterday)
                 const sleep = sleepData.data?.length > 0 ? sleepData.data[sleepData.data.length - 1] : null;
                 const readiness = readinessData.data?.length > 0 ? readinessData.data[readinessData.data.length - 1] : null;
                 const activity = activityData.data?.length > 0 ? activityData.data[activityData.data.length - 1] : null;
@@ -2656,7 +2671,6 @@
                 const steps = activity?.steps || 0;
                 const dataDate = sleep?.day || readiness?.day || today;
 
-                // Determine dragon status
                 let dragonStatus, dragonColor, dragonAdvice;
                 if (readinessScore >= 80) { dragonStatus = '🔥 龙威浩荡'; dragonColor = 'text-green-600'; dragonAdvice = '龙体康健，宜大力理政！'; }
                 else if (readinessScore >= 60) { dragonStatus = '⚡ 龙体尚可'; dragonColor = 'text-yellow-600'; dragonAdvice = '精力中等，适度理政。'; }
@@ -2664,7 +2678,6 @@
                 else { dragonStatus = '❓ 未知'; dragonColor = 'text-gray-400'; dragonAdvice = ''; }
 
                 document.getElementById('ouraDate').innerText = dataDate;
-
                 display.innerHTML = `
                     <div class="bg-white/60 rounded-xl p-2.5 text-center border border-green-100">
                         <div class="text-[10px] text-gray-500 mb-1">😴 睡眠</div>
@@ -2683,10 +2696,9 @@
                     </div>
                     ${dragonAdvice ? `<div class="col-span-3 text-center text-xs ${dragonColor} font-bold mt-1">${dragonAdvice}</div>` : ''}
                 `;
-
             } catch(e) {
                 console.error('Oura fetch error:', e);
-                display.innerHTML = `<div class="text-center text-yellow-600 text-xs py-3 col-span-3">⚠️ 无法连接 Oura（可能是网络限制）<br><span class="text-[10px] text-gray-400">${e.message}</span></div>`;
+                display.innerHTML = `<div class="text-center text-yellow-600 text-xs py-3 col-span-3">⚠️ 无法连接代理<br><span class="text-[10px] text-gray-400">${e.message}</span></div>`;
             }
         }
 
