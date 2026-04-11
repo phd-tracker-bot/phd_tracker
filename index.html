@@ -17,6 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
@@ -740,7 +741,8 @@
         function saveData() { 
             localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
             localStorage.setItem('phd_last_save_time', Date.now().toString());
-            saveDataToFirebase();
+            if (authProvider === 'google') saveDataToFirebase();
+            else if (authProvider === 'email') saveDataToSupabase();
         }
         let firebaseSaveTimer = null;
         function saveDataToFirebase(immediate) {
@@ -1183,7 +1185,7 @@
                 container.appendChild(li);
             });
         }
-        function addIdea() { const txt = document.getElementById("ideaInput").value.trim(); if(!txt) return; appData.ideas.push({ text: txt, time: new Date().toLocaleString() }); saveData(); saveDataToFirebase(true); document.getElementById("ideaInput").value = ""; renderIdeas(); }
+        function addIdea() { const txt = document.getElementById("ideaInput").value.trim(); if(!txt) return; appData.ideas.push({ text: txt, time: new Date().toLocaleString() }); saveData(); if (authProvider === 'google') saveDataToFirebase(true); else if (authProvider === 'email') saveDataToSupabase(); document.getElementById("ideaInput").value = ""; renderIdeas(); }
         function renderIdeas() { const container = document.getElementById("ideaList"); if (!appData.ideas.length) { container.innerHTML = ""; return; } container.innerHTML = ""; [...appData.ideas].reverse().forEach((item) => { const li = document.createElement("li"); li.className = "bg-green-50/40 p-3 rounded-xl border-l-4 border-dopamine-mint text-sm text-gray-700"; li.innerHTML = `${escapeHtml(item.text)}<div class="text-[10px] text-gray-400 mt-1">${item.time}</div>`; container.appendChild(li); }); }
         
         // ================= 统计视图与图表 =================
@@ -2158,7 +2160,8 @@
             });
             
             saveData();
-            saveDataToFirebase(true); // Force immediate sync
+            if (authProvider === 'google') saveDataToFirebase(true); else if (authProvider === 'email') saveDataToSupabase();
+            syncLeaderboard();
             document.getElementById('morningCourtModal').classList.remove('active');
             renderDecrees();
             
@@ -2709,7 +2712,7 @@
             renderPieChart(); updateFocusButtons(); renderKingdom(); renderDecrees();
         }
 
-        // ================= Firebase 排行榜 =================
+        // ================= 双通道认证 + 统一排行榜 =================
         const firebaseConfig = {
             apiKey: "AIzaSyDIReQrkP36AmqT28RQBMW7OfCNw29WcCo",
             authDomain: "phd-share.firebaseapp.com",
@@ -2719,52 +2722,77 @@
             messagingSenderId: "847786267879",
             appId: "1:847786267879:web:d26f327d6da5b2d3057e42"
         };
+        const SB_PROXY = 'https://phd-tracker.pages.dev/api';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4Z21pY3lrcXRnenpic3Fna2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NjE2NzgsImV4cCI6MjA5MTQzNzY3OH0.kBAe3xIgIk0sQn5Z4pjtaDft_fTrV7dSoiYjAhTMGIs';
+
         let fbApp = null, fbDb = null, fbUser = null;
+        let sbClient = null, sbUser = null;
+        let authProvider = null; // 'google' or 'email'
+
+        function getCurrentUser() { return fbUser || sbUser; }
+        function getCurrentUid() { return fbUser ? fbUser.uid : (sbUser ? sbUser.id : null); }
 
         function initFirebase() {
             try {
                 fbApp = firebase.initializeApp(firebaseConfig);
                 fbDb = firebase.database();
                 
-                // Listen for auth state
                 firebase.auth().onAuthStateChanged(async (user) => {
                     fbUser = user;
                     if (user) {
-                        // Try to load nickname from Firebase first
-                        try {
-                            const snap = await fbDb.ref('leaderboard/' + user.uid + '/nickname').once('value');
-                            const cloudNickname = snap.val();
-                            if (cloudNickname) {
-                                localStorage.setItem('phd_nickname', cloudNickname);
-                            } else if (!localStorage.getItem('phd_nickname')) {
-                                const name = prompt('👑 给自己起个名号吧（排行榜显示用）：', user.displayName || '无名侠客');
-                                localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
-                            }
-                        } catch(e) {
-                            if (!localStorage.getItem('phd_nickname')) {
-                                const name = prompt('👑 给自己起个名号吧（排行榜显示用）：', user.displayName || '无名侠客');
-                                localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
-                            }
+                        authProvider = 'google';
+                        if (!localStorage.getItem('phd_nickname')) {
+                            const name = prompt('👑 给自己起个名号吧：', user.displayName || '无名侠客');
+                            localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
                         }
                         updateNicknameDisplay();
                         loadDataFromFirebase();
-                        syncToFirebase();
+                        syncLeaderboard();
                     }
                     updateLeaderboardAuthUI();
                 });
-                
-                loadLeaderboard();
-            } catch(e) { console.error('Firebase init error:', e); }
+            } catch(e) { console.log('Firebase init (may fail in China):', e.message); }
+
+            // Init Supabase
+            try {
+                sbClient = window.supabase.createClient(SB_PROXY, SB_KEY);
+                sbClient.auth.onAuthStateChange((event, session) => {
+                    if (session?.user) {
+                        sbUser = session.user;
+                        authProvider = 'email';
+                        if (!localStorage.getItem('phd_nickname')) {
+                            const name = prompt('👑 给自己起个名号吧：', '无名侠客');
+                            localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                        }
+                        updateNicknameDisplay();
+                        loadDataFromSupabase();
+                        syncLeaderboard();
+                    } else if (authProvider === 'email') {
+                        sbUser = null;
+                        authProvider = null;
+                    }
+                    updateLeaderboardAuthUI();
+                });
+                sbClient.auth.getSession().then(({ data }) => {
+                    if (data.session?.user) {
+                        sbUser = data.session.user;
+                        authProvider = 'email';
+                        updateLeaderboardAuthUI();
+                        loadDataFromSupabase();
+                        syncLeaderboard();
+                    }
+                });
+            } catch(e) { console.log('Supabase init:', e.message); }
+
+            loadLeaderboard();
         }
 
+        // ===== Login =====
         function firebaseLogin() {
-            const choice = confirm('点「确定」用 Google 登录\n点「取消」用邮箱登录');
+            const choice = confirm('点「确定」用 Google 登录（海外）\n点「取消」用邮箱登录（国内外通用）');
             if (choice) {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithPopup(provider).catch(e => {
-                    console.error('Firebase login error:', e);
-                    alert('登录失败：' + e.message);
-                });
+                firebase.auth().signInWithPopup(provider).catch(e => alert('登录失败：' + e.message));
             } else {
                 showEmailLoginModal();
             }
@@ -2779,63 +2807,69 @@
                     <button class="text-gray-400 text-xl" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
                 <div class="space-y-3">
-                    <input type="email" id="fbEmailInput" placeholder="邮箱地址" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
-                    <input type="password" id="fbPasswordInput" placeholder="密码（至少6位）" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                    <input type="email" id="sbEmailInput" placeholder="邮箱地址" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
+                    <input type="password" id="sbPasswordInput" placeholder="密码（至少6位）" class="w-full p-2.5 border rounded-xl bg-gray-50 outline-none text-sm">
                     <div class="flex gap-2">
-                        <button onclick="emailLogin()" class="flex-1 bg-dopamine-purple text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">登录</button>
-                        <button onclick="emailRegister()" class="flex-1 bg-dopamine-sky text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">注册</button>
+                        <button onclick="sbEmailLogin()" class="flex-1 bg-dopamine-purple text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">登录</button>
+                        <button onclick="sbEmailRegister()" class="flex-1 bg-dopamine-sky text-white py-2.5 rounded-xl font-bold hover:opacity-90 transition">注册</button>
                     </div>
-                    <p class="text-[10px] text-gray-400 text-center">首次使用请先点「注册」</p>
+                    <p class="text-[10px] text-gray-400 text-center">首次使用请先点「注册」· 国内外均可使用</p>
                 </div>
             </div>`;
             document.body.appendChild(overlay);
         }
 
-        function emailLogin() {
-            const email = document.getElementById('fbEmailInput').value.trim();
-            const pass = document.getElementById('fbPasswordInput').value;
+        async function sbEmailLogin() {
+            const email = document.getElementById('sbEmailInput').value.trim();
+            const pass = document.getElementById('sbPasswordInput').value;
             if (!email || !pass) { alert('请填写邮箱和密码'); return; }
-            firebase.auth().signInWithEmailAndPassword(email, pass).then(() => {
-                document.querySelector('.modal-overlay.active').remove();
-            }).catch(e => alert('登录失败：' + (e.code === 'auth/wrong-password' ? '密码错误' : e.code === 'auth/user-not-found' ? '账号不存在，请先注册' : e.message)));
+            const { error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+            if (error) alert('登录失败：' + error.message);
+            else document.querySelector('.modal-overlay.active')?.remove();
         }
 
-        function emailRegister() {
-            const email = document.getElementById('fbEmailInput').value.trim();
-            const pass = document.getElementById('fbPasswordInput').value;
+        async function sbEmailRegister() {
+            const email = document.getElementById('sbEmailInput').value.trim();
+            const pass = document.getElementById('sbPasswordInput').value;
             if (!email || !pass) { alert('请填写邮箱和密码'); return; }
             if (pass.length < 6) { alert('密码至少6位'); return; }
-            firebase.auth().createUserWithEmailAndPassword(email, pass).then(() => {
-                document.querySelector('.modal-overlay.active').remove();
-                alert('✅ 注册成功！');
-            }).catch(e => alert('注册失败：' + (e.code === 'auth/email-already-in-use' ? '该邮箱已注册，请直接登录' : e.message)));
+            const { error } = await sbClient.auth.signUp({ email, password: pass });
+            if (error) alert('注册失败：' + error.message);
+            else { document.querySelector('.modal-overlay.active')?.remove(); alert('✅ 注册成功！'); }
         }
 
+        // ===== Logout =====
         async function firebaseLogout() {
-            if (confirm('确定退出排行榜登录？\n\n你的排名将从排行榜移除，进度数据会保留。')) {
-                if (fbDb && fbUser) {
-                    try {
-                        await fbDb.ref('leaderboard/' + fbUser.uid).remove();
-                        console.log('✅ 已从排行榜移除');
-                    } catch(e) { console.error('Delete error:', e); }
-                }
-                await firebase.auth().signOut();
-                fbUser = null;
-                localStorage.removeItem('phd_nickname');
-                localStorage.removeItem('phd_prev_rank');
-                updateLeaderboardAuthUI();
+            if (!confirm('确定退出？排名将从排行榜移除。')) return;
+            const uid = getCurrentUid();
+            // Remove from leaderboard
+            if (uid) {
+                try {
+                    await fetch(`${SB_PROXY}/rest/v1/public_leaderboard?uid=eq.${uid}`, {
+                        method: 'DELETE', headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+                    });
+                } catch(e) {}
             }
+            if (authProvider === 'google') { await firebase.auth().signOut(); fbUser = null; }
+            else if (authProvider === 'email') { await sbClient.auth.signOut(); sbUser = null; }
+            authProvider = null;
+            localStorage.removeItem('phd_nickname');
+            localStorage.removeItem('phd_prev_rank');
+            updateLeaderboardAuthUI();
         }
 
+        // ===== UI =====
         function updateLeaderboardAuthUI() {
             const el = document.getElementById('myNickname');
             if (!el) return;
-            if (fbUser) {
-                const name = localStorage.getItem('phd_nickname') || fbUser.displayName || '无名侠客';
-                el.innerHTML = `<span class="text-green-600">👤 ${escapeHtml(name)}</span> <span class="text-gray-400 text-[10px] ml-1" onclick="event.stopPropagation();firebaseLogout();" style="cursor:pointer;">退出</span>`;
+            const user = getCurrentUser();
+            if (user) {
+                const name = localStorage.getItem('phd_nickname') || (fbUser ? fbUser.displayName : '') || '无名侠客';
+                const providerLabel = authProvider === 'google' ? '🟢 Google' : '🔵 邮箱';
+                el.innerHTML = `<span class="text-green-600">👤 ${escapeHtml(name)}</span> <span class="text-[9px] text-gray-400">${providerLabel}</span> <span class="text-gray-400 text-[10px] ml-1" onclick="event.stopPropagation();firebaseLogout();" style="cursor:pointer;">退出</span>`;
                 el.onclick = changeNickname;
             } else {
-                el.innerHTML = `<button onclick="firebaseLogin()" class="bg-dopamine-purple text-white text-xs px-3 py-1 rounded-full font-bold hover:opacity-90 transition"><i class="fab fa-google"></i> 登录排行榜</button>`;
+                el.innerHTML = `<button onclick="firebaseLogin()" class="bg-dopamine-purple text-white text-xs px-3 py-1 rounded-full font-bold hover:opacity-90 transition">🔑 登录排行榜</button>`;
                 el.onclick = null;
             }
         }
@@ -2846,68 +2880,70 @@
             if (name && name.trim()) {
                 localStorage.setItem('phd_nickname', name.trim());
                 updateLeaderboardAuthUI();
-                syncToFirebase();
+                syncLeaderboard();
             }
         }
 
         function updateNicknameDisplay() { updateLeaderboardAuthUI(); }
-
-        function getMyFirebaseId() {
-            return fbUser ? fbUser.uid : null;
-        }
+        function getMyFirebaseId() { return getCurrentUid(); }
 
         function getWeekStats() {
             const now = new Date();
             const wStart = new Date(now); 
             wStart.setDate(now.getDate() - (now.getDay() || 7) + 1); 
             wStart.setHours(0, 0, 0, 0);
-
-            const weekFocus = appData.focusSessions
-                .filter(fs => fs.startTimestamp >= wStart.getTime())
-                .reduce((sum, fs) => sum + fs.durationMinutes, 0);
-
+            const weekFocus = appData.focusSessions.filter(fs => fs.startTimestamp >= wStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0);
             let weekCheckDays = 0;
             for (let d = new Date(wStart); d <= now; d.setDate(d.getDate() + 1)) {
                 const dStr = formatDateToYMD(d.getTime());
                 if (appData.checkRecords[dStr] && Object.values(appData.checkRecords[dStr]).some(v => v.start || v.end)) weekCheckDays++;
             }
-
             const weekTasks = appData.tasks.filter(t => t.status === "已完成" && t.completedAt >= wStart.getTime()).length;
             const streak = calculateStreak();
-
             return { weekFocus, weekCheckDays, weekTasks, streak };
         }
 
-        function syncToFirebase() {
-            if (!fbDb || !fbUser) return;
-            const uid = fbUser.uid;
-            const nickname = localStorage.getItem('phd_nickname') || fbUser.displayName || '无名侠客';
+        // ===== 排行榜统一写入 Supabase =====
+        async function syncLeaderboard() {
+            const uid = getCurrentUid();
+            if (!uid) return;
+            const nickname = localStorage.getItem('phd_nickname') || '无名侠客';
             const stats = getWeekStats();
-
-            fbDb.ref('leaderboard/' + uid).set({
-                nickname,
-                weekFocus: stats.weekFocus,
-                weekCheckDays: stats.weekCheckDays,
-                weekTasks: stats.weekTasks,
-                streak: stats.streak,
-                lastSync: Date.now()
-            }).catch(e => console.error('Firebase sync error:', e));
+            try {
+                await fetch(`${SB_PROXY}/rest/v1/public_leaderboard`, {
+                    method: 'POST',
+                    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                    body: JSON.stringify({
+                        uid, nickname,
+                        week_focus: stats.weekFocus,
+                        week_check_days: stats.weekCheckDays,
+                        week_tasks: stats.weekTasks,
+                        streak: stats.streak,
+                        auth_provider: authProvider || 'unknown',
+                        last_sync: new Date().toISOString()
+                    })
+                });
+                console.log('✅ 排行榜已同步');
+            } catch(e) { console.error('Leaderboard sync error:', e); }
         }
 
-        function loadLeaderboard() {
-            if (!fbDb) return;
-            fbDb.ref('leaderboard').orderByChild('weekFocus').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) { 
+        // Keep old name for compatibility
+        function syncToFirebase() { syncLeaderboard(); }
+
+        async function loadLeaderboard() {
+            try {
+                const resp = await fetch(`${SB_PROXY}/rest/v1/public_leaderboard?select=*&order=week_focus.desc`, {
+                    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+                });
+                if (!resp.ok) { console.log('Leaderboard load failed:', resp.status); return; }
+                const users = await resp.json();
+
+                if (!users || users.length === 0) {
                     document.getElementById('leaderboardList').innerHTML = '<div class="text-center text-gray-400 text-sm py-4">暂无数据，等朋友加入吧！</div>';
-                    return; 
+                    return;
                 }
 
-                const myUid = getMyFirebaseId();
-                const users = Object.entries(data)
-                    .map(([uid, d]) => ({ uid, ...d }))
-                    .sort((a, b) => b.weekFocus - a.weekFocus);
-
+                const myUid = getCurrentUid();
                 const medals = ['🥇', '🥈', '🥉'];
                 const rankTitles = ['👑 皇帝', '🗡️ 丞相', '🛡️ 大将军', '📜 御史大夫', '🏯 太守', '📚 翰林学士', '🔔 侍郎', '🧹 太监总管', '🪣 小太监', '🐴 马夫'];
                 const html = users.map((u, i) => {
@@ -2916,36 +2952,64 @@
                     const rankTitle = rankTitles[Math.min(i, rankTitles.length - 1)];
                     const bg = isMe ? 'bg-dopamine-purple/10 border-dopamine-purple/30' : (i === 0 ? 'bg-yellow-50/80 border-yellow-200' : 'bg-white/60 border-gray-100');
                     const nameStyle = i === 0 ? 'font-black text-dopamine-orange' : (isMe ? 'font-bold text-dopamine-purple' : 'text-gray-700');
-                    const ago = u.lastSync ? Math.round((Date.now() - u.lastSync) / 60000) : 0;
+                    const ago = u.last_sync ? Math.round((Date.now() - new Date(u.last_sync).getTime()) / 60000) : 0;
                     const agoText = ago < 1 ? '刚刚' : ago < 60 ? `${ago}分钟前` : ago < 1440 ? `${Math.round(ago/60)}小时前` : `${Math.round(ago/1440)}天前`;
+                    const provIcon = u.auth_provider === 'google' ? '🟢' : '🔵';
 
                     return `<div class="flex items-center gap-3 p-3 rounded-xl border ${bg} transition hover:shadow-sm">
                         <span class="text-xl w-8 text-center flex-shrink-0">${medal}</span>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="${nameStyle} text-sm truncate">${escapeHtml(u.nickname)}${isMe ? ' (我)' : ''}</span>
+                                <span class="${nameStyle} text-sm truncate">${provIcon} ${escapeHtml(u.nickname)}${isMe ? ' (我)' : ''}</span>
                                 ${u.streak >= 3 ? '<span class="text-[10px] bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded-full">🔥' + u.streak + '天</span>' : ''}
                             </div>
                             <div class="text-[10px] text-gray-400 mt-0.5">${rankTitle} · ${agoText}同步</div>
                         </div>
                         <div class="flex gap-4 text-xs flex-shrink-0">
-                            <div class="text-center"><div class="font-black text-dopamine-orange text-lg">${u.weekFocus}</div><div class="text-gray-400">分钟</div></div>
-                            <div class="text-center"><div class="font-black text-dopamine-sky text-lg">${u.weekCheckDays}</div><div class="text-gray-400">天</div></div>
-                            <div class="text-center"><div class="font-black text-dopamine-mint text-lg">${u.weekTasks}</div><div class="text-gray-400">奏折</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-orange text-lg">${u.week_focus}</div><div class="text-gray-400">分钟</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-sky text-lg">${u.week_check_days}</div><div class="text-gray-400">天</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-mint text-lg">${u.week_tasks}</div><div class="text-gray-400">奏折</div></div>
                         </div>
                     </div>`;
                 }).join('');
 
                 document.getElementById('leaderboardList').innerHTML = html;
 
-                // 登基动画：检测是否新晋皇帝
                 const myRank = myUid ? users.findIndex(u => u.uid === myUid) : -1;
                 const prevRank = parseInt(localStorage.getItem('phd_prev_rank') || '-1');
-                if (myRank === 0 && prevRank !== 0) {
-                    showCoronation();
-                }
+                if (myRank === 0 && prevRank !== 0) showCoronation();
                 localStorage.setItem('phd_prev_rank', myRank.toString());
-            });
+            } catch(e) { console.error('Leaderboard load error:', e); }
+
+            // Refresh every 30 seconds
+            setTimeout(loadLeaderboard, 30000);
+        }
+
+        // ===== Supabase 数据同步（邮箱用户）=====
+        async function loadDataFromSupabase() {
+            if (!sbClient || !sbUser) return;
+            try {
+                const { data } = await sbClient.from('user_data').select('*').eq('user_id', sbUser.id).single();
+                if (data && data.app_data) {
+                    mergeAppData(data.app_data);
+                    localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+                    renderAll();
+                    console.log('✅ 已从 Supabase 同步数据');
+                } else {
+                    saveDataToSupabase();
+                }
+            } catch(e) { console.log('Supabase data load:', e.message); }
+        }
+
+        async function saveDataToSupabase() {
+            if (!sbClient || !sbUser) return;
+            try {
+                await sbClient.from('user_data').upsert({
+                    user_id: sbUser.id,
+                    app_data: appData,
+                    last_sync: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+            } catch(e) { console.log('Supabase data save:', e.message); }
         }
 
         function showPomodoroComplete(minutes) {
@@ -3053,7 +3117,7 @@
             checkMorningCourt();
             initOura();
             setInterval(() => renderAll(), 60000);
-            setInterval(() => syncToFirebase(), 300000); // Auto sync every 5 min
+            setInterval(() => { syncLeaderboard(); if (authProvider === 'email') saveDataToSupabase(); }, 300000);
             requestAnimationFrame(patrolGuard); 
         }
         
@@ -3061,8 +3125,8 @@
         init();
         
         // Sync data when leaving page or switching tabs
-        window.addEventListener('beforeunload', () => saveDataToFirebase(true));
-        document.addEventListener('visibilitychange', () => { if (document.hidden && fbUser) saveDataToFirebase(true); });
+        window.addEventListener('beforeunload', () => { if (authProvider === 'google') saveDataToFirebase(true); else if (authProvider === 'email') saveDataToSupabase(); syncLeaderboard(); });
+        document.addEventListener('visibilitychange', () => { if (document.hidden && getCurrentUser()) { if (authProvider === 'google') saveDataToFirebase(true); else if (authProvider === 'email') saveDataToSupabase(); syncLeaderboard(); } });
         
         // PWA Service Worker
         if ('serviceWorker' in navigator) {
