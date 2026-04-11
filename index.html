@@ -85,13 +85,13 @@
         .night-mode #kingdomMap { background: linear-gradient(180deg,#2E3B2E 0%,#1B2E1B 100%) !important; border-color: #5D4037 !important; }
 
         /* 圣旨卡片 */
-        .decree-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 2px solid #EAB308; background: rgba(255,255,255,0.7); transition: all 0.3s; }
+        .decree-card { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; border: 2px solid #EAB308; background: rgba(255,255,255,0.7); transition: all 0.3s; cursor: pointer; }
         .decree-card.done { border-color: #22C55E; background: rgba(220,252,231,0.5); }
         .decree-card.done .decree-text { text-decoration: line-through; color: #9CA3AF; }
-        .decree-card .decree-seal { font-size: 1.5rem; cursor: pointer; transition: transform 0.2s; }
+        .decree-card .decree-seal { font-size: 1.1rem; transition: transform 0.2s; flex-shrink: 0; }
         .decree-card .decree-seal:hover { transform: scale(1.3); }
-        .decree-card .decree-text { flex: 1; font-weight: 700; font-size: 0.9rem; color: #78350F; font-family: '楷体','STKaiti',serif; }
-        .decree-card .decree-stamp { font-size: 1.8rem; opacity: 0; transition: all 0.3s; }
+        .decree-card .decree-text { flex: 1; font-weight: 700; font-size: 0.8rem; color: #78350F; font-family: '楷体','STKaiti',serif; line-height: 1.3; }
+        .decree-card .decree-stamp { font-size: 1.2rem; opacity: 0; transition: all 0.3s; flex-shrink: 0; }
         .decree-card.done .decree-stamp { opacity: 1; animation: stampSlam 0.4s ease-out; }
         @keyframes stampSlam { 0% { transform: scale(3) rotate(-20deg); opacity: 0; } 60% { transform: scale(0.9) rotate(5deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
         .night-mode .decree-card { background: rgba(60,50,30,0.7); border-color: #92400E; }
@@ -339,12 +339,12 @@
                 </div>
             </div>
 
-            <div id="module-decrees" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-4 md:p-5 hidden" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid #D4AF37;">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2"><span class="text-xl">🔱</span><h2 class="text-lg font-black text-yellow-800" style="font-family:'楷体','STKaiti',serif;">今日圣旨</h2><span id="decreesDone" class="text-xs bg-yellow-200 text-yellow-700 px-2 py-0.5 rounded-full"></span></div>
-                    <button onclick="openMorningCourt()" class="text-yellow-600 text-xs hover:text-yellow-800 transition"><i class="fas fa-edit"></i> 重拟</button>
+            <div id="module-decrees" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid #D4AF37;">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2"><span class="text-lg">🔱</span><h2 class="text-sm font-black text-yellow-800" style="font-family:'楷体','STKaiti',serif;">今日圣旨</h2><span id="decreesDone" class="text-[10px] bg-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-full"></span></div>
+                    <button onclick="openMorningCourt()" class="text-yellow-600 text-[10px] hover:text-yellow-800 transition"><i class="fas fa-edit"></i> 重拟</button>
                 </div>
-                <div id="decreesDisplay" class="space-y-2"></div>
+                <div id="decreesDisplay" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
             </div>
             
             <div id="module-focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #FF6B8B;">
@@ -450,14 +450,14 @@
                 <div class="flex items-center justify-between border-b border-yellow-700/20 pb-3 mb-4 mt-2">
                     <div class="flex items-center gap-2"><span class="text-xl">🏯</span><h2 class="text-xl font-bold text-yellow-900" style="font-family:'楷体','STKaiti',serif;">开疆拓土 · 江山万里图</h2><span id="kingdomProgress" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-1"></span></div>
                 </div>
-                <div id="kingdomMap" class="relative overflow-x-auto pb-2" style="background:linear-gradient(180deg,#E8F5E9 0%,#C8E6C9 40%,#A5D6A7 100%);border-radius:16px;border:3px solid #8D6E63;padding:20px;min-height:280px;">
-                    <div class="absolute inset-0 opacity-10" style="background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221%22 fill=%22%23333%22/></svg>');"></div>
-                    <div id="kingdomGrid" class="relative grid grid-cols-4 md:grid-cols-6 gap-3 md:gap-4"></div>
+                <div class="overflow-x-auto pb-2 rounded-2xl border-3 border-amber-700/30" style="cursor:grab;" id="kingdomScroll">
+                    <svg id="kingdomSvg" viewBox="0 0 1800 500" style="min-width:900px;width:100%;height:auto;border-radius:12px;" xmlns="http://www.w3.org/2000/svg"></svg>
                 </div>
                 <div class="flex justify-between items-center mt-3 text-[10px] text-yellow-800/60">
-                    <span>🔓 完成番茄钟和任务解锁新建筑</span>
+                    <span>🔓 完成番茄钟和任务解锁新建筑 · 点击建筑查看详情</span>
                     <span id="kingdomTotal"></span>
                 </div>
+                <div id="buildingTooltip" class="fixed hidden bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-4 z-[9999] border-2 border-yellow-400 max-w-[220px] text-center" style="pointer-events:none;"></div>
             </div>
 
             <div id="module-leaderboard" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #9B5DE5; background: linear-gradient(135deg, #F8F0FF, #FFF5F8);">
@@ -660,15 +660,18 @@
             saveDataToFirebase();
         }
         let firebaseSaveTimer = null;
-        function saveDataToFirebase() {
+        function saveDataToFirebase(immediate) {
             if (!fbDb || !fbUser) return;
             if (firebaseSaveTimer) clearTimeout(firebaseSaveTimer);
-            firebaseSaveTimer = setTimeout(() => {
+            const doSave = () => {
                 fbDb.ref('userData/' + fbUser.uid).set({
                     appData: JSON.stringify(appData),
                     lastSync: Date.now()
-                }).catch(e => console.error('Firebase data sync error:', e));
-            }, 2000); // Wait 2 seconds before syncing to batch rapid changes
+                }).then(() => console.log('✅ 云端同步成功'))
+                .catch(e => console.error('Firebase data sync error:', e));
+            };
+            if (immediate) { doSave(); } 
+            else { firebaseSaveTimer = setTimeout(doSave, 2000); }
         }
         function loadDataFromFirebase() {
             if (!fbDb || !fbUser) return;
@@ -1087,7 +1090,7 @@
                 container.appendChild(li);
             });
         }
-        function addIdea() { const txt = document.getElementById("ideaInput").value.trim(); if(!txt) return; appData.ideas.push({ text: txt, time: new Date().toLocaleString() }); saveData(); document.getElementById("ideaInput").value = ""; renderIdeas(); }
+        function addIdea() { const txt = document.getElementById("ideaInput").value.trim(); if(!txt) return; appData.ideas.push({ text: txt, time: new Date().toLocaleString() }); saveData(); saveDataToFirebase(true); document.getElementById("ideaInput").value = ""; renderIdeas(); }
         function renderIdeas() { const container = document.getElementById("ideaList"); if (!appData.ideas.length) { container.innerHTML = ""; return; } container.innerHTML = ""; [...appData.ideas].reverse().forEach((item) => { const li = document.createElement("li"); li.className = "bg-green-50/40 p-3 rounded-xl border-l-4 border-dopamine-mint text-sm text-gray-700"; li.innerHTML = `${escapeHtml(item.text)}<div class="text-[10px] text-gray-400 mt-1">${item.time}</div>`; container.appendChild(li); }); }
         
         // ================= 统计视图与图表 =================
@@ -1944,6 +1947,7 @@
             });
             
             saveData();
+            saveDataToFirebase(true); // Force immediate sync
             document.getElementById('morningCourtModal').classList.remove('active');
             renderDecrees();
             
@@ -2027,87 +2031,189 @@
             const decrees = getTodayDecrees();
             const skipped = localStorage.getItem('phd_court_skipped_' + today);
             
-            // Show morning court if: no decrees today AND not skipped AND it's before 2pm
             if (!decrees && !skipped && new Date().getHours() < 14) {
-                setTimeout(() => openMorningCourt(), 1500);
+                // Delay to let Firebase sync first
+                setTimeout(() => {
+                    // Re-check after sync
+                    const decreesAfterSync = getTodayDecrees();
+                    if (!decreesAfterSync) openMorningCourt();
+                    else renderDecrees();
+                }, 3000);
             }
             renderDecrees();
         }
 
         // ================= 江山万里图 =================
         const KINGDOM_BUILDINGS = [
-            { icon: '🏚️', name: '茅草屋', req: '完成第1个番茄钟', check: s => s.totalPomodoros >= 1 },
-            { icon: '🌾', name: '农田', req: '完成3个任务', check: s => s.totalTasks >= 3 },
-            { icon: '🏪', name: '客栈', req: '5个番茄钟', check: s => s.totalPomodoros >= 5 },
-            { icon: '🌸', name: '桃花林', req: '连续打卡3天', check: s => s.streak >= 3 },
-            { icon: '📖', name: '书院', req: '10个番茄钟', check: s => s.totalPomodoros >= 10 },
-            { icon: '🍜', name: '酒楼', req: '完成10个任务', check: s => s.totalTasks >= 10 },
-            { icon: '⛩️', name: '寺庙', req: '20个番茄钟', check: s => s.totalPomodoros >= 20 },
-            { icon: '🌉', name: '拱桥', req: '连续打卡7天', check: s => s.streak >= 7 },
-            { icon: '🎭', name: '戏楼', req: '完成20个任务', check: s => s.totalTasks >= 20 },
-            { icon: '🏮', name: '灯市', req: '50个番茄钟', check: s => s.totalPomodoros >= 50 },
-            { icon: '🗼', name: '望楼', req: '连续打卡14天', check: s => s.streak >= 14 },
-            { icon: '⚓', name: '码头', req: '100个番茄钟', check: s => s.totalPomodoros >= 100 },
-            { icon: '🏯', name: '王府', req: '完成50个任务', check: s => s.totalTasks >= 50 },
-            { icon: '🐉', name: '龙柱', req: '连续打卡30天', check: s => s.streak >= 30 },
-            { icon: '🎆', name: '烟火台', req: '200个番茄钟', check: s => s.totalPomodoros >= 200 },
-            { icon: '🏰', name: '紫禁城', req: '完成100个任务', check: s => s.totalTasks >= 100 },
-            { icon: '🐲', name: '九龙壁', req: '500个番茄钟', check: s => s.totalPomodoros >= 500 },
-            { icon: '👑', name: '万里江山', req: '解锁所有建筑', check: s => s.allUnlocked },
+            { icon: '🏚️', name: '茅草屋', req: '完成第1个番茄钟', check: s => s.totalPomodoros >= 1, x: 80, y: 320 },
+            { icon: '🌾', name: '农田', req: '完成3个任务', check: s => s.totalTasks >= 3, x: 200, y: 350 },
+            { icon: '🏪', name: '客栈', req: '5个番茄钟', check: s => s.totalPomodoros >= 5, x: 330, y: 300 },
+            { icon: '🌸', name: '桃花林', req: '连续打卡3天', check: s => s.streak >= 3, x: 460, y: 370 },
+            { icon: '📖', name: '书院', req: '10个番茄钟', check: s => s.totalPomodoros >= 10, x: 550, y: 280 },
+            { icon: '🍜', name: '酒楼', req: '完成10个任务', check: s => s.totalTasks >= 10, x: 680, y: 320 },
+            { icon: '⛩️', name: '寺庙', req: '20个番茄钟', check: s => s.totalPomodoros >= 20, x: 800, y: 240 },
+            { icon: '🌉', name: '拱桥', req: '连续打卡7天', check: s => s.streak >= 7, x: 920, y: 350 },
+            { icon: '🎭', name: '戏楼', req: '完成20个任务', check: s => s.totalTasks >= 20, x: 1040, y: 290 },
+            { icon: '🏮', name: '灯市', req: '50个番茄钟', check: s => s.totalPomodoros >= 50, x: 1160, y: 330 },
+            { icon: '🗼', name: '望楼', req: '连续打卡14天', check: s => s.streak >= 14, x: 1280, y: 250 },
+            { icon: '⚓', name: '码头', req: '100个番茄钟', check: s => s.totalPomodoros >= 100, x: 1380, y: 370 },
+            { icon: '🏯', name: '王府', req: '完成50个任务', check: s => s.totalTasks >= 50, x: 1480, y: 260 },
+            { icon: '🐉', name: '龙柱', req: '连续打卡30天', check: s => s.streak >= 30, x: 1580, y: 310 },
+            { icon: '🎆', name: '烟火台', req: '200个番茄钟', check: s => s.totalPomodoros >= 200, x: 1650, y: 240 },
+            { icon: '🏰', name: '紫禁城', req: '100个任务', check: s => s.totalTasks >= 100, x: 1730, y: 200 },
         ];
 
         function getKingdomStats() {
             const totalPomodoros = appData.focusSessions.length;
             const totalTasks = appData.tasks.filter(t => t.status === '已完成').length;
             const streak = calculateStreak();
-            return { totalPomodoros, totalTasks, streak, allUnlocked: false };
+            return { totalPomodoros, totalTasks, streak };
         }
 
         function renderKingdom() {
-            const grid = document.getElementById('kingdomGrid');
-            if (!grid) return;
+            const svg = document.getElementById('kingdomSvg');
+            if (!svg) return;
             const stats = getKingdomStats();
-            
-            // Check if all except last are unlocked
-            const unlockedCount = KINGDOM_BUILDINGS.slice(0, -1).filter(b => b.check(stats)).length;
-            stats.allUnlocked = unlockedCount === KINGDOM_BUILDINGS.length - 1;
-            
             const prevUnlocked = JSON.parse(localStorage.getItem('phd_kingdom_unlocked') || '[]');
-            const newUnlocked = [];
-            
-            grid.innerHTML = '';
+
+            // Build SVG
+            let s = '';
+            // Sky
+            s += `<defs>
+                <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#87CEEB"/><stop offset="60%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#F0FDF4"/></linearGradient>
+                <linearGradient id="waterGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#60A5FA"/><stop offset="50%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#60A5FA"/></linearGradient>
+                <filter id="shadow"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/></filter>
+            </defs>`;
+            s += `<rect width="1800" height="500" fill="url(#skyGrad)"/>`;
+
+            // Clouds
+            [200,600,1100,1500].forEach((cx,i) => {
+                const cy = 50 + (i%3)*25;
+                s += `<g opacity="0.5"><ellipse cx="${cx}" cy="${cy}" rx="60" ry="18" fill="white"/><ellipse cx="${cx-30}" cy="${cy+5}" rx="40" ry="14" fill="white"/><ellipse cx="${cx+35}" cy="${cy+3}" rx="45" ry="16" fill="white"/></g>`;
+            });
+
+            // Far mountains
+            s += `<path d="M0 200 Q150 80 300 180 Q450 60 600 170 Q750 90 900 160 Q1050 50 1200 180 Q1350 70 1500 150 Q1650 80 1800 190 L1800 500 L0 500Z" fill="#86EFAC" opacity="0.4"/>`;
+            s += `<path d="M0 240 Q200 140 400 230 Q600 120 800 220 Q1000 150 1200 230 Q1400 130 1600 210 Q1700 180 1800 240 L1800 500 L0 500Z" fill="#4ADE80" opacity="0.3"/>`;
+
+            // Ground
+            s += `<path d="M0 380 Q300 360 600 390 Q900 370 1200 395 Q1500 375 1800 385 L1800 500 L0 500Z" fill="#86EFAC"/>`;
+            s += `<path d="M0 400 Q400 385 800 405 Q1200 390 1800 400 L1800 500 L0 500Z" fill="#4ADE80"/>`;
+            s += `<rect x="0" y="440" width="1800" height="60" fill="#2D6A4F" opacity="0.3"/>`;
+
+            // River
+            s += `<path d="M0 410 Q200 395 400 415 Q600 400 800 420 Q1000 405 1200 418 Q1400 400 1600 415 Q1700 408 1800 412" stroke="url(#waterGrad)" stroke-width="18" fill="none" opacity="0.6" stroke-linecap="round"/>`;
+            s += `<path d="M0 410 Q200 395 400 415 Q600 400 800 420 Q1000 405 1200 418 Q1400 400 1600 415 Q1700 408 1800 412" stroke="white" stroke-width="2" fill="none" opacity="0.3" stroke-dasharray="8,12"/>`;
+
+            // Road path connecting buildings
+            s += `<path d="M60 340 Q150 330 200 360 Q270 340 330 310 Q400 340 460 380 Q510 330 550 290 Q620 310 680 330 Q740 290 800 250 Q860 300 920 360 Q980 320 1040 300 Q1100 320 1160 340 Q1220 290 1280 260 Q1330 320 1380 380 Q1430 310 1480 270 Q1530 290 1580 320 Q1610 280 1650 250 Q1690 230 1730 210" stroke="#8B7355" stroke-width="4" fill="none" opacity="0.4" stroke-dasharray="6,4"/>`;
+
+            // Trees scattered
+            const trees = [[50,370],[150,340],[270,370],[390,350],[500,370],[620,360],[760,330],[870,340],[980,360],[1100,350],[1230,370],[1340,340],[1430,350],[1550,370],[1700,340]];
+            trees.forEach(([tx,ty]) => {
+                s += `<g transform="translate(${tx},${ty})"><circle cx="0" cy="-12" r="10" fill="#22C55E" opacity="0.7"/><circle cx="-7" cy="-8" r="8" fill="#16A34A" opacity="0.6"/><circle cx="6" cy="-9" r="7" fill="#15803D" opacity="0.5"/><rect x="-2" y="-4" width="4" height="12" rx="1" fill="#8B7355"/></g>`;
+            });
+
+            // Buildings
             KINGDOM_BUILDINGS.forEach((b, i) => {
                 const unlocked = b.check(stats);
                 const isNew = unlocked && !prevUnlocked.includes(i);
-                if (isNew) newUnlocked.push(i);
-                
-                const div = document.createElement('div');
-                div.className = `kingdom-building ${unlocked ? 'unlocked' : 'locked'} ${isNew ? 'just-unlocked' : ''}`;
-                div.innerHTML = `
-                    <span class="building-icon">${b.icon}</span>
-                    <div class="building-name">${unlocked ? b.name : '???'}</div>
-                    <div class="building-req">${unlocked ? '✅ 已解锁' : b.req}</div>
-                `;
-                if (unlocked) div.title = `${b.name}：${b.req}`;
-                grid.appendChild(div);
+                const opacity = unlocked ? 1 : 0.3;
+                const filter = unlocked ? 'filter="url(#shadow)"' : '';
+                const gray = unlocked ? '' : 'filter: grayscale(1);';
+                const anim = isNew ? `<animateTransform attributeName="transform" type="scale" values="0;1.2;1" dur="0.6s" additive="sum"/>` : '';
+                const cursor = 'cursor:pointer;';
+
+                s += `<g transform="translate(${b.x},${b.y})" style="opacity:${opacity};${gray}${cursor}" onclick="showBuildingInfo(${i})" onmouseenter="showBuildingHover(event,${i})" onmouseleave="hideBuildingHover()">`;
+                s += anim;
+
+                if (unlocked) {
+                    // Building base
+                    s += `<rect x="-22" y="-40" width="44" height="35" rx="3" fill="#D4A373" ${filter}/>`;
+                    // Roof
+                    s += `<path d="M-30 -40 L0 -60 L30 -40Z" fill="#8B0000" ${filter}/>`;
+                    s += `<path d="M-33 -40 L0 -62 L33 -40" stroke="#D4AF37" stroke-width="1.5" fill="none"/>`;
+                    // Door
+                    s += `<rect x="-6" y="-20" width="12" height="16" rx="6" fill="#5D3A1A"/>`;
+                    // Lanterns
+                    s += `<circle cx="-18" cy="-30" r="4" fill="#EF4444" opacity="0.8"/><circle cx="18" cy="-30" r="4" fill="#EF4444" opacity="0.8"/>`;
+                    // Glow for new
+                    if (isNew) s += `<circle cx="0" cy="-30" r="35" fill="#FFD700" opacity="0.2"><animate attributeName="r" values="35;45;35" dur="1.5s" repeatCount="3"/><animate attributeName="opacity" values="0.2;0.4;0.2" dur="1.5s" repeatCount="3"/></circle>`;
+                } else {
+                    // Locked: just a foundation outline
+                    s += `<rect x="-22" y="-40" width="44" height="35" rx="3" fill="#9CA3AF" opacity="0.5" stroke="#6B7280" stroke-dasharray="4,2"/>`;
+                    s += `<path d="M-30 -40 L0 -60 L30 -40Z" fill="#9CA3AF" opacity="0.3"/>`;
+                    s += `<text x="0" y="-25" text-anchor="middle" font-size="18" fill="#6B7280">🔒</text>`;
+                }
+
+                // Label
+                s += `<text x="0" y="12" text-anchor="middle" font-size="11" font-weight="bold" fill="${unlocked ? '#5D4037' : '#9CA3AF'}" font-family="'楷体','STKaiti',serif">${unlocked ? b.name : '???'}</text>`;
+                s += `</g>`;
             });
-            
-            // Update progress
-            const total = KINGDOM_BUILDINGS.length;
+
+            // Sun
+            s += `<circle cx="1700" cy="60" r="35" fill="#FDE68A" opacity="0.8"/><circle cx="1700" cy="60" r="28" fill="#FCD34D"/>`;
+
+            svg.innerHTML = s;
+
+            // Progress
             const done = KINGDOM_BUILDINGS.filter(b => b.check(stats)).length;
-            document.getElementById('kingdomProgress').innerText = `${done}/${total} 已解锁`;
+            document.getElementById('kingdomProgress').innerText = `${done}/${KINGDOM_BUILDINGS.length} 已解锁`;
             document.getElementById('kingdomTotal').innerText = `🍅${stats.totalPomodoros}个番茄钟 · ✅${stats.totalTasks}个任务 · 🔥${stats.streak}天连续`;
-            
-            // Save unlocked state
+
+            // Save & check new unlocks
             const allUnlockedIds = KINGDOM_BUILDINGS.map((b, i) => b.check(stats) ? i : -1).filter(i => i >= 0);
             localStorage.setItem('phd_kingdom_unlocked', JSON.stringify(allUnlockedIds));
-            
-            // Show unlock celebration for new buildings
-            if (newUnlocked.length > 0 && prevUnlocked.length > 0) {
-                const b = KINGDOM_BUILDINGS[newUnlocked[0]];
-                showBuildingUnlock(b);
+            if (prevUnlocked.length > 0) {
+                const newOnes = allUnlockedIds.filter(id => !prevUnlocked.includes(id));
+                if (newOnes.length > 0) showBuildingUnlock(KINGDOM_BUILDINGS[newOnes[0]]);
             }
         }
+
+        function showBuildingInfo(index) {
+            const b = KINGDOM_BUILDINGS[index];
+            const stats = getKingdomStats();
+            const unlocked = b.check(stats);
+            isShowingAlert = true;
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);animation:scaryFadeIn 0.3s;cursor:pointer;';
+            overlay.innerHTML = `<div style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border-radius:20px;padding:30px;text-align:center;max-width:300px;border:3px solid ${unlocked?'#D4AF37':'#9CA3AF'};box-shadow:0 20px 40px rgba(0,0,0,0.3);animation:coronationZoom 0.4s;">
+                <div style="font-size:60px;margin-bottom:10px;">${unlocked ? b.icon : '🔒'}</div>
+                <h3 style="font-size:1.5rem;font-weight:900;color:${unlocked?'#78350F':'#6B7280'};font-family:'楷体','STKaiti',serif;margin-bottom:8px;">${unlocked ? b.name : '???'}</h3>
+                <p style="font-size:0.9rem;color:${unlocked?'#92400E':'#9CA3AF'};margin-bottom:4px;">${b.req}</p>
+                <p style="font-size:0.8rem;color:${unlocked?'#22C55E':'#EF4444'};font-weight:bold;">${unlocked ? '✅ 已解锁' : '🔒 未解锁'}</p>
+            </div>`;
+            overlay.onclick = () => { overlay.remove(); isShowingAlert = false; };
+            document.body.appendChild(overlay);
+        }
+
+        function showBuildingHover(event, index) {
+            const b = KINGDOM_BUILDINGS[index];
+            const stats = getKingdomStats();
+            const unlocked = b.check(stats);
+            const tip = document.getElementById('buildingTooltip');
+            tip.innerHTML = `<div style="font-size:24px;">${unlocked ? b.icon : '🔒'}</div><div style="font-weight:900;color:#78350F;font-family:'楷体','STKaiti',serif;">${unlocked ? b.name : '???'}</div><div style="font-size:11px;color:#92400E;">${b.req}</div>`;
+            tip.classList.remove('hidden');
+            tip.style.left = Math.min(event.pageX + 10, window.innerWidth - 240) + 'px';
+            tip.style.top = (event.pageY - 80) + 'px';
+        }
+
+        function hideBuildingHover() {
+            document.getElementById('buildingTooltip').classList.add('hidden');
+        }
+
+        // Drag to scroll the map
+        (function(){
+            const el = document.getElementById('kingdomScroll');
+            if(!el) return;
+            let isDown=false, startX, scrollLeft;
+            el.addEventListener('mousedown',e=>{if(e.target.closest('g'))return;isDown=true;el.style.cursor='grabbing';startX=e.pageX-el.offsetLeft;scrollLeft=el.scrollLeft;});
+            el.addEventListener('mouseleave',()=>{isDown=false;el.style.cursor='grab';});
+            el.addEventListener('mouseup',()=>{isDown=false;el.style.cursor='grab';});
+            el.addEventListener('mousemove',e=>{if(!isDown)return;e.preventDefault();el.scrollLeft=scrollLeft-(e.pageX-el.offsetLeft-startX);});
+            el.addEventListener('touchstart',e=>{startX=e.touches[0].pageX-el.offsetLeft;scrollLeft=el.scrollLeft;},{passive:true});
+            el.addEventListener('touchmove',e=>{el.scrollLeft=scrollLeft-(e.touches[0].pageX-el.offsetLeft-startX);},{passive:true});
+        })();
 
         function showBuildingUnlock(building) {
             const overlay = document.createElement('div');
@@ -2464,6 +2570,10 @@
         
         // 陛下驾到，系统启动！
         init();
+        
+        // Sync data when leaving page or switching tabs
+        window.addEventListener('beforeunload', () => saveDataToFirebase(true));
+        document.addEventListener('visibilitychange', () => { if (document.hidden && fbUser) saveDataToFirebase(true); });
         
         // PWA Service Worker
         if ('serviceWorker' in navigator) {
