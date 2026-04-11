@@ -514,7 +514,7 @@
     </div>
                     
         <div class="text-center text-gray-400 text-xs mt-8 pt-4 border-t border-dopamine-yellow/30 flex justify-center gap-3">
-            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> MOMO Inspired by Reed</span>
+            <span><i class="far fa-save"></i> 史库自动存档</span><span>·</span><span><i class="fas fa-arrows-alt"></i> 支持拖动排序与满宽半宽并列</span><span>·</span><span><i class="far fa-smile"></i> 圣意起居相伴</span> <span><i class="far fa-save"></i> mono edited from Reed</span>
         </div>
     </div>
 
@@ -2063,6 +2063,163 @@
             { icon: '🏰', name: '紫禁城', req: '100个任务', check: s => s.totalTasks >= 100, x: 1730, y: 200 },
         ];
 
+        function getBuildingSvg(idx) {
+            const f = 'filter="url(#shadow)"';
+            switch(idx) {
+                case 0: // 茅草屋 - thatched cottage
+                    return `<rect x="-18" y="-30" width="36" height="28" rx="2" fill="#C4A882" ${f}/>
+                        <path d="M-26 -30 L0 -52 L26 -30Z" fill="#8B7355"/>
+                        <path d="M-28 -30 L0 -54 L28 -30" stroke="#A0845C" stroke-width="2" fill="none"/>
+                        <line x1="-20" y1="-38" x2="20" y2="-38" stroke="#9B8B6F" stroke-width="1.5"/>
+                        <line x1="-14" y1="-44" x2="14" y2="-44" stroke="#9B8B6F" stroke-width="1.5"/>
+                        <rect x="-5" y="-14" width="10" height="13" rx="1" fill="#5D3A1A"/>`;
+                case 1: // 农田 - farmland
+                    return `<rect x="-28" y="-20" width="56" height="22" rx="3" fill="#7CB342" ${f}/>
+                        <line x1="-24" y1="-14" x2="24" y2="-14" stroke="#558B2F" stroke-width="2"/>
+                        <line x1="-24" y1="-8" x2="24" y2="-8" stroke="#558B2F" stroke-width="2"/>
+                        <line x1="-24" y1="-2" x2="24" y2="-2" stroke="#558B2F" stroke-width="2"/>
+                        <rect x="-28" y="0" width="56" height="4" rx="1" fill="#4FC3F7" opacity="0.5"/>
+                        <line x1="-10" y1="-18" x2="-10" y2="-4" stroke="#33691E" stroke-width="1"/>
+                        <line x1="0" y1="-18" x2="0" y2="-4" stroke="#33691E" stroke-width="1"/>
+                        <line x1="10" y1="-18" x2="10" y2="-4" stroke="#33691E" stroke-width="1"/>`;
+                case 2: // 客栈 - inn
+                    return `<rect x="-22" y="-45" width="44" height="42" rx="2" fill="#D7CCC8" ${f}/>
+                        <path d="M-30 -45 L0 -62 L30 -45Z" fill="#5D4037"/>
+                        <path d="M-32 -45 L0 -64 L32 -45" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+                        <rect x="-16" y="-38" width="12" height="10" rx="1" fill="#FFF9C4" opacity="0.6"/>
+                        <rect x="4" y="-38" width="12" height="10" rx="1" fill="#FFF9C4" opacity="0.6"/>
+                        <rect x="-6" y="-16" width="12" height="14" rx="1" fill="#3E2723"/>
+                        <rect x="-3" y="-55" width="6" height="14" rx="1" fill="#EF4444"/>
+                        <text x="0" y="-47" text-anchor="middle" font-size="5" fill="#FFF" font-weight="bold">客栈</text>`;
+                case 3: // 桃花林 - peach blossom forest
+                    return `<circle cx="-15" cy="-30" r="16" fill="#F48FB1" opacity="0.7" ${f}/>
+                        <circle cx="10" cy="-35" r="14" fill="#F06292" opacity="0.6"/>
+                        <circle cx="0" cy="-22" r="12" fill="#EC407A" opacity="0.5"/>
+                        <circle cx="-8" cy="-38" r="10" fill="#FCE4EC" opacity="0.6"/>
+                        <rect x="-17" y="-18" width="4" height="16" rx="1" fill="#795548"/>
+                        <rect x="8" y="-22" width="4" height="20" rx="1" fill="#795548"/>
+                        <rect x="-2" y="-12" width="3" height="10" rx="1" fill="#795548"/>
+                        <circle cx="-5" cy="-35" r="2" fill="#FFF" opacity="0.7"/>
+                        <circle cx="5" cy="-28" r="2" fill="#FFF" opacity="0.7"/>
+                        <circle cx="12" cy="-40" r="1.5" fill="#FFF" opacity="0.6"/>`;
+                case 4: // 书院 - academy
+                    return `<rect x="-24" y="-42" width="48" height="38" rx="2" fill="#EFEBE9" ${f}/>
+                        <path d="M-32 -42 Q0 -68 32 -42Z" fill="#1565C0"/>
+                        <path d="M-34 -42 Q0 -70 34 -42" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+                        <rect x="-18" y="-34" width="14" height="12" rx="1" fill="#E3F2FD"/>
+                        <rect x="4" y="-34" width="14" height="12" rx="1" fill="#E3F2FD"/>
+                        <rect x="-6" y="-16" width="12" height="14" rx="1" fill="#3E2723"/>
+                        <text x="0" y="-52" text-anchor="middle" font-size="5" fill="#FFF" font-weight="bold">学</text>`;
+                case 5: // 酒楼 - restaurant
+                    return `<rect x="-20" y="-58" width="40" height="55" rx="2" fill="#FFCCBC" ${f}/>
+                        <path d="M-28 -58 L0 -72 L28 -58Z" fill="#BF360C"/>
+                        <line x1="-20" y1="-35" x2="20" y2="-35" stroke="#D7CCC8" stroke-width="1"/>
+                        <rect x="-14" y="-52" width="10" height="8" rx="1" fill="#FFF9C4" opacity="0.6"/>
+                        <rect x="4" y="-52" width="10" height="8" rx="1" fill="#FFF9C4" opacity="0.6"/>
+                        <rect x="-14" y="-30" width="10" height="8" rx="1" fill="#FFF9C4" opacity="0.5"/>
+                        <rect x="4" y="-30" width="10" height="8" rx="1" fill="#FFF9C4" opacity="0.5"/>
+                        <rect x="-5" y="-14" width="10" height="13" rx="1" fill="#3E2723"/>
+                        <circle cx="-18" cy="-45" r="4" fill="#EF4444" opacity="0.8"/>
+                        <circle cx="18" cy="-45" r="4" fill="#EF4444" opacity="0.8"/>`;
+                case 6: // 寺庙 - pagoda temple
+                    return `<rect x="-14" y="-30" width="28" height="28" rx="1" fill="#FFF8E1" ${f}/>
+                        <path d="M-20 -30 L0 -45 L20 -30Z" fill="#E65100"/>
+                        <path d="M-12 -45 L0 -56 L12 -45Z" fill="#BF360C"/>
+                        <path d="M-6 -56 L0 -63 L6 -56Z" fill="#8B0000"/>
+                        <path d="M-22 -30 L0 -47 L22 -30" stroke="#D4AF37" stroke-width="1" fill="none"/>
+                        <rect x="-4" y="-14" width="8" height="12" rx="4" fill="#5D4037"/>
+                        <line x1="0" y1="-63" x2="0" y2="-70" stroke="#D4AF37" stroke-width="2"/>
+                        <circle cx="0" cy="-72" r="2.5" fill="#FFD700"/>`;
+                case 7: // 拱桥 - arch bridge
+                    return `<path d="M-35 0 Q-20 -35 0 -30 Q20 -35 35 0" fill="none" stroke="#8D6E63" stroke-width="5" ${f}/>
+                        <path d="M-35 0 Q-20 -35 0 -30 Q20 -35 35 0" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+                        <line x1="-28" y1="-8" x2="-28" y2="0" stroke="#8D6E63" stroke-width="3"/>
+                        <line x1="-14" y1="-22" x2="-14" y2="-10" stroke="#8D6E63" stroke-width="3"/>
+                        <line x1="0" y1="-28" x2="0" y2="-16" stroke="#8D6E63" stroke-width="3"/>
+                        <line x1="14" y1="-22" x2="14" y2="-10" stroke="#8D6E63" stroke-width="3"/>
+                        <line x1="28" y1="-8" x2="28" y2="0" stroke="#8D6E63" stroke-width="3"/>
+                        <path d="M-40 2 Q0 8 40 2" fill="#64B5F6" opacity="0.4"/>`;
+                case 8: // 戏楼 - theater
+                    return `<rect x="-24" y="-42" width="48" height="40" rx="2" fill="#FBE9E7" ${f}/>
+                        <path d="M-30 -42 L0 -58 L30 -42Z" fill="#C62828"/>
+                        <path d="M-32 -42 L0 -60 L32 -42" stroke="#FFD700" stroke-width="1.5" fill="none"/>
+                        <path d="M-18 -38 Q-18 -28 -12 -28" fill="none" stroke="#C62828" stroke-width="3"/>
+                        <path d="M18 -38 Q18 -28 12 -28" fill="none" stroke="#C62828" stroke-width="3"/>
+                        <rect x="-10" y="-28" width="20" height="16" rx="1" fill="#FFECB3"/>
+                        <text x="0" y="-18" text-anchor="middle" font-size="8" fill="#C62828">🎭</text>
+                        <rect x="-5" y="-14" width="10" height="13" rx="1" fill="#5D4037"/>`;
+                case 9: // 灯市 - lantern market
+                    return `<rect x="-30" y="-20" width="60" height="18" rx="2" fill="#D7CCC8" ${f}/>
+                        <line x1="-25" y1="-22" x2="25" y2="-22" stroke="#8D6E63" stroke-width="2"/>
+                        <circle cx="-20" cy="-32" r="6" fill="#F44336" opacity="0.85"/><line x1="-20" y1="-26" x2="-20" y2="-22" stroke="#8D6E63" stroke-width="1"/>
+                        <circle cx="-6" cy="-35" r="6" fill="#FF9800" opacity="0.85"/><line x1="-6" y1="-29" x2="-6" y2="-22" stroke="#8D6E63" stroke-width="1"/>
+                        <circle cx="8" cy="-30" r="6" fill="#FFEB3B" opacity="0.85"/><line x1="8" y1="-24" x2="8" y2="-22" stroke="#8D6E63" stroke-width="1"/>
+                        <circle cx="22" cy="-34" r="6" fill="#F44336" opacity="0.85"/><line x1="22" y1="-28" x2="22" y2="-22" stroke="#8D6E63" stroke-width="1"/>
+                        <circle cx="-20" cy="-32" r="3" fill="#FFCDD2" opacity="0.5"/>
+                        <circle cx="8" cy="-30" r="3" fill="#FFF9C4" opacity="0.5"/>`;
+                case 10: // 望楼 - watchtower
+                    return `<rect x="-10" y="-65" width="20" height="62" rx="1" fill="#A1887F" ${f}/>
+                        <path d="M-18 -65 L0 -78 L18 -65Z" fill="#5D4037"/>
+                        <path d="M-20 -65 L0 -80 L20 -65" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+                        <rect x="-6" y="-58" width="12" height="8" fill="#FFF9C4" opacity="0.5"/>
+                        <rect x="-6" y="-42" width="12" height="8" fill="#FFF9C4" opacity="0.4"/>
+                        <line x1="-10" y1="-48" x2="10" y2="-48" stroke="#8D6E63" stroke-width="1.5"/>
+                        <rect x="-4" y="-10" width="8" height="8" rx="1" fill="#3E2723"/>`;
+                case 11: // 码头 - dock
+                    return `<rect x="-30" y="-8" width="60" height="8" rx="1" fill="#8D6E63" ${f}/>
+                        <line x1="-25" y1="-8" x2="-25" y2="4" stroke="#5D4037" stroke-width="3"/>
+                        <line x1="0" y1="-8" x2="0" y2="4" stroke="#5D4037" stroke-width="3"/>
+                        <line x1="25" y1="-8" x2="25" y2="4" stroke="#5D4037" stroke-width="3"/>
+                        <path d="M-28 -12 Q-22 -24 -10 -20 L-10 -10 L-28 -10Z" fill="#D7CCC8" ${f}/>
+                        <path d="M-24 -20 L-16 -34" stroke="#8D6E63" stroke-width="2"/>
+                        <path d="M-16 -34 L-16 -20 L-10 -18" fill="#C62828" opacity="0.6"/>
+                        <path d="M15 -6 Q25 -10 35 -4" fill="#64B5F6" opacity="0.3"/>`;
+                case 12: // 王府 - prince mansion
+                    return `<rect x="-30" y="-45" width="60" height="42" rx="2" fill="#FFECB3" ${f}/>
+                        <path d="M-38 -45 L0 -68 L38 -45Z" fill="#C62828"/>
+                        <path d="M-40 -45 L0 -70 L40 -45" stroke="#FFD700" stroke-width="2" fill="none"/>
+                        <rect x="-24" y="-38" width="16" height="12" rx="1" fill="#FFF9C4"/>
+                        <rect x="8" y="-38" width="16" height="12" rx="1" fill="#FFF9C4"/>
+                        <rect x="-8" y="-18" width="16" height="16" rx="1" fill="#5D4037"/>
+                        <rect x="-4" y="-14" width="8" height="12" rx="4" fill="#3E2723"/>
+                        <circle cx="-5" cy="-10" r="1.5" fill="#FFD700"/>
+                        <circle cx="5" cy="-10" r="1.5" fill="#FFD700"/>`;
+                case 13: // 龙柱 - dragon pillar
+                    return `<rect x="-6" y="-60" width="12" height="58" rx="2" fill="#C62828" ${f}/>
+                        <rect x="-10" y="-62" width="20" height="6" rx="2" fill="#FFD700"/>
+                        <rect x="-10" y="-4" width="20" height="6" rx="2" fill="#FFD700"/>
+                        <path d="M-6 -50 Q-12 -42 -6 -34 Q0 -26 -6 -18" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+                        <path d="M6 -55 Q12 -47 6 -39 Q0 -31 6 -23" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+                        <circle cx="0" cy="-62" r="5" fill="#FFD700"/>
+                        <circle cx="0" cy="-62" r="3" fill="#C62828"/>`;
+                case 14: // 烟火台 - fireworks platform
+                    return `<path d="M-25 -5 L-18 -30 L18 -30 L25 -5Z" fill="#8D6E63" ${f}/>
+                        <rect x="-18" y="-35" width="36" height="6" rx="1" fill="#A1887F"/>
+                        <rect x="-14" y="-38" width="28" height="4" rx="1" fill="#D4AF37"/>
+                        <line x1="-5" y1="-38" x2="-8" y2="-52" stroke="#FF9800" stroke-width="1.5"/>
+                        <line x1="5" y1="-38" x2="8" y2="-55" stroke="#FF9800" stroke-width="1.5"/>
+                        <circle cx="-8" cy="-54" r="4" fill="#FF5722" opacity="0.7"/>
+                        <circle cx="8" cy="-57" r="5" fill="#FFC107" opacity="0.6"/>
+                        <circle cx="-10" cy="-56" r="2" fill="#FFEB3B" opacity="0.8"/>
+                        <circle cx="10" cy="-60" r="2" fill="#FF8A65" opacity="0.7"/>
+                        <circle cx="0" cy="-50" r="3" fill="#F44336" opacity="0.5"/>`;
+                case 15: // 紫禁城 - forbidden city
+                    return `<rect x="-38" y="-50" width="76" height="48" rx="2" fill="#FFE082" ${f}/>
+                        <path d="M-46 -50 L0 -76 L46 -50Z" fill="#C62828"/>
+                        <path d="M-48 -50 L0 -78 L48 -50" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+                        <rect x="-30" y="-42" width="18" height="14" rx="1" fill="#FFF9C4"/>
+                        <rect x="12" y="-42" width="18" height="14" rx="1" fill="#FFF9C4"/>
+                        <rect x="-10" y="-20" width="20" height="18" rx="1" fill="#5D4037"/>
+                        <rect x="-6" y="-16" width="12" height="14" rx="6" fill="#3E2723"/>
+                        <circle cx="-4" cy="-11" r="2" fill="#FFD700"/><circle cx="4" cy="-11" r="2" fill="#FFD700"/>
+                        <circle cx="-34" cy="-40" r="5" fill="#EF4444" opacity="0.8"/>
+                        <circle cx="34" cy="-40" r="5" fill="#EF4444" opacity="0.8"/>
+                        <line x1="0" y1="-76" x2="0" y2="-82" stroke="#FFD700" stroke-width="2"/>
+                        <circle cx="0" cy="-84" r="3" fill="#FFD700"/>`;
+                default: return '';
+            }
+        }
+
         function getKingdomStats() {
             const totalPomodoros = appData.focusSessions.length;
             const totalTasks = appData.tasks.filter(t => t.status === '已完成').length;
@@ -2128,22 +2285,12 @@
                 s += anim;
 
                 if (unlocked) {
-                    // Building base
-                    s += `<rect x="-22" y="-40" width="44" height="35" rx="3" fill="#D4A373" ${filter}/>`;
-                    // Roof
-                    s += `<path d="M-30 -40 L0 -60 L30 -40Z" fill="#8B0000" ${filter}/>`;
-                    s += `<path d="M-33 -40 L0 -62 L33 -40" stroke="#D4AF37" stroke-width="1.5" fill="none"/>`;
-                    // Door
-                    s += `<rect x="-6" y="-20" width="12" height="16" rx="6" fill="#5D3A1A"/>`;
-                    // Lanterns
-                    s += `<circle cx="-18" cy="-30" r="4" fill="#EF4444" opacity="0.8"/><circle cx="18" cy="-30" r="4" fill="#EF4444" opacity="0.8"/>`;
-                    // Glow for new
-                    if (isNew) s += `<circle cx="0" cy="-30" r="35" fill="#FFD700" opacity="0.2"><animate attributeName="r" values="35;45;35" dur="1.5s" repeatCount="3"/><animate attributeName="opacity" values="0.2;0.4;0.2" dur="1.5s" repeatCount="3"/></circle>`;
+                    s += getBuildingSvg(i);
+                    if (isNew) s += `<circle cx="0" cy="-30" r="40" fill="#FFD700" opacity="0.2"><animate attributeName="r" values="35;50;35" dur="1.5s" repeatCount="3"/><animate attributeName="opacity" values="0.2;0.4;0.2" dur="1.5s" repeatCount="3"/></circle>`;
                 } else {
-                    // Locked: just a foundation outline
-                    s += `<rect x="-22" y="-40" width="44" height="35" rx="3" fill="#9CA3AF" opacity="0.5" stroke="#6B7280" stroke-dasharray="4,2"/>`;
-                    s += `<path d="M-30 -40 L0 -60 L30 -40Z" fill="#9CA3AF" opacity="0.3"/>`;
-                    s += `<text x="0" y="-25" text-anchor="middle" font-size="18" fill="#6B7280">🔒</text>`;
+                    s += `<rect x="-25" y="-45" width="50" height="40" rx="4" fill="#9CA3AF" opacity="0.4" stroke="#6B7280" stroke-dasharray="4,2"/>`;
+                    s += `<path d="M-32 -45 L0 -65 L32 -45Z" fill="#9CA3AF" opacity="0.25"/>`;
+                    s += `<text x="0" y="-22" text-anchor="middle" font-size="20" fill="#6B7280">🔒</text>`;
                 }
 
                 // Label
@@ -2332,9 +2479,15 @@
         }
 
         function firebaseLogout() {
-            if (confirm('确定退出排行榜登录？')) {
+            if (confirm('确定退出排行榜登录？\n\n你的排名数据将从排行榜移除。')) {
+                // Remove leaderboard data
+                if (fbDb && fbUser) {
+                    fbDb.ref('leaderboard/' + fbUser.uid).remove();
+                }
                 firebase.auth().signOut();
                 fbUser = null;
+                localStorage.removeItem('phd_nickname');
+                localStorage.removeItem('phd_prev_rank');
                 updateLeaderboardAuthUI();
             }
         }
@@ -2344,7 +2497,7 @@
             if (!el) return;
             if (fbUser) {
                 const name = localStorage.getItem('phd_nickname') || fbUser.displayName || '无名侠客';
-                el.innerHTML = `<span class="text-green-600">👤 ${escapeHtml(name)}</span>`;
+                el.innerHTML = `<span class="text-green-600">👤 ${escapeHtml(name)}</span> <span class="text-gray-400 text-[10px] ml-1" onclick="event.stopPropagation();firebaseLogout();" style="cursor:pointer;">退出</span>`;
                 el.onclick = changeNickname;
             } else {
                 el.innerHTML = `<button onclick="firebaseLogin()" class="bg-dopamine-purple text-white text-xs px-3 py-1 rounded-full font-bold hover:opacity-90 transition"><i class="fab fa-google"></i> 登录排行榜</button>`;
