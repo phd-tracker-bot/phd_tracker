@@ -110,21 +110,34 @@
         /* 底部停靠 (高度适当增加) */
         .drawer-bottom { bottom: 0; left: 50%; width: 100%; max-width: 80rem; height: 60vh; border-radius: 24px 24px 0 0; border-top: 4px solid #FF8C42; transform: translate(-50%, 100%); }
         .drawer-bottom.open { transform: translate(-50%, 0); }
-        .drawer-bottom .drawer-toggle-btn { top: -48px; left: 50%; transform: translateX(-50%); height: 48px; padding: 0 36px; border-radius: 24px 24px 0 0; border-bottom: none; flex-direction: row; }
 
         /* 左侧停靠 (宽度加宽至 500px，防止内容挤压) */
         .drawer-left { top: 0; left: 0; width: 500px; max-width: 90vw; height: 100vh; border-radius: 0 24px 24px 0; border-right: 4px solid #FF8C42; transform: translateX(-100%); }
         .drawer-left.open { transform: translateX(0); }
-        .drawer-left .drawer-toggle-btn { right: -48px; top: 15%; width: 48px; padding: 36px 0; border-radius: 0 24px 24px 0; border-left: none; flex-direction: row; writing-mode: vertical-rl; text-orientation: upright; }
 
         /* 右侧停靠 (宽度加宽至 500px) */
         .drawer-right { top: 0; right: 0; width: 500px; max-width: 90vw; height: 100vh; border-radius: 24px 0 0 24px; border-left: 4px solid #FF8C42; transform: translateX(100%); }
         .drawer-right.open { transform: translateX(0); }
-        .drawer-right .drawer-toggle-btn { left: -48px; top: 15%; width: 48px; padding: 36px 0; border-radius: 24px 0 0 24px; border-right: none; flex-direction: row; writing-mode: vertical-rl; text-orientation: upright; }
 
-        /* 按钮通用：强制高宽，绝对外挂，永不遮挡内务，内部完全居中 */
-        .drawer-toggle-btn { position: absolute; background: linear-gradient(135deg, #FF8C42, #FF6B8B); color: white; cursor: pointer; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; transition: filter 0.3s; border: 2px solid white; display: flex; align-items: center; justify-content: center; text-align: center; gap: 8px; box-shadow: 0 0 20px rgba(255, 107, 139, 0.4); z-index: 901; }
+        /* 按钮通用：小标签，悬停展开 */
+        .drawer-toggle-btn { position: absolute; background: linear-gradient(135deg, #FF8C42, #FF6B8B); color: white; cursor: pointer; font-weight: 900; transition: all 0.3s; border: 2px solid white; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 15px rgba(255, 107, 139, 0.3); z-index: 901; overflow: hidden; }
         .drawer-toggle-btn:hover { filter: brightness(1.1); }
+        .drawer-toggle-btn .btn-text { opacity: 0; max-width: 0; transition: all 0.3s; white-space: nowrap; overflow: hidden; }
+        .drawer-toggle-btn:hover .btn-text { opacity: 1; max-width: 100px; margin-left: 6px; }
+
+        /* 底部停靠：细长条 */
+        .drawer-bottom .drawer-toggle-btn { top: -36px; left: 50%; transform: translateX(-50%); height: 36px; width: 36px; padding: 0; border-radius: 18px 18px 0 0; border-bottom: none; font-size: 0.85rem; }
+        .drawer-bottom .drawer-toggle-btn:hover { width: auto; padding: 0 20px; }
+
+        /* 左侧停靠 */
+        .drawer-left .drawer-toggle-btn { right: -36px; top: 15%; width: 36px; height: 36px; padding: 0; border-radius: 0 18px 18px 0; border-left: none; font-size: 0.85rem; }
+        .drawer-left .drawer-toggle-btn:hover { height: auto; padding: 16px 0; writing-mode: vertical-rl; }
+        .drawer-left .drawer-toggle-btn:hover .btn-text { max-width: none; max-height: 100px; margin-left: 0; margin-top: 6px; }
+
+        /* 右侧停靠 */
+        .drawer-right .drawer-toggle-btn { left: -36px; top: 15%; width: 36px; height: 36px; padding: 0; border-radius: 18px 0 0 18px; border-right: none; font-size: 0.85rem; }
+        .drawer-right .drawer-toggle-btn:hover { height: auto; padding: 16px 0; writing-mode: vertical-rl; }
+        .drawer-right .drawer-toggle-btn:hover .btn-text { max-width: none; max-height: 100px; margin-left: 0; margin-top: 6px; }
         
         /* ================= 真实比例锦衣卫特效 ================= */
         .guard-bubble-v4 { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border: 2px solid #8B0000; box-shadow: 0 4px 15px rgba(139, 0, 0, 0.3); color: #8B0000; }
@@ -490,7 +503,7 @@
             </div>
   <div id="taskDrawer" class="smart-drawer drawer-bottom">
         <div class="drawer-toggle-btn" onclick="toggleTaskDrawer()">
-            <i class="fas fa-chevron-up" id="drawerIcon"></i> <span>批阅奏折</span>
+            <i class="fas fa-chevron-up" id="drawerIcon"></i><span class="btn-text">批阅奏折</span>
         </div>
         <div class="p-5 md:p-6 flex flex-col h-full overflow-hidden">
             <div class="flex flex-wrap items-center justify-between border-b border-dopamine-yellow/30 pb-4 mb-4 mt-2 gap-4">
