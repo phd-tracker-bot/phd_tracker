@@ -576,7 +576,7 @@
             <span id="footerQuote" class="italic"></span>
         </div>
         <script>
-            const quotes = [
+            const zhQuotes = [
                 '千里之行，始于足下。——老子',
                 '不积跬步，无以至千里。——荀子',
                 '业精于勤，荒于嬉。——韩愈',
@@ -598,7 +598,31 @@
                 '功崇惟志，业广惟勤。——《尚书》',
                 '长风破浪会有时，直挂云帆济沧海。——李白',
             ];
-            document.getElementById('footerQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            const enQuotes = [
+                'A journey of a thousand miles begins with a single step. — Lao Tzu',
+                'Small steps lead to great distances. — Xunzi',
+                'Excellence comes from diligence, lost through play. — Han Yu',
+                'As heaven maintains vigor through movement, so should we strive. — I Ching',
+                'Learning without thinking is useless; thinking without learning is dangerous. — Confucius',
+                'A sharp sword comes from grinding; plum blossoms smell sweet after bitter cold.',
+                'Where there is a will, there is a way.',
+                'The path of knowledge requires diligence; the sea of learning has no bounds.',
+                'Persistence can carve through stone. — Xunzi',
+                'The road ahead is long; I shall search far and wide. — Qu Yuan',
+                'What you read on paper is shallow; true knowledge requires practice. — Lu You',
+                'Observe broadly, select carefully, accumulate deeply. — Su Shi',
+                'Read ten thousand books, write with the power of a god. — Du Fu',
+                'If you do not work hard in youth, you will regret it in old age.',
+                'Nothing in the world is difficult for one who sets their mind to it.',
+                'Heaven places great responsibility on those who first endure hardship. — Mencius',
+                'Burn the midnight oil; dawn is the time for reading. — Yan Zhenqing',
+                'Study hard while young, lest you regret it when old. — Yan Zhenqing',
+                'Great achievements require ambition; great work requires diligence. — Book of Documents',
+                'Ride the wind, break the waves, set sail for the open sea. — Li Bai',
+            ];
+            const lang = localStorage.getItem('phd_lang') || 'zh';
+            const q = lang === 'en' ? enQuotes : zhQuotes;
+            document.getElementById('footerQuote').innerText = q[Math.floor(Math.random() * q.length)];
         </script>
         </div>
     </div>
@@ -963,7 +987,15 @@
             }
         }
         function showScaryWarning() {
-            const mild = [
+            const mild = currentLang === 'en' ? [
+                { title: '⚔️ Hey!', text: 'You left your focus session! Get back to work!' },
+                { title: '👁️ I see you', text: 'Thought I wouldn\'t notice you switched tabs?' },
+                { title: '🐟 Caught slacking!', text: 'Even the goldfish focuses better than you!' },
+                { title: '📢 Alert!', text: 'Your timer is still running!' },
+                { title: '🦅 Busted!', text: 'Your little escape has been recorded!' },
+                { title: '🔔 Timer angry!', text: 'The pomodoro is upset with you!' },
+                { title: '😾 Cat disapproves', text: 'Even the cat is more focused than you!' },
+            ] : [
                 { title: '⚔️ 大胆！', text: '陛下擅离龙椅，锦衣卫已记录在案！' },
                 { title: '👁️ 朕看到你了', text: '以为切出去朕就不知道了？' },
                 { title: '🐟 摸鱼被抓！', text: '御书房的金鱼都比你专注！' },
@@ -972,7 +1004,15 @@
                 { title: '🔔 龙钟长鸣', text: '番茄钟怒了！它说你对不起它！' },
                 { title: '😾 御猫不悦', text: '连朕的猫都在专注抓老鼠，你呢？' },
             ];
-            const medium = [
+            const medium = currentLang === 'en' ? [
+                { title: '🔥 Furious!', text: 'Who said you could leave?! Timer is still going!' },
+                { title: '💀 Impeachment!', text: 'Your mind is wandering, productivity is failing!' },
+                { title: '⛓️ Banished!', text: 'One more time and your timer goes to jail!' },
+                { title: '🗡️ Final warning!', text: 'Cut the distraction, NOW!' },
+                { title: '📜 Write an apology!', text: 'You must apologize for this slacking!' },
+                { title: '🏴 Red alert!', text: 'Procrastination detected! All units deployed!' },
+                { title: '👻 Ghost warning!', text: 'Your past self says: I was never this lazy!' },
+            ] : [
                 { title: '🔥 龙颜大怒！', text: '谁允许你离开的？！番茄钟还在计时！' },
                 { title: '💀 御史弹劾！', text: '陛下心猿意马，朝纲不振！' },
                 { title: '⛓️ 打入冷宫！', text: '再摸鱼就把你的番茄钟关进冷宫！' },
@@ -981,7 +1021,14 @@
                 { title: '🏴 黑旗高悬', text: '摸鱼警报！全城戒严！锦衣卫出动！' },
                 { title: '👻 先帝显灵', text: '先帝托梦说：朕当年可没你这么懒！' },
             ];
-            const severe = [
+            const severe = currentLang === 'en' ? [
+                { title: '☠️ Death sentence?', text: 'One more and ALL your focus time gets erased!' },
+                { title: '🌋 Catastrophe!', text: 'Your procrastination is causing natural disasters!' },
+                { title: '💣 Crisis!', text: 'The empire is falling and you\'re on your phone?!' },
+                { title: '👹 Deadline!', text: 'Death says your thesis deadline has arrived!' },
+                { title: '🔥 Burn it all!', text: 'Keep slacking and your draft gets deleted!' },
+                { title: '⚡ Lightning!', text: 'Even heaven can\'t stand your procrastination!' },
+            ] : [
                 { title: '☠️ 斩立决？', text: '再敢摸鱼，番茄钟时长全部清零！' },
                 { title: '🌋 天崩地裂', text: '你的摸鱼已经引起了天象异变！' },
                 { title: '💣 社稷将倾', text: '国家都要亡了你还在刷手机？！' },
@@ -996,7 +1043,9 @@
             else pool = severe;
             
             const msg = pool[Math.floor(Math.random() * pool.length)];
-            const sub = `第 ${focusLeaveCount} 次离朝 · 锦衣卫如实记录`;
+            const sub = currentLang === 'en' 
+                ? `Left ${focusLeaveCount} time(s) · Recorded` 
+                : `第 ${focusLeaveCount} 次离朝 · 锦衣卫如实记录`;
             
             const overlay = document.createElement('div');
             overlay.id = 'scaryOverlay';
@@ -1012,7 +1061,7 @@
                     <h1 style="font-size:${focusLeaveCount >= 3 ? '3rem' : '2.5rem'};font-weight:900;color:#FF4444;margin-bottom:16px;text-shadow:0 0 30px rgba(255,0,0,0.5);">${msg.title}</h1>
                     <p style="font-size:1.3rem;color:#FFD700;font-weight:bold;margin-bottom:12px;">${msg.text}</p>
                     <p style="font-size:0.9rem;color:#FF6B6B;margin-bottom:30px;">${msg.sub}</p>
-                    <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:20px;">点击任意处回到理政</div>
+                    <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:20px;">${currentLang==='en'?'Click anywhere to return':'点击任意处回到理政'}</div>
                 </div>
             `;
             overlay.onclick = () => { overlay.remove(); };
@@ -1159,7 +1208,7 @@
         // ================= 奏折与杂项 =================
         function addTask() { const name = document.getElementById("taskInput").value.trim(); if (!name) return; appData.tasks.push({ id: Date.now(), name, priority: document.getElementById("taskPriority").value, category: document.getElementById("taskCategory").value, status: "未开始", createdAt: Date.now(), completedAt: null }); saveData(); document.getElementById("taskInput").value = ""; renderTasks(); updateStatistics(); renderPieChart(); }
         function changeTaskStatus(id) { const t = appData.tasks.find(x => x.id === id); if (!t) return; if (t.status === "未开始") t.status = "进行中"; else if (t.status === "进行中") { t.status = "已完成"; t.completedAt = Date.now(); } else { t.status = "未开始"; t.completedAt = null; } saveData(); renderTasks(); updateStatistics(); renderPieChart(); }
-        function deleteTask(id) { if (confirm("陛下确定要抹去此奏折？")) { appData.tasks = appData.tasks.filter(t => t.id !== id); saveData(); renderTasks(); updateStatistics(); renderPieChart(); } }
+        function deleteTask(id) { if (confirm(currentLang==='en'?"Delete this task?":"陛下确定要抹去此奏折？")) { appData.tasks = appData.tasks.filter(t => t.id !== id); saveData(); renderTasks(); updateStatistics(); renderPieChart(); } }
         function updateTaskTime(taskId, newTimeString) { const task = appData.tasks.find(t => t.id === taskId); if (task) { task.createdAt = new Date(newTimeString).getTime(); saveData(); } }
        function renderTasks() {
             const container = document.getElementById("taskList"), empty = document.getElementById("emptyTaskHint");
@@ -1447,7 +1496,7 @@
             document.getElementById("dayDetailModal").classList.add("active");
         }
 
-        function renderTrendChart() { const ctx = document.getElementById('trendChart'); if (!ctx) return; const labels=[], data=[]; const today=new Date(); today.setHours(0,0,0,0); for(let i=6;i>=0;i--){ const d=new Date(today); d.setDate(today.getDate()-i); labels.push(`${d.getMonth()+1}/${d.getDate()}`); data.push(appData.focusSessions.filter(s=>s.dateStr===formatDateToYMD(d.getTime())).reduce((sum,s)=>sum+s.durationMinutes,0)); } if(focusTrendChart){ focusTrendChart.data.labels=labels; focusTrendChart.data.datasets[0].data=data; focusTrendChart.update(); }else focusTrendChart=new Chart(ctx, {type:'line', data:{labels, datasets:[{label:'理政分钟', data, borderColor:'#FF8C42', fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false}}); }
+        function renderTrendChart() { const ctx = document.getElementById('trendChart'); if (!ctx) return; const labels=[], data=[]; const today=new Date(); today.setHours(0,0,0,0); for(let i=6;i>=0;i--){ const d=new Date(today); d.setDate(today.getDate()-i); labels.push(`${d.getMonth()+1}/${d.getDate()}`); data.push(appData.focusSessions.filter(s=>s.dateStr===formatDateToYMD(d.getTime())).reduce((sum,s)=>sum+s.durationMinutes,0)); } if(focusTrendChart){ focusTrendChart.data.labels=labels; focusTrendChart.data.datasets[0].data=data; focusTrendChart.update(); }else focusTrendChart=new Chart(ctx, {type:'line', data:{labels, datasets:[{label:currentLang==='en'?'Focus (min)':'理政分钟', data, borderColor:'#FF8C42', fill:true, tension:0.4}]}, options:{responsive:true, maintainAspectRatio:false}}); }
         
         let taskPieChart = null;
         function renderPieChart() {
@@ -1458,10 +1507,12 @@
             completedTasks.forEach(t => { categoryCounts[t.category] = (categoryCounts[t.category] || 0) + 1; });
             
             // 修复饼图文字丢失问题，建立图标全称映射
-            const catMap = { '📚': '📚 文献', '🔬': '🔬 实验', '✍️': '✍️ 写作', '💻': '💻 绘图', '📝': '📝 日常' };
+            const catMap = currentLang === 'en' 
+                ? { '📚': '📚 Literature', '🔬': '🔬 Experiment', '✍️': '✍️ Writing', '💻': '💻 Drawing', '📝': '📝 Daily' }
+                : { '📚': '📚 文献', '🔬': '🔬 实验', '✍️': '✍️ 写作', '💻': '💻 绘图', '📝': '📝 日常' };
             const labels = Object.keys(categoryCounts).map(l => catMap[l] || l); 
             const data = Object.values(categoryCounts); 
-            if (labels.length === 0) { labels.push('暂无奏折'); data.push(1); }
+            if (labels.length === 0) { labels.push(currentLang==='en'?'No tasks':'暂无奏折'); data.push(1); }
             
             const isNight = document.body.classList.contains('night-mode');
             const textColor = isNight ? '#E2E8F0' : '#4B5563';
@@ -1486,8 +1537,8 @@
         // ================= 其他及初始化 =================
         function handleAvatarUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { localStorage.setItem("phd_pro_avatar", e.target.result); document.getElementById("userAvatar").src = e.target.result; }; reader.readAsDataURL(file); }
         function loadAvatar() { const stored = localStorage.getItem("phd_pro_avatar"); if (stored) document.getElementById("userAvatar").src = stored; }
-        function editTitle() { const el = document.getElementById('appTitle'); const current = el.innerText; const newTitle = prompt('修改名称：', current); if (newTitle && newTitle.trim()) { el.innerText = newTitle.trim(); localStorage.setItem('phd_app_title', newTitle.trim()); } }
-        function loadTitle() { const stored = localStorage.getItem('phd_app_title'); if (stored) document.getElementById('appTitle').innerText = stored; }
+        function editTitle() { const el = document.getElementById('appTitle'); const current = el.innerText; const newTitle = prompt(currentLang==='en'?'Change name:':'修改名称：', current); if (newTitle && newTitle.trim()) { el.innerText = newTitle.trim(); localStorage.setItem('phd_app_title', newTitle.trim()); } }
+        function loadTitle() { const stored = localStorage.getItem('phd_app_title'); if (stored) { document.getElementById('appTitle').innerText = stored; } else { document.getElementById('appTitle').innerText = currentLang === 'en' ? 'Road to Success' : '皇帝养成日记'; } }
         function exportData() { const blob = new Blob([JSON.stringify(appData)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `史库备份_${getTodayStr()}.json`; a.click(); }
         function importData(event) { const r = new FileReader(); r.onload = e => { appData = {...appData, ...JSON.parse(e.target.result)}; saveData(); renderAll(); }; r.readAsText(event.target.files[0]); }
 
@@ -1694,15 +1745,25 @@
                     console.log('✅ GCal token still valid');
                     await pullEventsFromGCal();
                 } else {
-                    // Token expired
-                    gcalAccessToken = null;
-                    localStorage.removeItem('phd_gcal_token');
-                    updateGCalButton(false);
+                    // Token expired, try silent refresh
+                    console.log('🔄 GCal token expired, refreshing...');
+                    if (gcalTokenClient) {
+                        gcalTokenClient.requestAccessToken({ prompt: '' }); // silent refresh
+                    } else {
+                        gcalAccessToken = null;
+                        localStorage.removeItem('phd_gcal_token');
+                        updateGCalButton(false);
+                    }
                 }
             } catch(e) {
-                gcalAccessToken = null;
-                localStorage.removeItem('phd_gcal_token');
-                updateGCalButton(false);
+                // Try silent refresh on network error too
+                if (gcalTokenClient) {
+                    try { gcalTokenClient.requestAccessToken({ prompt: '' }); } catch(e2) {
+                        gcalAccessToken = null;
+                        localStorage.removeItem('phd_gcal_token');
+                        updateGCalButton(false);
+                    }
+                }
             }
         }
 
@@ -2207,9 +2268,9 @@
             overlay.innerHTML = `
                 <div style="text-align:center;animation:coronationZoom 0.6s ease-out;">
                     <div style="font-size:80px;margin-bottom:16px;">🏆</div>
-                    <h1 style="font-size:2.5rem;font-weight:900;color:#FFD700;margin-bottom:12px;font-family:'楷体','STKaiti',serif;">圣旨皆已执行</h1>
-                    <p style="font-size:1.3rem;color:#F9C74F;margin-bottom:8px;">今日朝政大事已毕</p>
-                    <p style="font-size:1rem;color:#D4AF37;">陛下英明神武，可安心退朝歇息！</p>
+                    <h1 style="font-size:2.5rem;font-weight:900;color:#FFD700;margin-bottom:12px;font-family:'楷体','STKaiti',serif;">${currentLang==='en'?'All Goals Completed!':'圣旨皆已执行'}</h1>
+                    <p style="font-size:1.3rem;color:#F9C74F;margin-bottom:8px;">${currentLang==='en'?"Today's work is done!":'今日朝政大事已毕'}</p>
+                    <p style="font-size:1rem;color:#D4AF37;">${currentLang==='en'?'Well done! Time to rest.':'陛下英明神武，可安心退朝歇息！'}</p>
                     <div style="font-size:3rem;margin-top:20px;">🎆🏮✨🏮🎆</div>
                     <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:20px;">点击退朝</p>
                 </div>
@@ -2511,7 +2572,7 @@
                 }
 
                 // Label
-                s += `<text x="0" y="12" text-anchor="middle" font-size="11" font-weight="bold" fill="${unlocked ? '#5D4037' : '#9CA3AF'}" font-family="'楷体','STKaiti',serif">${unlocked ? b.name : '???'}</text>`;
+                s += `<text x="0" y="12" text-anchor="middle" font-size="11" font-weight="bold" fill="${unlocked ? '#5D4037' : '#9CA3AF'}" font-family="'楷体','STKaiti',serif">${unlocked ? t(b.name) : '???'}</text>`;
                 s += `</g>`;
             });
 
@@ -2522,8 +2583,10 @@
 
             // Progress
             const done = KINGDOM_BUILDINGS.filter(b => b.check(stats)).length;
-            document.getElementById('kingdomProgress').innerText = `${done}/${KINGDOM_BUILDINGS.length} 已解锁`;
-            document.getElementById('kingdomTotal').innerText = `🍅${stats.totalPomodoros}个番茄钟 · ✅${stats.totalTasks}个任务 · 🔥${stats.streak}天连续`;
+            document.getElementById('kingdomProgress').innerText = `${done}/${KINGDOM_BUILDINGS.length} ${currentLang==='en'?'Unlocked':'已解锁'}`;
+            document.getElementById('kingdomTotal').innerText = currentLang === 'en' 
+                ? `🍅${stats.totalPomodoros} pomodoros · ✅${stats.totalTasks} tasks · 🔥${stats.streak} day streak`
+                : `🍅${stats.totalPomodoros}个番茄钟 · ✅${stats.totalTasks}个任务 · 🔥${stats.streak}天连续`;
 
             // Save & check new unlocks
             const allUnlockedIds = KINGDOM_BUILDINGS.map((b, i) => b.check(stats) ? i : -1).filter(i => i >= 0);
@@ -2534,6 +2597,8 @@
             }
         }
 
+        function t(zh) { return currentLang === 'en' && i18n[zh] ? i18n[zh] : zh; }
+
         function showBuildingInfo(index) {
             const b = KINGDOM_BUILDINGS[index];
             const stats = getKingdomStats();
@@ -2543,9 +2608,9 @@
             overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);animation:scaryFadeIn 0.3s;cursor:pointer;';
             overlay.innerHTML = `<div style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border-radius:20px;padding:30px;text-align:center;max-width:300px;border:3px solid ${unlocked?'#D4AF37':'#9CA3AF'};box-shadow:0 20px 40px rgba(0,0,0,0.3);animation:coronationZoom 0.4s;">
                 <div style="font-size:60px;margin-bottom:10px;">${unlocked ? b.icon : '🔒'}</div>
-                <h3 style="font-size:1.5rem;font-weight:900;color:${unlocked?'#78350F':'#6B7280'};font-family:'楷体','STKaiti',serif;margin-bottom:8px;">${unlocked ? b.name : '???'}</h3>
-                <p style="font-size:0.9rem;color:${unlocked?'#92400E':'#9CA3AF'};margin-bottom:4px;">${b.req}</p>
-                <p style="font-size:0.8rem;color:${unlocked?'#22C55E':'#EF4444'};font-weight:bold;">${unlocked ? '✅ 已解锁' : '🔒 未解锁'}</p>
+                <h3 style="font-size:1.5rem;font-weight:900;color:${unlocked?'#78350F':'#6B7280'};font-family:'楷体','STKaiti',serif;margin-bottom:8px;">${unlocked ? t(b.name) : '???'}</h3>
+                <p style="font-size:0.9rem;color:${unlocked?'#92400E':'#9CA3AF'};margin-bottom:4px;">${t(b.req)}</p>
+                <p style="font-size:0.8rem;color:${unlocked?'#22C55E':'#EF4444'};font-weight:bold;">${unlocked ? '✅ '+t('已解锁') : '🔒 '+t('未解锁')}</p>
             </div>`;
             overlay.onclick = () => { overlay.remove(); isShowingAlert = false; };
             document.body.appendChild(overlay);
@@ -2556,7 +2621,7 @@
             const stats = getKingdomStats();
             const unlocked = b.check(stats);
             const tip = document.getElementById('buildingTooltip');
-            tip.innerHTML = `<div style="font-size:24px;">${unlocked ? b.icon : '🔒'}</div><div style="font-weight:900;color:#78350F;font-family:'楷体','STKaiti',serif;">${unlocked ? b.name : '???'}</div><div style="font-size:11px;color:#92400E;">${b.req}</div>`;
+            tip.innerHTML = `<div style="font-size:24px;">${unlocked ? b.icon : '🔒'}</div><div style="font-weight:900;color:#78350F;font-family:'楷体','STKaiti',serif;">${unlocked ? t(b.name) : '???'}</div><div style="font-size:11px;color:#92400E;">${t(b.req)}</div>`;
             tip.classList.remove('hidden');
             tip.style.left = Math.min(event.pageX + 10, window.innerWidth - 240) + 'px';
             tip.style.top = (event.pageY - 80) + 'px';
@@ -2585,10 +2650,10 @@
             overlay.innerHTML = `
                 <div style="text-align:center;animation:coronationZoom 0.6s ease-out;">
                     <div style="font-size:80px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(255,215,0,0.5));">${building.icon}</div>
-                    <p style="font-size:1rem;color:#D4AF37;margin-bottom:8px;letter-spacing:0.15em;">🎊 新建筑解锁 🎊</p>
-                    <h1 style="font-size:2.5rem;font-weight:900;color:#FFD700;margin-bottom:12px;font-family:'楷体','STKaiti',serif;">${building.name}</h1>
-                    <p style="font-size:1rem;color:#F9C74F;">${building.req}</p>
-                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:24px;">点击继续</p>
+                    <p style="font-size:1rem;color:#D4AF37;margin-bottom:8px;letter-spacing:0.15em;">🎊 ${currentLang==='en'?'New Building Unlocked':'新建筑解锁'} 🎊</p>
+                    <h1 style="font-size:2.5rem;font-weight:900;color:#FFD700;margin-bottom:12px;font-family:'楷体','STKaiti',serif;">${t(building.name)}</h1>
+                    <p style="font-size:1rem;color:#F9C74F;">${t(building.req)}</p>
+                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:24px;">${currentLang==='en'?'Click to continue':'点击继续'}</p>
                 </div>
             `;
             overlay.onclick = () => overlay.remove();
@@ -2943,13 +3008,20 @@
                 const users = await resp.json();
 
                 if (!users || users.length === 0) {
-                    document.getElementById('leaderboardList').innerHTML = '<div class="text-center text-gray-400 text-sm py-4">暂无数据，等朋友加入吧！</div>';
+                    document.getElementById('leaderboardList').innerHTML = `<div class="text-center text-gray-400 text-sm py-4">${currentLang==='en'?'No data yet, invite friends!':'暂无数据，等朋友加入吧！'}</div>`;
                     return;
                 }
 
                 const myUid = getCurrentUid();
                 const medals = ['🥇', '🥈', '🥉'];
-                const rankTitles = ['👑 皇帝', '🗡️ 丞相', '🛡️ 大将军', '📜 御史大夫', '🏯 太守', '📚 翰林学士', '🔔 侍郎', '🧹 太监总管', '🪣 小太监', '🐴 马夫'];
+                const rankTitles = currentLang === 'en' 
+                    ? ['👑 Emperor', '🗡️ Prime Minister', '🛡️ General', '📜 Censor', '🏯 Governor', '📚 Scholar', '🔔 Minister', '🧹 Chief Eunuch', '🪣 Eunuch', '🐴 Groom']
+                    : ['👑 皇帝', '🗡️ 丞相', '🛡️ 大将军', '📜 御史大夫', '🏯 太守', '📚 翰林学士', '🔔 侍郎', '🧹 太监总管', '🪣 小太监', '🐴 马夫'];
+                const _m = currentLang === 'en' ? 'min' : '分钟';
+                const _d = currentLang === 'en' ? 'days' : '天';
+                const _t = currentLang === 'en' ? 'tasks' : '奏折';
+                const _me = currentLang === 'en' ? ' (Me)' : ' (我)';
+                const _sync = currentLang === 'en' ? ' ago' : '同步';
                 const html = users.map((u, i) => {
                     const isMe = myUid && u.uid === myUid;
                     const medal = i < 3 ? medals[i] : `<span class="text-gray-400 text-xs w-6 inline-block text-center">${i + 1}</span>`;
@@ -2957,22 +3029,24 @@
                     const bg = isMe ? 'bg-dopamine-purple/10 border-dopamine-purple/30' : (i === 0 ? 'bg-yellow-50/80 border-yellow-200' : 'bg-white/60 border-gray-100');
                     const nameStyle = i === 0 ? 'font-black text-dopamine-orange' : (isMe ? 'font-bold text-dopamine-purple' : 'text-gray-700');
                     const ago = u.last_sync ? Math.round((Date.now() - new Date(u.last_sync).getTime()) / 60000) : 0;
-                    const agoText = ago < 1 ? '刚刚' : ago < 60 ? `${ago}分钟前` : ago < 1440 ? `${Math.round(ago/60)}小时前` : `${Math.round(ago/1440)}天前`;
+                    const agoText = currentLang === 'en' 
+                        ? (ago < 1 ? 'just now' : ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.round(ago/60)}h ago` : `${Math.round(ago/1440)}d ago`)
+                        : (ago < 1 ? '刚刚' : ago < 60 ? `${ago}分钟前` : ago < 1440 ? `${Math.round(ago/60)}小时前` : `${Math.round(ago/1440)}天前`);
                     const provIcon = u.auth_provider === 'google' ? '🟢' : '🔵';
 
                     return `<div class="flex items-center gap-3 p-3 rounded-xl border ${bg} transition hover:shadow-sm">
                         <span class="text-xl w-8 text-center flex-shrink-0">${medal}</span>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="${nameStyle} text-sm truncate">${provIcon} ${escapeHtml(u.nickname)}${isMe ? ' (我)' : ''}</span>
-                                ${u.streak >= 3 ? '<span class="text-[10px] bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded-full">🔥' + u.streak + '天</span>' : ''}
+                                <span class="${nameStyle} text-sm truncate">${provIcon} ${escapeHtml(u.nickname)}${isMe ? _me : ''}</span>
+                                ${u.streak >= 3 ? '<span class="text-[10px] bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded-full">🔥' + u.streak + _d + '</span>' : ''}
                             </div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">${rankTitle} · ${agoText}同步</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${rankTitle} · ${agoText}${currentLang==='zh'?'同步':''}</div>
                         </div>
                         <div class="flex gap-4 text-xs flex-shrink-0">
-                            <div class="text-center"><div class="font-black text-dopamine-orange text-lg">${u.week_focus}</div><div class="text-gray-400">分钟</div></div>
-                            <div class="text-center"><div class="font-black text-dopamine-sky text-lg">${u.week_check_days}</div><div class="text-gray-400">天</div></div>
-                            <div class="text-center"><div class="font-black text-dopamine-mint text-lg">${u.week_tasks}</div><div class="text-gray-400">奏折</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-orange text-lg">${u.week_focus}</div><div class="text-gray-400">${_m}</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-sky text-lg">${u.week_check_days}</div><div class="text-gray-400">${_d}</div></div>
+                            <div class="text-center"><div class="font-black text-dopamine-mint text-lg">${u.week_tasks}</div><div class="text-gray-400">${_t}</div></div>
                         </div>
                     </div>`;
                 }).join('');
@@ -3021,7 +3095,14 @@
             const nickname = localStorage.getItem('phd_nickname') || localStorage.getItem('phd_app_title') || '陛下';
             const totalToday = getTodayFocusMinutes() + minutes;
             
-            const praises = [
+            const praises = currentLang === 'en' ? [
+                { title: 'Mighty!', text: 'Your dedication inspires the nation!' },
+                { title: 'Brilliant!', text: 'This achievement is recorded in history!' },
+                { title: 'Legendary!', text: 'Comparable to the greatest rulers!' },
+                { title: 'Prosperous!', text: 'The empire thrives under your rule!' },
+                { title: 'Eternal Glory!', text: 'Future generations will praise this day!' },
+                { title: 'Wise Ruler!', text: 'Working tirelessly, stay healthy!' },
+            ] : [
                 { title: '龙威大振！', text: '天下臣民皆仰望陛下之勤勉！' },
                 { title: '文治武功！', text: '史官已将此功绩载入史册！' },
                 { title: '千古一帝！', text: '如此勤政，堪比秦皇汉武！' },
@@ -3030,6 +3111,7 @@
                 { title: '圣明天子！', text: '日理万机，龙体康健！' },
             ];
             const praise = praises[Math.floor(Math.random() * praises.length)];
+            const _en = currentLang === 'en';
 
             const overlay = document.createElement('div');
             overlay.id = 'pomodoroCompleteOverlay';
@@ -3038,17 +3120,17 @@
                 <div id="completeParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
                 <div style="position:relative;z-index:10;text-align:center;animation:coronationZoom 0.8s ease-out;">
                     <div style="font-size:80px;margin-bottom:10px;">🎊</div>
-                    <h1 style="font-size:2rem;font-weight:900;color:#FFD700;margin-bottom:8px;letter-spacing:0.15em;">恭喜陛下 · 贺喜陛下</h1>
+                    <h1 style="font-size:2rem;font-weight:900;color:#FFD700;margin-bottom:8px;letter-spacing:0.15em;">${_en?'Congratulations!':'恭喜陛下 · 贺喜陛下'}</h1>
                     <p style="font-size:2.5rem;font-weight:900;background:linear-gradient(to right,#FFD700,#FF8C42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;">${praise.title}</p>
                     <p style="font-size:1.2rem;color:#F9C74F;margin-bottom:24px;">${praise.text}</p>
                     <div style="background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.3);border-radius:16px;padding:16px 32px;margin-bottom:24px;display:inline-block;">
-                        <div style="font-size:0.8rem;color:#D4AF37;margin-bottom:4px;">本次理政</div>
-                        <div style="font-size:3rem;font-weight:900;color:#FFD700;">${minutes} <span style="font-size:1.2rem;">分钟</span></div>
-                        <div style="font-size:0.75rem;color:#B8860B;margin-top:4px;">今日累计 ${totalToday} 分钟</div>
+                        <div style="font-size:0.8rem;color:#D4AF37;margin-bottom:4px;">${_en?'This Session':'本次理政'}</div>
+                        <div style="font-size:3rem;font-weight:900;color:#FFD700;">${minutes} <span style="font-size:1.2rem;">${_en?'min':'分钟'}</span></div>
+                        <div style="font-size:0.75rem;color:#B8860B;margin-top:4px;">${_en?'Today total: '+totalToday+' min':'今日累计 '+totalToday+' 分钟'}</div>
                     </div>
                     <div style="font-size:3rem;margin-bottom:16px;">🎆🏮🎇🏮🎆</div>
-                    <p style="font-size:1.5rem;color:#FFD700;font-weight:900;letter-spacing:0.2em;text-shadow:0 0 15px rgba(253,224,71,0.5);">可以称帝了！</p>
-                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:20px;">点击任意处退朝歇息</p>
+                    <p style="font-size:1.5rem;color:#FFD700;font-weight:900;letter-spacing:0.2em;text-shadow:0 0 15px rgba(253,224,71,0.5);">${_en?'You are the Emperor!':'可以称帝了！'}</p>
+                    <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:20px;">${_en?'Click anywhere to close':'点击任意处退朝歇息'}</p>
                 </div>
             `;
             overlay.onclick = () => { overlay.remove(); isShowingAlert = false; };
@@ -3080,13 +3162,13 @@
                 <div id="coronationParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
                 <div style="position:relative;z-index:10;text-align:center;animation:coronationZoom 1s ease-out;">
                     <div style="font-size:100px;margin-bottom:10px;animation:coronationCrown 2s ease-in-out infinite;">👑</div>
-                    <h1 style="font-size:3rem;font-weight:900;background:linear-gradient(to bottom,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:0.2em;text-shadow:0 0 30px rgba(255,215,0,0.5);">登 基 大 典</h1>
-                    <p style="font-size:1.5rem;color:#FFD700;font-weight:bold;margin-bottom:8px;">${escapeHtml(nickname)} 荣登榜首</p>
-                    <p style="font-size:1.2rem;color:#FF8C42;margin-bottom:24px;">万民朝拜，四海归心</p>
+                    <h1 style="font-size:3rem;font-weight:900;background:linear-gradient(to bottom,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:0.2em;text-shadow:0 0 30px rgba(255,215,0,0.5);">${currentLang==='en'?'CORONATION':'登 基 大 典'}</h1>
+                    <p style="font-size:1.5rem;color:#FFD700;font-weight:bold;margin-bottom:8px;">${escapeHtml(nickname)} ${currentLang==='en'?'Ranked #1!':'荣登榜首'}</p>
+                    <p style="font-size:1.2rem;color:#FF8C42;margin-bottom:24px;">${currentLang==='en'?'All hail the Emperor!':'万民朝拜，四海归心'}</p>
                     <div style="font-size:4rem;margin-bottom:20px;animation:bowing 1.2s ease-in-out infinite;">🙇‍♂️ 🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️</div>
                     <div style="font-size:3rem;margin-bottom:30px;animation:bowing 1.2s ease-in-out infinite;animation-delay:0.3s;opacity:0.7;">🙇🏻‍♂️ 🙇🏼‍♂️ 🙇🏽‍♂️ 🙇🏾‍♂️ 🙇🏿‍♂️</div>
-                    <p style="font-size:2rem;color:#FFD700;font-weight:900;letter-spacing:0.3em;text-shadow:0 0 20px rgba(253,224,71,0.6);">吾皇万岁万万岁</p>
-                    <p style="font-size:0.8rem;color:rgba(255,255,255,0.3);margin-top:30px;">点击任意处退朝</p>
+                    <p style="font-size:2rem;color:#FFD700;font-weight:900;letter-spacing:0.3em;text-shadow:0 0 20px rgba(253,224,71,0.6);">${currentLang==='en'?'Long live the Emperor!':'吾皇万岁万万岁'}</p>
+                    <p style="font-size:0.8rem;color:rgba(255,255,255,0.3);margin-top:30px;">${currentLang==='en'?'Click anywhere to close':'点击任意处退朝'}</p>
                 </div>
             `;
             overlay.onclick = () => overlay.remove();
@@ -3317,8 +3399,6 @@
             '今日是否上朝科研，不开心就提早退朝！': 'Ready to work? Take a break if you need!',
             '退朝时间': 'End Time',
             '上朝时间': 'Start Time',
-            '皇帝养成日记': 'Emperor Growth Diary',
-            '养成日记': 'Growth Diary',
             '陛下理政中': 'Focusing...',
             '理政分钟': 'min focus',
             '分钟理政中': 'min focusing',
@@ -3358,23 +3438,29 @@
             const btn = document.getElementById('langBtn');
             if (btn) btn.innerHTML = currentLang === 'zh' ? '🌐 EN' : '🌐 中';
             
+            // Handle app title - only change if not customized
+            if (!localStorage.getItem('phd_app_title')) {
+                const titleEl = document.getElementById('appTitle');
+                if (titleEl) titleEl.innerText = currentLang === 'en' ? 'Road to Success' : '皇帝养成日记';
+            }
+            document.title = currentLang === 'en' ? 'Road to Success' : '皇帝养成日记';
+            
             if (currentLang === 'zh') {
                 document.querySelectorAll('[data-zh]').forEach(el => {
+                    if (el.id === 'appTitle') return; // Skip custom title
                     el.textContent = el.getAttribute('data-zh');
                 });
                 document.querySelectorAll('[data-zh-placeholder]').forEach(el => {
                     el.placeholder = el.getAttribute('data-zh-placeholder');
                 });
-                document.title = '皇帝养成日记';
             } else {
-                document.title = 'Emperor Growth Diary';
-                const map = currentLang === 'en' ? i18n : i18nReverse;
+                const map = i18n;
                 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
                 while (walker.nextNode()) {
                     const node = walker.currentNode;
+                    if (node.parentElement && node.parentElement.id === 'appTitle') continue; // Skip custom title
                     const origText = node.textContent;
                     let newText = origText;
-                    // Try exact match first
                     const trimmed = origText.trim();
                     if (trimmed && map[trimmed]) {
                         if (!node.parentElement.getAttribute('data-zh')) {
@@ -3382,7 +3468,6 @@
                         }
                         newText = origText.replace(trimmed, map[trimmed]);
                     } else {
-                        // Try partial replacements for longer strings
                         for (const [from, to] of Object.entries(map)) {
                             if (from.length >= 2 && newText.includes(from)) {
                                 if (!node.parentElement.getAttribute('data-zh')) {
@@ -3394,7 +3479,6 @@
                     }
                     if (newText !== origText) node.textContent = newText;
                 }
-                // Placeholders
                 document.querySelectorAll('textarea[placeholder], input[placeholder]').forEach(el => {
                     const ph = el.placeholder;
                     if (map[ph]) {
