@@ -409,11 +409,26 @@
             <div id="module-calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #4D9DE0;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-sky/30 pb-3 mb-4 mt-2">
-                    <div class="flex items-center gap-2"><i class="fas fa-map-marked-alt text-dopamine-sky text-xl"></i><h2 class="text-xl font-bold text-gray-800">江山社稷图</h2><span class="text-xs bg-dopamine-sky/20 text-dopamine-sky px-2 py-0.5 rounded-full ml-1">热力日历</span><span id="icsCountBadge" class="hidden text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full ml-1 cursor-pointer" onclick="if(confirm('清除所有导入的外部日程？')){appData.calendarEvents=[];saveData();renderCalendar();}" title="点击清除外部日程">📅 <span id="icsCount">0</span>条日程 ×</span></div>
-                    <div class="flex items-center gap-3 relative z-0"><button id="prevMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-left"></i></button><span id="calendarMonthYear" class="font-bold text-gray-700 text-sm w-20 text-center"></span><button id="nextMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-right"></i></button></div>
+                    <div class="flex items-center gap-2"><i class="fas fa-map-marked-alt text-dopamine-sky text-xl"></i><h2 class="text-xl font-bold text-gray-800">江山社稷图</h2><span id="icsCountBadge" class="hidden text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full ml-1 cursor-pointer" onclick="if(confirm('清除所有导入的外部日程？')){appData.calendarEvents=[];saveData();renderCalendar();}" title="点击清除外部日程">📅 <span id="icsCount">0</span>条 ×</span></div>
+                    <div class="flex items-center gap-2">
+                        <div class="bg-gray-100 rounded-lg p-0.5 flex gap-0.5 text-[10px] font-bold">
+                            <button onclick="setCalView('day')" id="calViewDay" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">日</button>
+                            <button onclick="setCalView('week')" id="calViewWeek" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">周</button>
+                            <button onclick="setCalView('month')" id="calViewMonth" class="px-2 py-1 rounded bg-white text-dopamine-sky shadow-sm">月</button>
+                            <button onclick="setCalView('year')" id="calViewYear" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">年</button>
+                        </div>
+                        <button id="prevMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-left"></i></button>
+                        <span id="calendarMonthYear" class="font-bold text-gray-700 text-xs w-20 text-center"></span>
+                        <button id="nextMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-xs font-bold text-gray-400 mb-2"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+                <div id="calViewMonthContainer">
+                    <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-xs font-bold text-gray-400 mb-2"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+                </div>
+                <div id="calViewDayContainer" class="hidden"></div>
+                <div id="calViewWeekContainer" class="hidden"></div>
+                <div id="calViewYearContainer" class="hidden"></div>
             </div>
 
             <div id="module-stats" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col relative" style="background: linear-gradient(135deg, #FFF9F0, #FFF5E6);">
@@ -502,13 +517,6 @@
             <div class="flex-1 overflow-y-auto pr-2 pb-10">
                 <ul id="taskList" class="space-y-3"></ul>
                 <div id="emptyTaskHint" class="text-center text-gray-400 text-sm py-10 hidden flex-col items-center gap-2"><i class="fas fa-clipboard-list text-4xl opacity-30"></i><span>✨ 案牍清空，四海升平</span></div>
-            </div>
-        </div>
-    </div>
-                   
-            <div class="flex-1 overflow-y-auto pr-1">
-                <ul id="taskList" class="space-y-3"></ul>
-                <div id="emptyTaskHint" class="text-center text-gray-400 text-sm py-6 hidden flex-col items-center gap-1"><i class="fas fa-clipboard-list text-3xl opacity-40"></i><span>✨ 暂无奏折</span></div>
             </div>
         </div>
     </div>
@@ -1251,6 +1259,112 @@
             if (badge) { if (icsTotal > 0) { badge.classList.remove('hidden'); document.getElementById('icsCount').innerText = icsTotal; } else { badge.classList.add('hidden'); } }
         }
 
+        // ================= 日历多视图 =================
+        let calendarView = 'month';
+        
+        function setCalView(view) {
+            calendarView = view;
+            ['day','week','month','year'].forEach(v => {
+                const cId = 'calView'+v.charAt(0).toUpperCase()+v.slice(1)+'Container';
+                const c = document.getElementById(cId);
+                if (c) c.classList.toggle('hidden', v !== view);
+                const btn = document.getElementById('calView'+v.charAt(0).toUpperCase()+v.slice(1));
+                if (btn) {
+                    if (v === view) { btn.classList.add('bg-white','text-dopamine-sky','shadow-sm'); btn.classList.remove('text-gray-500'); }
+                    else { btn.classList.remove('bg-white','text-dopamine-sky','shadow-sm'); btn.classList.add('text-gray-500'); }
+                }
+            });
+            renderCalendarView();
+        }
+
+        function renderCalendarView() {
+            if (calendarView === 'month') renderCalendar();
+            else if (calendarView === 'day') renderCalendarDay();
+            else if (calendarView === 'week') renderCalendarWeek();
+            else if (calendarView === 'year') renderCalendarYear();
+        }
+
+        function renderCalendarDay() {
+            const container = document.getElementById('calViewDayContainer');
+            if (!container) return;
+            const d = currentCalendarDate;
+            const dStr = formatDateToYMD(d.getTime());
+            const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
+            const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
+            const icsEvts = getCalendarEventsForDate(dStr);
+            const dateLabel = d.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+            document.getElementById('calendarMonthYear').innerText = d.toLocaleDateString('zh-CN', { month:'short', day:'numeric' });
+
+            let html = `<div class="text-center text-sm font-bold text-gray-600 mb-3">${dateLabel}</div>`;
+            html += `<div class="bg-orange-50 rounded-xl p-3 mb-3 flex justify-between items-center"><span class="text-sm text-dopamine-orange font-bold">⏱ 专注</span><span class="text-2xl font-black text-dopamine-orange">${mins}min</span></div>`;
+            
+            if (icsEvts.length > 0) {
+                html += `<div class="mb-3"><div class="text-xs font-bold text-gray-500 mb-2">📅 日程</div>`;
+                icsEvts.forEach(ev => { html += `<div class="bg-sky-50 p-2 rounded-lg mb-1 text-xs border-l-2 border-dopamine-sky"><b>${ev.startTime}${ev.endTime?'→'+ev.endTime:''}</b> ${escapeHtml(ev.summary)}</div>`; });
+                html += `</div>`;
+            }
+            if (tks.length > 0) {
+                html += `<div><div class="text-xs font-bold text-gray-500 mb-2">✅ 完成（${tks.length}）</div>`;
+                tks.forEach(t => { html += `<div class="bg-green-50 p-2 rounded-lg mb-1 text-xs">✅ ${escapeHtml(t.name)}</div>`; });
+                html += `</div>`;
+            }
+            if (icsEvts.length === 0 && tks.length === 0 && mins === 0) html += `<div class="text-center text-gray-400 text-sm py-4">📭 暂无记录</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderCalendarWeek() {
+            const container = document.getElementById('calViewWeekContainer');
+            if (!container) return;
+            const d = new Date(currentCalendarDate);
+            d.setDate(d.getDate() - (d.getDay() || 7) + 1);
+            document.getElementById('calendarMonthYear').innerText = `${d.getMonth()+1}月W${Math.ceil(d.getDate()/7)}`;
+
+            let html = `<div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-1"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>`;
+            html += `<div class="grid grid-cols-7 gap-1">`;
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(d); day.setDate(d.getDate() + i);
+                const dStr = formatDateToYMD(day.getTime());
+                const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
+                const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
+                const icsEvts = getCalendarEventsForDate(dStr);
+                const isToday = dStr === getTodayStr();
+                let bg = 'bg-gray-50'; if (mins > 120) bg = 'bg-orange-300'; else if (mins > 30) bg = 'bg-orange-200'; else if (mins > 0) bg = 'bg-orange-100';
+                html += `<div class="rounded-lg p-1 ${bg} ${isToday?'ring-2 ring-dopamine-sky':''} cursor-pointer min-h-[70px]" onclick="currentCalendarDate=new Date('${dStr}');setCalView('day')">`;
+                html += `<div class="text-center font-bold text-[10px] mb-0.5">${day.getDate()}</div>`;
+                if (mins > 0) html += `<div class="cal-event cal-event-focus">⏱${mins}m</div>`;
+                icsEvts.slice(0, 2).forEach(ev => { html += `<div class="cal-event cal-event-ics">${escapeHtml(ev.summary)}</div>`; });
+                if (tks.length > 0) html += `<div class="cal-event cal-event-task">✅${tks.length}</div>`;
+                html += `</div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderCalendarYear() {
+            const container = document.getElementById('calViewYearContainer');
+            if (!container) return;
+            const y = currentCalendarDate.getFullYear();
+            document.getElementById('calendarMonthYear').innerText = `${y}年`;
+            let html = `<div class="grid grid-cols-3 sm:grid-cols-4 gap-2">`;
+            for (let m = 0; m < 12; m++) {
+                const isCur = (m === new Date().getMonth() && y === new Date().getFullYear());
+                html += `<div class="cursor-pointer rounded-lg p-1.5 ${isCur?'bg-sky-50 ring-1 ring-dopamine-sky':'bg-gray-50'} hover:bg-sky-50 transition" onclick="currentCalendarDate.setMonth(${m});setCalView('month')">`;
+                html += `<div class="text-[10px] font-bold text-center mb-1 ${isCur?'text-dopamine-sky':'text-gray-600'}">${m+1}月</div>`;
+                html += `<div class="grid grid-cols-7 gap-px">`;
+                const firstDay = new Date(y, m, 1).getDay();
+                for (let p = 0; p < firstDay; p++) html += `<div class="h-1.5"></div>`;
+                for (let day = 1; day <= new Date(y, m + 1, 0).getDate(); day++) {
+                    const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
+                    let c = 'bg-gray-200'; if (mins > 120) c = 'bg-dopamine-orange'; else if (mins > 30) c = 'bg-orange-300'; else if (mins > 0) c = 'bg-orange-200';
+                    html += `<div class="h-1.5 rounded-sm ${c}"></div>`;
+                }
+                html += `</div></div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
         function showDayDetail(dStr, mins, tks, icsEvts) {
             icsEvts = icsEvts || getCalendarEventsForDate(dStr);
             document.getElementById("dayDetailTitle").innerText = dStr; 
@@ -1926,8 +2040,20 @@
             document.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = closeModals);
             document.querySelectorAll('.energy-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange')); e.target.classList.add('ring-2', 'ring-dopamine-orange', 'bg-orange-50', 'text-dopamine-orange'); document.getElementById('checkModalEnergy').value = e.target.getAttribute('data-energy'); });
             document.querySelectorAll('.mood-emoji').forEach(el => el.onclick = () => setMood(el.getAttribute('data-mood')));
-            document.getElementById("prevMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); };
-            document.getElementById("nextMonthBtn").onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); };
+            document.getElementById("prevMonthBtn").onclick = () => { 
+                if (calendarView === 'day') currentCalendarDate.setDate(currentCalendarDate.getDate() - 1);
+                else if (calendarView === 'week') currentCalendarDate.setDate(currentCalendarDate.getDate() - 7);
+                else if (calendarView === 'month') currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                else currentCalendarDate.setFullYear(currentCalendarDate.getFullYear() - 1);
+                renderCalendarView();
+            };
+            document.getElementById("nextMonthBtn").onclick = () => { 
+                if (calendarView === 'day') currentCalendarDate.setDate(currentCalendarDate.getDate() + 1);
+                else if (calendarView === 'week') currentCalendarDate.setDate(currentCalendarDate.getDate() + 7);
+                else if (calendarView === 'month') currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                else currentCalendarDate.setFullYear(currentCalendarDate.getFullYear() + 1);
+                renderCalendarView();
+            };
             document.getElementById("moodCalPrev").onclick = () => { moodCalDate.setMonth(moodCalDate.getMonth() - 1); renderMoodCalendar(); };
             document.getElementById("moodCalNext").onclick = () => { moodCalDate.setMonth(moodCalDate.getMonth() + 1); renderMoodCalendar(); };
         }
