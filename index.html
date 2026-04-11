@@ -2711,6 +2711,7 @@
             renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
             updateMoodUI(); updateStreakBadge(); renderCalendar(); renderMoodCalendar(); renderTrendChart(); 
             renderPieChart(); updateFocusButtons(); renderKingdom(); renderDecrees();
+            if (currentLang === 'en') setTimeout(applyLang, 50);
         }
 
         // ================= 双通道认证 + 统一排行榜 =================
@@ -3108,19 +3109,23 @@
         // ================= 中英文切换 =================
         let currentLang = localStorage.getItem('phd_lang') || 'zh';
         const i18n = {
-            // Headers
+            // Module headers
             '今日理政时间': 'Focus Time Today',
-            '番茄工作法 · 累积能量': 'Pomodoro · Build Energy',
-            '分钟': 'min',
+            '番茄工作法 · 累积能量': 'Pomodoro · Build Momentum',
             '天恩闪念': 'Quick Ideas',
             '龙体圣意月历': 'Mood Calendar',
-            '江山社稷图': 'Progress Calendar',
+            '江山社稷图': 'Activity Calendar',
             '司天监 · 统计看板': 'Statistics Dashboard',
             '群臣排行榜': 'Leaderboard',
             '开疆拓土 · 江山万里图': 'Kingdom Map',
-            '今日圣旨': "Today's Decrees",
+            '今日圣旨': "Today's Goals",
             '龙体状况': 'Health Status',
-            // Buttons
+            '作息起居 · 真实四段式': 'Daily Check-in',
+            '近7天理政趋势': '7-Day Focus Trend',
+            '奏折分布': 'Task Distribution',
+            '天恩闪念历史': 'Idea Archive',
+            '智能排程': 'Smart Schedule',
+            // Toolbar buttons
             '夜巡': 'Night',
             '本地备份': 'Backup',
             '本地恢复': 'Restore',
@@ -3128,75 +3133,181 @@
             '同步日历': 'Sync Cal',
             '登录日历': 'Login Cal',
             '隐匿护卫': 'Guard',
-            '阵法锁定': 'Lock',
+            '阵法锁定': 'Lock Layout',
+            '阵法已锁定': 'Layout Locked',
+            '阵法调整中': 'Layout Unlocked',
             '刷新': 'Refresh',
-            '颁布诏书': 'Report',
+            '颁布诏书': 'Export Report',
             '退出': 'Logout',
             '登录排行榜': 'Login',
             '批阅奏折': 'Tasks',
-            // Stats
-            '本周': 'Week',
-            '本月': 'Month',
+            '召唤护卫': 'Summon Guard',
+            '锦衣卫隐匿': 'Hide Guard',
+            '归档': 'Archive',
+            '重拟': 'Edit',
+            // Stats labels
+            '本周': 'This Week',
+            '本月': 'This Month',
             '累计': 'Total',
-            '批阅:': 'Tasks:',
-            '时长:': 'Focus:',
-            '上朝:': 'Days:',
+            '汇总': 'Summary',
+            '分钟': 'min',
             '天': 'days',
             '奏折': 'tasks',
+            '时长': 'Duration',
+            '上朝': 'Check-in',
+            '批阅': 'Tasks',
+            '专注': 'Focus',
             // Calendar views
-            '日': 'D',
-            '周': 'W',
-            '月': 'M',
-            '年': 'Y',
-            // Focus
+            '日': 'D', '周': 'W', '月': 'M', '年': 'Y',
+            '热力日历': 'Heatmap',
+            // Focus modes
             '自由模式': 'Free Mode',
+            '自由理政': 'Free Focus',
+            '自由理政中': 'Free Focusing...',
             '暂无专注': 'Not Focusing',
             '⏸️ 暂无专注': '⏸️ Not Focusing',
+            '专注理政': 'Focus Mode',
+            '专注计时': 'Focus Timer',
+            '分钟深度钟': 'min Deep Focus',
+            '分钟番茄钟': 'min Pomodoro',
             // Mood
-            '开心': 'Happy',
-            '一般': 'Neutral',
-            '低落': 'Low',
-            // Ideas
-            '记录瞬间的想法(回车保存)...': 'Capture a thought (Enter to save)...',
-            '归档': 'Archive',
-            // Leaderboard ranks
-            '皇帝': 'Emperor',
-            '丞相': 'Prime Minister',
-            '大将军': 'General',
-            '御史大夫': 'Censor',
-            '太守': 'Governor',
-            '翰林学士': 'Scholar',
-            '侍郎': 'Minister',
-            '太监总管': 'Chief Eunuch',
-            '小太监': 'Eunuch',
-            '马夫': 'Groom',
-            // Routines
+            '开心': 'Happy', '一般': 'Neutral', '低落': 'Low',
+            // Check-in periods
             '卯时 · 早朝': 'Morning Session',
             '午时 · 理政': 'Afternoon Session',
             '酉时 · 夜读': 'Evening Session',
             '亥时 · 养心殿': 'Night Session',
-            // Kingdom
-            '已解锁': 'Unlocked',
-            '完成番茄钟和任务解锁新建筑': 'Complete pomodoros & tasks to unlock buildings',
-            '个番茄钟': ' pomodoros',
-            '个任务': ' tasks',
-            '天连续': ' day streak',
-            // Decrees
-            '已执行': 'Done',
-            '重拟': 'Edit',
-            // Check-in
-            '汇总': 'Summary',
-            // Map buildings
+            '早朝': 'Morning', '午朝': 'Afternoon', '晚朝': 'Evening', '修仙': 'Night',
+            '上朝时间': 'Start Time', '退朝时间': 'End Time',
+            '精力评估': 'Energy Level',
+            '碎碎念': 'Notes',
+            '载入史册': 'Save Record',
+            '时段补录': 'Manual Entry',
+            '补录与复盘': 'Review',
+            // Leaderboard ranks
+            '皇帝': 'Emperor', '丞相': 'Prime Minister', '大将军': 'General',
+            '御史大夫': 'Censor', '太守': 'Governor', '翰林学士': 'Scholar',
+            '侍郎': 'Minister', '太监总管': 'Chief Eunuch', '小太监': 'Eunuch', '马夫': 'Groom',
+            // Kingdom buildings
             '茅草屋': 'Cottage', '农田': 'Farm', '客栈': 'Inn', '桃花林': 'Peach Grove',
             '书院': 'Academy', '酒楼': 'Restaurant', '寺庙': 'Temple', '拱桥': 'Bridge',
             '戏楼': 'Theater', '灯市': 'Lantern Market', '望楼': 'Watchtower', '码头': 'Dock',
-            '王府': 'Mansion', '龙柱': 'Dragon Pillar', '烟火台': 'Fireworks', '紫禁城': 'Palace',
+            '王府': 'Mansion', '龙柱': 'Dragon Pillar', '烟火台': 'Fireworks', '紫禁城': 'Forbidden City',
+            '已解锁': 'Unlocked', '未解锁': 'Locked',
+            '完成番茄钟和任务解锁新建筑': 'Complete pomodoros & tasks to unlock',
+            '完成番茄钟和任务解锁新建筑 · 点击建筑查看详情': 'Complete tasks to unlock · Click for details',
+            '个番茄钟': ' pomodoros', '个任务': ' tasks', '天连续': ' day streak',
+            // Kingdom unlock requirements
+            '完成第1个番茄钟': '1 pomodoro',
+            '完成3个任务': '3 tasks',
+            '完成10个任务': '10 tasks',
+            '完成20个任务': '20 tasks',
+            '完成50个任务': '50 tasks',
+            '连续打卡3天': '3-day streak',
+            '连续打卡7天': '7-day streak',
+            '连续打卡14天': '14-day streak',
+            '连续打卡30天': '30-day streak',
+            // Decrees
+            '已执行': 'Done',
+            '早 朝 议 事': 'Morning Court',
+            '陛下，今日要颁布哪三道圣旨？': 'What are your 3 goals for today?',
+            '第一道圣旨（最重要的事）': 'Goal #1 (most important)',
+            '第二道圣旨': 'Goal #2',
+            '第三道圣旨': 'Goal #3',
+            '颁布圣旨': 'Set Goals',
+            '今日不早朝（跳过）': 'Skip for today',
+            // Tasks
+            '任务名称': 'Task name',
+            '呈递': 'Add',
+            '未开始': 'To Do', '进行中': 'In Progress', '已完成': 'Done',
+            '开始审阅': 'Start', '已批': 'Done',
+            '已批奏折归档': 'Completed Tasks',
+            '查看历史': 'History',
+            '案牍清空，四海升平': 'All tasks completed!',
+            '暂无奏折': 'No tasks',
+            '紧急': 'Urgent', '重要': 'Important', '日常': 'Daily',
+            '写论文': 'Write Paper', '实验': 'Experiment', '文献': 'Literature',
+            '写作': 'Writing', '绘图': 'Drawing', '其他': 'Other',
+            // Auth
+            '邮箱登录': 'Email Login',
+            '邮箱地址': 'Email address',
+            '登录': 'Login', '注册': 'Register',
+            '首次使用请先点「注册」· 国内外均可使用': 'New user? Click Register · Works worldwide',
+            // Ideas
+            '记录瞬间的想法(回车保存)...': 'Capture a thought (Enter to save)...',
+            // Oura
+            '龙威浩荡': 'Peak Readiness',
+            '龙体尚可': 'Moderate',
+            '圣体违和': 'Low Energy',
+            '龙体康健，宜大力理政！': 'Peak condition, go hard!',
+            '精力中等，适度理政。': 'Moderate energy, pace yourself.',
+            '建议轻度理政，早些退朝歇息。': 'Low energy, take it easy today.',
+            '睡眠': 'Sleep', '准备度': 'Readiness', '活动': 'Activity',
+            '问诊太医中': 'Loading health data...',
+            // Celebrations
+            '恭喜陛下 · 贺喜陛下': 'Congratulations!',
+            '可以称帝了！': 'You are the Emperor!',
+            '龙威大振！': 'Mighty!',
+            '文治武功！': 'Brilliant!',
+            '千古一帝！': 'Legendary!',
+            '国泰民安！': 'Prosperous!',
+            '万世流芳！': 'Eternal Glory!',
+            '圣明天子！': 'Wise Ruler!',
+            '本次理政': 'This Session',
+            '今日累计': 'Today Total',
+            '点击任意处退朝歇息': 'Click anywhere to close',
+            '点击退朝': 'Click to close',
+            '点击继续': 'Click to continue',
+            '圣旨皆已执行': 'All Goals Completed!',
+            '今日朝政大事已毕': "Today's work is done!",
+            '陛下英明神武，可安心退朝歇息！': 'Well done! Time to rest.',
+            '新建筑解锁': 'New Building Unlocked!',
+            // Warnings
+            '摸鱼被抓！': 'Caught slacking!',
+            '大胆！': 'How dare you!',
+            '先帝显灵': 'Ancestors watching!',
+            '御史弹劾！': 'Impeachment!',
+            '天崩地裂': 'Disaster!',
+            '阎王催命': 'Deadline!',
+            '社稷将倾': 'Crisis!',
+            '御猫不悦': 'Cat angry!',
+            '龙颜大怒！': 'Royal fury!',
+            '次离朝 · 锦衣卫如实记录': ' times away · Recorded',
+            // Schedule
+            '排程范围（从）': 'From', '排程范围（到）': 'To',
+            '每块时长': 'Block length', '预览排程': 'Preview',
+            '确认并创建': 'Create',
+            // Calendar
+            '外部日程': 'External Events', '日历订阅设置': 'Calendar Settings',
+            '设置日历订阅链接': 'Calendar subscription URL',
+            '保存并同步': 'Save & Sync',
+            '从 Google Calendar 拉取日程': 'Fetch from Google Calendar',
+            '日历已连接': 'Calendar Connected',
             // Misc
-            '热力日历': 'Heatmap',
             '暂无数据，等朋友加入吧！': 'No data yet, invite friends!',
+            '暂无记录': 'No records',
+            '加载中': 'Loading...',
+            '同步中': 'Syncing...',
+            '同步': 'Sync',
+            '修改你的名号：': 'Change your nickname:',
+            '给自己起个名号吧：': 'Choose a nickname:',
+            '确定退出？排名将从排行榜移除。': 'Logout? Your ranking will be removed.',
+            '陛下确定要抹去此奏折？': 'Delete this task?',
+            '密码（至少6位）': 'Password (min 6 chars)',
+            '请填写邮箱和密码': 'Please enter email and password',
+            '登录失败：': 'Login failed: ',
+            '注册失败：': 'Register failed: ',
+            '注册成功！': 'Registered!',
+            '史库备份_': 'Backup_',
+            '岁首诏书_': 'Report_',
+            // Routine panel
+            '龙体圣意': 'Daily Status',
+            '作息打卡': 'Check-in',
+            '皇帝的贴身史官': 'Personal Historian',
+            '圣意起居注': 'Daily Log',
+            '连朝': 'Streak',
         };
 
-        // Build reverse map
         const i18nReverse = {};
         Object.entries(i18n).forEach(([zh, en]) => { i18nReverse[en] = zh; });
 
@@ -3211,32 +3322,47 @@
             if (btn) btn.innerHTML = currentLang === 'zh' ? '🌐 EN' : '🌐 中';
             
             if (currentLang === 'zh') {
-                // Restore Chinese
                 document.querySelectorAll('[data-zh]').forEach(el => {
                     el.textContent = el.getAttribute('data-zh');
                 });
                 document.querySelectorAll('[data-zh-placeholder]').forEach(el => {
                     el.placeholder = el.getAttribute('data-zh-placeholder');
                 });
+                document.title = '皇帝养成日记';
             } else {
-                // Apply English: walk all text nodes
+                document.title = 'Emperor Growth Diary';
+                const map = currentLang === 'en' ? i18n : i18nReverse;
                 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
                 while (walker.nextNode()) {
                     const node = walker.currentNode;
-                    const text = node.textContent.trim();
-                    if (text && i18n[text]) {
+                    const origText = node.textContent;
+                    let newText = origText;
+                    // Try exact match first
+                    const trimmed = origText.trim();
+                    if (trimmed && map[trimmed]) {
                         if (!node.parentElement.getAttribute('data-zh')) {
-                            node.parentElement.setAttribute('data-zh', text);
+                            node.parentElement.setAttribute('data-zh', trimmed);
                         }
-                        node.textContent = node.textContent.replace(text, i18n[text]);
+                        newText = origText.replace(trimmed, map[trimmed]);
+                    } else {
+                        // Try partial replacements for longer strings
+                        for (const [from, to] of Object.entries(map)) {
+                            if (from.length >= 2 && newText.includes(from)) {
+                                if (!node.parentElement.getAttribute('data-zh')) {
+                                    node.parentElement.setAttribute('data-zh', origText.trim());
+                                }
+                                newText = newText.replace(from, to);
+                            }
+                        }
                     }
+                    if (newText !== origText) node.textContent = newText;
                 }
                 // Placeholders
                 document.querySelectorAll('textarea[placeholder], input[placeholder]').forEach(el => {
                     const ph = el.placeholder;
-                    if (i18n[ph]) {
+                    if (map[ph]) {
                         el.setAttribute('data-zh-placeholder', ph);
-                        el.placeholder = i18n[ph];
+                        el.placeholder = map[ph];
                     }
                 });
             }
