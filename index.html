@@ -244,6 +244,7 @@
                     <button onclick="document.getElementById('icsUrlModal').classList.add('active')" class="bg-white hover:bg-sky-50 text-gray-500 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center justify-center shadow-sm" title="设置日历订阅链接"><i class="fas fa-cog"></i></button>
                     <button id="gcalLoginBtn" onclick="handleGCalAuth()" class="bg-white hover:bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-full border border-red-200 transition flex items-center gap-1 shadow-sm font-bold whitespace-nowrap"><i class="fab fa-google"></i> <span id="gcalLoginText">登录日历</span></button>
                     <button onclick="toggleOuraModule()" class="text-green-500 text-xs px-1 py-1 transition hover:scale-125" title="龙体状况"><i class="fas fa-heart"></i></button>
+                    <button id="langBtn" onclick="toggleLang()" class="bg-white hover:bg-gray-50 text-gray-600 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-bold" title="中/EN">🌐 EN</button>
                 </div>
             </div>
         </div>
@@ -3104,6 +3105,143 @@
             setTimeout(() => { if (document.getElementById('coronationOverlay')) overlay.remove(); }, 10000);
         }
 
+        // ================= 中英文切换 =================
+        let currentLang = localStorage.getItem('phd_lang') || 'zh';
+        const i18n = {
+            // Headers
+            '今日理政时间': 'Focus Time Today',
+            '番茄工作法 · 累积能量': 'Pomodoro · Build Energy',
+            '分钟': 'min',
+            '天恩闪念': 'Quick Ideas',
+            '龙体圣意月历': 'Mood Calendar',
+            '江山社稷图': 'Progress Calendar',
+            '司天监 · 统计看板': 'Statistics Dashboard',
+            '群臣排行榜': 'Leaderboard',
+            '开疆拓土 · 江山万里图': 'Kingdom Map',
+            '今日圣旨': "Today's Decrees",
+            '龙体状况': 'Health Status',
+            // Buttons
+            '夜巡': 'Night',
+            '本地备份': 'Backup',
+            '本地恢复': 'Restore',
+            '导入日历': 'Import Cal',
+            '同步日历': 'Sync Cal',
+            '登录日历': 'Login Cal',
+            '隐匿护卫': 'Guard',
+            '阵法锁定': 'Lock',
+            '刷新': 'Refresh',
+            '颁布诏书': 'Report',
+            '退出': 'Logout',
+            '登录排行榜': 'Login',
+            '批阅奏折': 'Tasks',
+            // Stats
+            '本周': 'Week',
+            '本月': 'Month',
+            '累计': 'Total',
+            '批阅:': 'Tasks:',
+            '时长:': 'Focus:',
+            '上朝:': 'Days:',
+            '天': 'days',
+            '奏折': 'tasks',
+            // Calendar views
+            '日': 'D',
+            '周': 'W',
+            '月': 'M',
+            '年': 'Y',
+            // Focus
+            '自由模式': 'Free Mode',
+            '暂无专注': 'Not Focusing',
+            '⏸️ 暂无专注': '⏸️ Not Focusing',
+            // Mood
+            '开心': 'Happy',
+            '一般': 'Neutral',
+            '低落': 'Low',
+            // Ideas
+            '记录瞬间的想法(回车保存)...': 'Capture a thought (Enter to save)...',
+            '归档': 'Archive',
+            // Leaderboard ranks
+            '皇帝': 'Emperor',
+            '丞相': 'Prime Minister',
+            '大将军': 'General',
+            '御史大夫': 'Censor',
+            '太守': 'Governor',
+            '翰林学士': 'Scholar',
+            '侍郎': 'Minister',
+            '太监总管': 'Chief Eunuch',
+            '小太监': 'Eunuch',
+            '马夫': 'Groom',
+            // Routines
+            '卯时 · 早朝': 'Morning Session',
+            '午时 · 理政': 'Afternoon Session',
+            '酉时 · 夜读': 'Evening Session',
+            '亥时 · 养心殿': 'Night Session',
+            // Kingdom
+            '已解锁': 'Unlocked',
+            '完成番茄钟和任务解锁新建筑': 'Complete pomodoros & tasks to unlock buildings',
+            '个番茄钟': ' pomodoros',
+            '个任务': ' tasks',
+            '天连续': ' day streak',
+            // Decrees
+            '已执行': 'Done',
+            '重拟': 'Edit',
+            // Check-in
+            '汇总': 'Summary',
+            // Map buildings
+            '茅草屋': 'Cottage', '农田': 'Farm', '客栈': 'Inn', '桃花林': 'Peach Grove',
+            '书院': 'Academy', '酒楼': 'Restaurant', '寺庙': 'Temple', '拱桥': 'Bridge',
+            '戏楼': 'Theater', '灯市': 'Lantern Market', '望楼': 'Watchtower', '码头': 'Dock',
+            '王府': 'Mansion', '龙柱': 'Dragon Pillar', '烟火台': 'Fireworks', '紫禁城': 'Palace',
+            // Misc
+            '热力日历': 'Heatmap',
+            '暂无数据，等朋友加入吧！': 'No data yet, invite friends!',
+        };
+
+        // Build reverse map
+        const i18nReverse = {};
+        Object.entries(i18n).forEach(([zh, en]) => { i18nReverse[en] = zh; });
+
+        function toggleLang() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('phd_lang', currentLang);
+            applyLang();
+        }
+
+        function applyLang() {
+            const btn = document.getElementById('langBtn');
+            if (btn) btn.innerHTML = currentLang === 'zh' ? '🌐 EN' : '🌐 中';
+            
+            if (currentLang === 'zh') {
+                // Restore Chinese
+                document.querySelectorAll('[data-zh]').forEach(el => {
+                    el.textContent = el.getAttribute('data-zh');
+                });
+                document.querySelectorAll('[data-zh-placeholder]').forEach(el => {
+                    el.placeholder = el.getAttribute('data-zh-placeholder');
+                });
+            } else {
+                // Apply English: walk all text nodes
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                while (walker.nextNode()) {
+                    const node = walker.currentNode;
+                    const text = node.textContent.trim();
+                    if (text && i18n[text]) {
+                        if (!node.parentElement.getAttribute('data-zh')) {
+                            node.parentElement.setAttribute('data-zh', text);
+                        }
+                        node.textContent = node.textContent.replace(text, i18n[text]);
+                    }
+                }
+                // Placeholders
+                document.querySelectorAll('textarea[placeholder], input[placeholder]').forEach(el => {
+                    const ph = el.placeholder;
+                    if (i18n[ph]) {
+                        el.setAttribute('data-zh-placeholder', ph);
+                        el.placeholder = i18n[ph];
+                    }
+                });
+            }
+        }
+
       function init() { 
             loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); loadRoutineCollapse(); loadOuraToken(); bindEvents();
             setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
@@ -3115,10 +3253,10 @@
             applyGuardState();
             initFirebase();
             checkMorningCourt();
-            initOura();
             setInterval(() => renderAll(), 60000);
             setInterval(() => { syncLeaderboard(); if (authProvider === 'email') saveDataToSupabase(); }, 300000);
-            requestAnimationFrame(patrolGuard); 
+            requestAnimationFrame(patrolGuard);
+            setTimeout(applyLang, 500); // Apply language after render
         }
         
         // 陛下驾到，系统启动！
