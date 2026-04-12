@@ -10,13 +10,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="养成日记">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
-    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/3.0.23/tailwind.min.js"></script>
-    <link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/Chart.js/3.7.1/chart.min.js"></script>
-    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        // Lazy-load Google/Firebase scripts (not needed for China users)
+        // Lazy-load Google/Firebase scripts (blocked in China, don't block page)
         function loadGoogleScripts() {
             const scripts = [
                 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
@@ -35,7 +35,6 @@
                 document.head.appendChild(s);
             });
         }
-        // Start loading after page renders
         window.addEventListener('load', () => setTimeout(loadGoogleScripts, 500));
     </script>
     <script>
@@ -76,6 +75,21 @@
         .draggable-module { position: relative; transition: all 0.3s ease; background: white; min-height: 200px; min-width: 280px; }
         .module-controls { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .edit-mode .module-controls { opacity: 1; pointer-events: auto; }
+        .module-menu { position: absolute; top: 40px; right: 0; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 8px; z-index: 100; min-width: 180px; display: none; }
+        .module-menu.show { display: block; animation: scaryFadeIn 0.2s; }
+        .module-menu .menu-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; transition: background 0.15s; }
+        .module-menu .menu-item:hover { background: #F3F4F6; }
+        .module-menu .menu-item.danger { color: #EF4444; }
+        .module-menu .menu-item.danger:hover { background: #FEE2E2; }
+        .module-menu .color-row { display: flex; gap: 6px; padding: 8px 12px; }
+        .module-menu .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: transform 0.15s; border: 2px solid transparent; }
+        .module-menu .color-dot:hover { transform: scale(1.3); }
+        .module-menu .color-dot.active { border-color: #1F2937; transform: scale(1.2); }
+        .module-menu .menu-divider { height: 1px; background: #E5E7EB; margin: 4px 12px; }
+        .night-mode .module-menu { background: #1F2937; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        .night-mode .module-menu .menu-item { color: #D1D5DB; }
+        .night-mode .module-menu .menu-item:hover { background: #374151; }
+        .night-mode .module-menu .menu-divider { background: #374151; }
         .edit-mode .draggable-module { outline: 2px dashed rgba(255, 140, 66, 0.3); outline-offset: 4px; }
         .drag-handle:active { cursor: grabbing !important; }
         .drop-target { outline: 3px dashed #FF8C42 !important; outline-offset: -4px; opacity: 0.6; }
@@ -119,6 +133,23 @@
         .night-mode #module-daily-event { background: linear-gradient(135deg,#3B1A1A,#2D1010) !important; border-color: #991B1B !important; }
         .event-pulse { animation: eventPulse 2s ease-in-out infinite; }
         @keyframes eventPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.4); } 50% { box-shadow: 0 0 0 8px rgba(248,113,113,0); } }
+
+        /* Module customization */
+        .module-menu { position: absolute; top: 40px; right: 8px; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 12px; z-index: 100; min-width: 200px; display: none; }
+        .module-menu.show { display: block; animation: scaryFadeIn 0.15s; }
+        .module-menu .menu-title { font-size: 11px; font-weight: 900; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .module-menu .color-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .module-menu .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all 0.15s; }
+        .module-menu .color-dot:hover { transform: scale(1.2); }
+        .module-menu .color-dot.active { border-color: #333; }
+        .module-menu .menu-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; border-radius: 10px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #4B5563; text-align: left; transition: background 0.15s; }
+        .module-menu .menu-btn:hover { background: #F3F4F6; }
+        .module-menu .menu-btn.danger { color: #EF4444; }
+        .module-menu .menu-btn.danger:hover { background: #FEF2F2; }
+        .night-mode .module-menu { background: #1F2937; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        .night-mode .module-menu .menu-btn { color: #D1D5DB; }
+        .night-mode .module-menu .menu-btn:hover { background: #374151; }
+        .module-hidden { display: none !important; }
         .court-active { display: flex !important; opacity: 1 !important; }
 
         /* 悬浮窗样式 */
@@ -266,6 +297,8 @@
                     <button id="gcalLoginBtn" onclick="handleGCalAuth()" class="bg-white hover:bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-full border border-red-200 transition flex items-center gap-1 shadow-sm font-bold whitespace-nowrap"><i class="fab fa-google"></i> <span id="gcalLoginText">登录日历</span></button>
                     <button onclick="toggleOuraModule()" class="text-green-500 text-xs px-1 py-1 transition hover:scale-125" title="龙体状况"><i class="fas fa-heart"></i></button>
                     <button id="langBtn" onclick="toggleLang()" class="bg-white hover:bg-gray-50 text-gray-600 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-bold" title="中/EN">🌐 EN</button>
+                    <button onclick="openModuleManager()" class="bg-white hover:bg-purple-50 text-purple-500 text-xs px-2 py-1.5 rounded-full border border-purple-200 transition flex items-center gap-1 shadow-sm font-bold" title="模块管理"><i class="fas fa-th-large"></i></button>
+                    <button onclick="openModuleManager()" class="bg-white hover:bg-gray-50 text-gray-600 text-xs px-2 py-1.5 rounded-full border border-gray-300 transition flex items-center gap-1 shadow-sm font-bold" title="模块管理">🎨</button>
                 </div>
             </div>
         </div>
@@ -376,6 +409,17 @@
                     <div><label class="text-xs font-bold text-gray-500">碎碎念</label><textarea id="checkModalNote" rows="2" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none resize-none text-sm"></textarea></div>
                     <button onclick="saveCheckModal()" class="w-full bg-dopamine-orange text-white py-2.5 rounded-xl font-bold shadow-sm hover:bg-orange-500 transition">💾 载入史册</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="moduleManagerModal" class="modal-overlay">
+            <div class="modal-content p-5" style="max-width:480px;">
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">🎨 模块管理</h3>
+                    <button class="close-modal-btn text-gray-400 text-xl" onclick="document.getElementById('moduleManagerModal').classList.remove('active')">&times;</button>
+                </div>
+                <div id="moduleManagerList" class="space-y-2"></div>
+                <button onclick="resetModuleSettings()" class="w-full mt-4 py-2 rounded-xl text-gray-400 text-xs font-medium hover:bg-gray-50 transition">恢复默认设置</button>
             </div>
         </div>
 
@@ -3782,6 +3826,192 @@
             }
         }
 
+        // ================= 模块个性化管理 =================
+        const MODULE_REGISTRY = [
+            { id: 'module-decrees', name: '今日圣旨', nameEn: 'Daily Goals', icon: '🔱' },
+            { id: 'module-daily-event', name: '每日事件', nameEn: 'Daily Event', icon: '⚔️' },
+            { id: 'module-oura', name: '龙体状况', nameEn: 'Health', icon: '💚' },
+            { id: 'module-focus', name: '番茄钟', nameEn: 'Focus Timer', icon: '🍅' },
+            { id: 'module-routine', name: '作息打卡', nameEn: 'Check-in', icon: '✅' },
+            { id: 'module-ideas', name: '天恩闪念', nameEn: 'Quick Ideas', icon: '💡' },
+            { id: 'module-mood-cal', name: '心情月历', nameEn: 'Mood Calendar', icon: '😊' },
+            { id: 'module-calendar', name: '江山社稷图', nameEn: 'Calendar', icon: '📅' },
+            { id: 'module-stats', name: '统计看板', nameEn: 'Statistics', icon: '📊' },
+            { id: 'module-kingdom', name: '江山万里图', nameEn: 'Kingdom Map', icon: '🏯' },
+            { id: 'module-leaderboard', name: '排行榜', nameEn: 'Leaderboard', icon: '🏆' },
+        ];
+
+        const MODULE_COLORS = [
+            { name: '默认', value: '' },
+            { name: '🌸', value: 'linear-gradient(135deg,#FFF0F5,#FFE4E8)' },
+            { name: '🌊', value: 'linear-gradient(135deg,#EFF6FF,#DBEAFE)' },
+            { name: '🌿', value: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)' },
+            { name: '🌅', value: 'linear-gradient(135deg,#FFFBEB,#FEF3C7)' },
+            { name: '🔮', value: 'linear-gradient(135deg,#F5F3FF,#EDE9FE)' },
+            { name: '🌑', value: 'linear-gradient(135deg,#1F2937,#111827)' },
+            { name: '🍊', value: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)' },
+            { name: '🌹', value: 'linear-gradient(135deg,#FDF2F8,#FCE7F3)' },
+        ];
+
+        function getModuleSettings() {
+            return JSON.parse(localStorage.getItem('phd_module_settings') || '{}');
+        }
+
+        function saveModuleSettings(settings) {
+            localStorage.setItem('phd_module_settings', JSON.stringify(settings));
+        }
+
+        function applyModuleSettings() {
+            const settings = getModuleSettings();
+            MODULE_REGISTRY.forEach(mod => {
+                const el = document.getElementById(mod.id);
+                if (!el) return;
+                const s = settings[mod.id] || {};
+                
+                // Visibility
+                if (s.hidden) el.classList.add('module-hidden');
+                else el.classList.remove('module-hidden');
+                
+                // Color
+                if (s.color) el.style.background = s.color;
+                
+                // Scale
+                if (s.scale) el.style.transform = `scale(${s.scale})`;
+            });
+            
+            // Inject settings gear into each module's controls
+            document.querySelectorAll('.module-controls').forEach(ctrl => {
+                if (ctrl.querySelector('.mod-gear')) return; // Already added
+                const modEl = ctrl.closest('.draggable-module') || ctrl.closest('[id^="module-"]');
+                if (!modEl) return;
+                
+                const gear = document.createElement('button');
+                gear.className = 'mod-gear w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-purple flex items-center justify-center transition';
+                gear.innerHTML = '<i class="fas fa-palette"></i>';
+                gear.onclick = (e) => { e.stopPropagation(); toggleModuleMenu(modEl.id, gear); };
+                ctrl.insertBefore(gear, ctrl.firstChild);
+            });
+        }
+
+        function toggleModuleMenu(moduleId, btnEl) {
+            // Close any existing menu
+            document.querySelectorAll('.module-menu.show').forEach(m => m.remove());
+            
+            const modEl = document.getElementById(moduleId);
+            if (!modEl) return;
+            
+            const settings = getModuleSettings();
+            const s = settings[moduleId] || {};
+            const _en = currentLang === 'en';
+            
+            const menu = document.createElement('div');
+            menu.className = 'module-menu show';
+            
+            // Color picker
+            let colorHtml = `<div class="menu-title">${_en ? 'Theme Color' : '主题配色'}</div><div class="color-row">`;
+            MODULE_COLORS.forEach((c, i) => {
+                const isActive = (s.color || '') === c.value;
+                const bg = c.value || '#F3F4F6';
+                colorHtml += `<div class="color-dot ${isActive?'active':''}" style="background:${bg}" onclick="setModuleColor('${moduleId}','${c.value}')" title="${c.name}"></div>`;
+            });
+            colorHtml += '</div>';
+            
+            menu.innerHTML = `
+                ${colorHtml}
+                <div class="menu-title">${_en ? 'Size' : '尺寸'}</div>
+                <div style="display:flex;gap:4px;margin-bottom:12px;">
+                    <button class="menu-btn" style="flex:1;justify-content:center;${s.scale===0.9?'background:#E5E7EB;':''}" onclick="setModuleScale('${moduleId}',0.9)">S</button>
+                    <button class="menu-btn" style="flex:1;justify-content:center;${!s.scale||s.scale===1?'background:#E5E7EB;':''}" onclick="setModuleScale('${moduleId}',1)">M</button>
+                    <button class="menu-btn" style="flex:1;justify-content:center;${s.scale===1.05?'background:#E5E7EB;':''}" onclick="setModuleScale('${moduleId}',1.05)">L</button>
+                </div>
+                <button class="menu-btn danger" onclick="toggleModuleVisibility('${moduleId}')">
+                    <i class="fas fa-eye-slash"></i> ${_en ? 'Hide Module' : '隐藏模块'}
+                </button>
+            `;
+            
+            // Position relative to button
+            modEl.style.position = 'relative';
+            modEl.appendChild(menu);
+            
+            // Close on outside click
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+                });
+            }, 10);
+        }
+
+        function setModuleColor(moduleId, color) {
+            const settings = getModuleSettings();
+            if (!settings[moduleId]) settings[moduleId] = {};
+            settings[moduleId].color = color;
+            saveModuleSettings(settings);
+            
+            const el = document.getElementById(moduleId);
+            if (el) el.style.background = color || '';
+            
+            // Close menu
+            document.querySelectorAll('.module-menu').forEach(m => m.remove());
+        }
+
+        function setModuleScale(moduleId, scale) {
+            const settings = getModuleSettings();
+            if (!settings[moduleId]) settings[moduleId] = {};
+            settings[moduleId].scale = scale;
+            saveModuleSettings(settings);
+            
+            const el = document.getElementById(moduleId);
+            if (el) el.style.transform = scale === 1 ? '' : `scale(${scale})`;
+            
+            document.querySelectorAll('.module-menu').forEach(m => m.remove());
+        }
+
+        function toggleModuleVisibility(moduleId) {
+            const settings = getModuleSettings();
+            if (!settings[moduleId]) settings[moduleId] = {};
+            settings[moduleId].hidden = !settings[moduleId].hidden;
+            saveModuleSettings(settings);
+            
+            const el = document.getElementById(moduleId);
+            if (el) el.classList.toggle('module-hidden', settings[moduleId].hidden);
+            
+            document.querySelectorAll('.module-menu').forEach(m => m.remove());
+        }
+
+        function openModuleManager() {
+            const settings = getModuleSettings();
+            const _en = currentLang === 'en';
+            const list = document.getElementById('moduleManagerList');
+            
+            list.innerHTML = MODULE_REGISTRY.map(mod => {
+                const s = settings[mod.id] || {};
+                const isHidden = s.hidden;
+                const name = _en ? mod.nameEn : mod.name;
+                const colorPreview = s.color ? `style="background:${s.color}"` : 'style="background:#F3F4F6"';
+                
+                return `<div class="flex items-center gap-3 p-3 rounded-xl ${isHidden ? 'bg-gray-100 opacity-50' : 'bg-gray-50'} transition">
+                    <span class="text-xl w-8 text-center">${mod.icon}</span>
+                    <span class="flex-1 font-bold text-sm ${isHidden ? 'text-gray-400 line-through' : 'text-gray-700'}">${name}</span>
+                    <div class="w-6 h-6 rounded-full border-2 border-gray-200 flex-shrink-0" ${colorPreview}></div>
+                    <button onclick="toggleModuleVisibility('${mod.id}');openModuleManager();" class="w-8 h-8 rounded-full ${isHidden ? 'bg-gray-200 text-gray-400' : 'bg-green-100 text-green-600'} flex items-center justify-center text-xs transition">
+                        <i class="fas ${isHidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                    </button>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('moduleManagerModal').classList.add('active');
+        }
+
+        function resetModuleSettings() {
+            if (!confirm(currentLang === 'en' ? 'Reset all module settings?' : '恢复所有模块的默认设置？')) return;
+            localStorage.removeItem('phd_module_settings');
+            MODULE_REGISTRY.forEach(mod => {
+                const el = document.getElementById(mod.id);
+                if (el) { el.classList.remove('module-hidden'); el.style.background = ''; el.style.transform = ''; }
+            });
+            document.getElementById('moduleManagerModal').classList.remove('active');
+        }
+
       function init() { 
             loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); loadRoutineCollapse(); loadOuraToken(); bindEvents();
             document.getElementById("currentDate").innerText = new Date().toLocaleDateString(); 
@@ -3790,6 +4020,7 @@
             loadLayout(); 
             initDrawer();
             applyGuardState();
+            applyModuleSettings();
             
             // Init Supabase immediately (works in China)
             try {
