@@ -98,6 +98,9 @@
         .night-mode .decree-card { background: rgba(60,50,30,0.7); border-color: #92400E; }
         .night-mode .decree-card .decree-text { color: #FDE68A; }
         .night-mode #module-decrees { background: linear-gradient(135deg,#3B2E1A,#2D2210) !important; border-color: #92400E !important; }
+        .night-mode #module-daily-event { background: linear-gradient(135deg,#3B1A1A,#2D1010) !important; border-color: #991B1B !important; }
+        .event-pulse { animation: eventPulse 2s ease-in-out infinite; }
+        @keyframes eventPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.4); } 50% { box-shadow: 0 0 0 8px rgba(248,113,113,0); } }
         .court-active { display: flex !important; opacity: 1 !important; }
 
         /* 悬浮窗样式 */
@@ -385,6 +388,17 @@
                 <div id="decreesDisplay" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
             </div>
 
+            <div id="module-daily-event" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFF1F2,#FEE2E2);border:2px solid #F87171;">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2"><span class="text-lg">⚔️</span><h2 class="text-sm font-black text-red-800" style="font-family:'楷体','STKaiti',serif;" id="eventTitle">八百里加急</h2></div>
+                    <div class="flex items-center gap-1">
+                        <span id="eventBonusBadge" class="text-[10px] bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full font-bold">+15 bonus</span>
+                        <span id="eventTimerBadge" class="text-[10px] bg-red-200 text-red-700 px-2 py-0.5 rounded-full font-bold"></span>
+                    </div>
+                </div>
+                <div id="eventContent"></div>
+            </div>
+
             <div id="module-oura" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:2px solid #34D399;">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2"><span class="text-lg">🐲</span><h2 class="text-sm font-black text-green-800" style="font-family:'楷体','STKaiti',serif;">龙体状况</h2><span id="ouraDate" class="text-[10px] text-green-600"></span></div>
@@ -665,7 +679,7 @@
     </div>
 
     <script>
-        let appData = { tasks: [], focusSessions: [], checkRecords: {}, ideas: [], moodHistory: {}, calendarEvents: [], decrees: {} };
+        let appData = { tasks: [], focusSessions: [], checkRecords: {}, ideas: [], moodHistory: {}, calendarEvents: [], decrees: {}, dailyEvents: {}, eventBonusPoints: 0 };
         let activeFocusStart = null; let focusTimerInterval = null; let remainingSeconds = 0; let currentFocusMode = 'free'; 
         let wakeLock = null;
         async function requestWakeLock() {
@@ -881,6 +895,20 @@
                         if (remoteDone > localDone) appData.decrees[date] = decrees;
                     }
                 });
+            }
+            // Merge dailyEvents: keep the one with bonus awarded
+            if (remote.dailyEvents) {
+                if (!appData.dailyEvents) appData.dailyEvents = {};
+                Object.entries(remote.dailyEvents).forEach(([date, evt]) => {
+                    if (!appData.dailyEvents[date]) {
+                        appData.dailyEvents[date] = evt;
+                    } else if (evt.bonusAwarded && !appData.dailyEvents[date].bonusAwarded) {
+                        appData.dailyEvents[date] = evt;
+                    }
+                });
+            }
+            if (remote.eventBonusPoints && remote.eventBonusPoints > (appData.eventBonusPoints || 0)) {
+                appData.eventBonusPoints = remote.eventBonusPoints;
             }
         }
         function loadData() {
@@ -2321,6 +2349,234 @@
             renderDecrees();
         }
 
+        // ================= 每日随机事件 · 八百里加急 =================
+        const DAILY_EVENTS = [
+            // Military events (边疆军事)
+            { icon: '⚔️', title: '匈奴入侵', titleEn: 'Barbarian Invasion', desc: '北方匈奴大军压境，急需陛下坐镇指挥！', descEn: 'Northern forces are at the border! Command the defense!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            { icon: '🏴‍☠️', title: '海盗来袭', titleEn: 'Pirates Attack', desc: '东海海盗劫掠商船，需要陛下调兵遣将！', descEn: 'Pirates raiding merchant ships! Deploy the navy!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            { icon: '🛡️', title: '边关告急', titleEn: 'Border Crisis', desc: '西北边关失守，将军请求增援！', descEn: 'Western border breached! The general requests reinforcements!', type: 'pomodoro', requirement: 50, bonus: 25 },
+            { icon: '🐎', title: '蛮族叩关', titleEn: 'Tribal Raid', desc: '游牧民族突袭边境村庄，百姓流离失所！', descEn: 'Nomads raiding border villages! Citizens need protection!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            
+            // Governance events (朝政治理)
+            { icon: '📜', title: '科举大考', titleEn: 'Imperial Exam', desc: '三年一度科举开考，陛下需审阅试卷！', descEn: 'Time for the imperial examination! Review the papers!', type: 'tasks', requirement: 3, bonus: 20 },
+            { icon: '⚖️', title: '冤案昭雪', titleEn: 'Justice Case', desc: '各地上报冤案积压，百姓翘首以盼公正！', descEn: 'Unjust cases piling up! The people await justice!', type: 'tasks', requirement: 2, bonus: 10 },
+            { icon: '🏗️', title: '修筑长城', titleEn: 'Build the Wall', desc: '工部请求拨款修筑长城，需要专注规划！', descEn: 'Ministry requests funds for the Great Wall! Plan carefully!', type: 'pomodoro', requirement: 50, bonus: 25 },
+            { icon: '🌾', title: '赈灾救民', titleEn: 'Famine Relief', desc: '南方水灾，灾民遍野，急需赈济方案！', descEn: 'Floods in the south! Disaster relief needed urgently!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            
+            // Diplomatic events (外交邦交)
+            { icon: '🤝', title: '番邦来朝', titleEn: 'Foreign Embassy', desc: '西域使节来朝进贡，需要准备外交方案！', descEn: 'Foreign ambassadors arriving! Prepare diplomatic plans!', type: 'tasks', requirement: 2, bonus: 10 },
+            { icon: '📨', title: '和亲谈判', titleEn: 'Peace Treaty', desc: '邻国提出和亲请求，需权衡利弊！', descEn: 'Neighboring kingdom proposes alliance! Weigh the options!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            { icon: '🚢', title: '开辟航路', titleEn: 'New Trade Route', desc: '水师发现新航路，需要规划贸易路线！', descEn: 'Navy discovered new routes! Plan the trade expansion!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            
+            // Cultural events (文化民生)
+            { icon: '📚', title: '编纂典籍', titleEn: 'Compile Records', desc: '翰林院请旨编修四库全书，需要大量文献工作！', descEn: 'Academy requests approval to compile the great encyclopedia!', type: 'pomodoro', requirement: 50, bonus: 25 },
+            { icon: '🎭', title: '祭天大典', titleEn: 'Heaven Ceremony', desc: '冬至将至，祭天大典需要陛下亲自主持！', descEn: 'Winter solstice approaches! Lead the ceremony!', type: 'checkin', requirement: 1, bonus: 10 },
+            { icon: '🏮', title: '元宵灯会', titleEn: 'Lantern Festival', desc: '元宵佳节，需要完成今日所有圣旨才能赏灯！', descEn: 'Festival tonight! Complete all goals to enjoy the lanterns!', type: 'decrees', requirement: 'all', bonus: 20 },
+            { icon: '🎪', title: '百戏进宫', titleEn: 'Royal Performance', desc: '各地艺人进宫献艺，但陛下得先完成理政！', descEn: 'Performers await! But finish your work first!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            
+            // Crisis events (紧急事件)
+            { icon: '🌊', title: '黄河决口', titleEn: 'River Flood', desc: '黄河决堤！工部紧急请求陛下坐镇指挥抢修！', descEn: 'The river has breached! Emergency repairs needed!', type: 'pomodoro', requirement: 25, bonus: 20 },
+            { icon: '🦠', title: '瘟疫蔓延', titleEn: 'Plague Outbreak', desc: '疫情肆虐，太医院请求陛下批准防疫方案！', descEn: 'Plague spreading! Approve the prevention plan!', type: 'tasks', requirement: 3, bonus: 20 },
+            { icon: '🔥', title: '宫殿失火', titleEn: 'Palace Fire', desc: '太和殿走水！需要紧急处理善后事宜！', descEn: 'Fire in the palace! Handle the aftermath urgently!', type: 'pomodoro', requirement: 25, bonus: 15 },
+            { icon: '💰', title: '国库空虚', titleEn: 'Treasury Empty', desc: '户部尚书跪报：国库告急，需要开源节流！', descEn: 'Treasury running low! Find ways to save and earn!', type: 'tasks', requirement: 4, bonus: 20 },
+            
+            // Rare epic events (稀有史诗事件)
+            { icon: '🐉', title: '真龙现世', titleEn: 'Dragon Appears', desc: '祥瑞降临！天降神龙，需要陛下以超凡专注力感应天命！', descEn: 'A divine dragon appears! Channel extraordinary focus!', type: 'pomodoro', requirement: 50, bonus: 40 },
+            { icon: '👑', title: '万国来朝', titleEn: 'World Tribute', desc: '四方万国遣使来朝！陛下需要完成所有圣旨并专注理政以彰显国威！', descEn: 'All nations send tribute! Complete all goals and focus to show imperial might!', type: 'combo', requirement: {pomodoro: 25, decrees: 'all'}, bonus: 50 },
+        ];
+
+        function getTodayEvent() {
+            if (!appData.dailyEvents) appData.dailyEvents = {};
+            const today = getTodayStr();
+            if (appData.dailyEvents[today]) return appData.dailyEvents[today];
+            
+            // Generate today's event using date as seed
+            const seed = today.replace(/-/g, '');
+            const idx = parseInt(seed) % DAILY_EVENTS.length;
+            const evt = DAILY_EVENTS[idx];
+            
+            appData.dailyEvents[today] = {
+                ...evt,
+                status: 'pending', // pending, accepted, completed, expired, rejected
+                acceptedAt: null,
+                completedAt: null,
+                bonusAwarded: false,
+            };
+            saveData();
+            return appData.dailyEvents[today];
+        }
+
+        function renderDailyEvent() {
+            const evt = getTodayEvent();
+            const module = document.getElementById('module-daily-event');
+            const content = document.getElementById('eventContent');
+            if (!module || !content) return;
+            
+            const _en = currentLang === 'en';
+            const title = _en ? evt.titleEn : evt.title;
+            const desc = _en ? evt.descEn : evt.desc;
+            
+            document.getElementById('eventTitle').innerText = `${evt.icon} ${_en ? 'Urgent Dispatch' : '八百里加急'} · ${title}`;
+            
+            const bonusText = `+${evt.bonus} ${_en ? 'bonus' : '积分'}`;
+            document.getElementById('eventBonusBadge').innerText = bonusText;
+            
+            // Determine requirement text
+            let reqText = '';
+            if (evt.type === 'pomodoro') reqText = _en ? `Complete a ${evt.requirement}min focus session` : `完成一个${evt.requirement}分钟番茄钟`;
+            else if (evt.type === 'tasks') reqText = _en ? `Complete ${evt.requirement} tasks today` : `今日完成${evt.requirement}个奏折`;
+            else if (evt.type === 'checkin') reqText = _en ? 'Check in for at least 1 session' : '至少打卡一个时段';
+            else if (evt.type === 'decrees') reqText = _en ? 'Complete all daily goals' : '完成所有今日圣旨';
+            else if (evt.type === 'combo') reqText = _en ? `${evt.requirement.pomodoro}min focus + complete all goals` : `${evt.requirement.pomodoro}分钟番茄钟 + 完成所有圣旨`;
+            
+            if (evt.status === 'pending') {
+                module.classList.remove('hidden');
+                module.classList.add('event-pulse');
+                content.innerHTML = `
+                    <p class="text-sm text-red-700 mb-3" style="font-family:'楷体','STKaiti',serif;">${desc}</p>
+                    <div class="bg-white/60 rounded-xl p-2 mb-3 text-xs text-gray-600 flex items-center gap-2">
+                        <span class="font-bold text-red-600">📋 ${_en ? 'Mission' : '任务'}:</span> ${reqText}
+                        <span class="ml-auto font-bold text-yellow-600">${bonusText}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="acceptEvent()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl font-bold text-sm transition">⚔️ ${_en ? 'Accept Challenge' : '接受挑战'}</button>
+                        <button onclick="rejectEvent()" class="bg-gray-200 hover:bg-gray-300 text-gray-600 px-4 py-2 rounded-xl font-bold text-sm transition">${_en ? 'Decline' : '回避'}</button>
+                    </div>
+                `;
+            } else if (evt.status === 'accepted') {
+                module.classList.remove('hidden');
+                module.classList.remove('event-pulse');
+                const progress = checkEventProgress(evt);
+                const pct = Math.min(100, Math.round(progress.current / progress.target * 100));
+                content.innerHTML = `
+                    <p class="text-sm text-red-700 mb-2" style="font-family:'楷体','STKaiti',serif;">${desc}</p>
+                    <div class="bg-white/60 rounded-xl p-2 mb-2">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-bold text-gray-600">📋 ${reqText}</span>
+                            <span class="font-bold ${pct >= 100 ? 'text-green-600' : 'text-red-600'}">${progress.current}/${progress.target}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-green-500' : 'bg-red-400'}" style="width:${pct}%"></div>
+                        </div>
+                    </div>
+                    ${pct >= 100 && !evt.bonusAwarded ? `<button onclick="claimEventReward()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-2 rounded-xl font-bold text-sm shadow-lg animate-bounce">🎉 ${_en ? 'Claim Reward!' : '领取奖赏！'} ${bonusText}</button>` : ''}
+                    ${evt.bonusAwarded ? `<div class="text-center text-green-600 text-xs font-bold py-1">✅ ${_en ? 'Reward claimed!' : '奖赏已领取！'} ${bonusText}</div>` : ''}
+                `;
+            } else if (evt.status === 'completed') {
+                module.classList.remove('hidden', 'event-pulse');
+                module.style.borderColor = '#22C55E';
+                module.style.background = 'linear-gradient(135deg,#F0FDF4,#DCFCE7)';
+                content.innerHTML = `<div class="text-center text-green-600 text-sm font-bold py-1">✅ ${_en ? 'Mission Accomplished!' : '大捷！任务已完成！'} ${bonusText}</div>`;
+            } else if (evt.status === 'rejected') {
+                module.classList.add('hidden');
+            } else if (evt.status === 'expired') {
+                module.classList.add('hidden');
+            }
+            
+            document.getElementById('eventTimerBadge').innerText = _en ? 'Today only' : '仅限今日';
+        }
+
+        function acceptEvent() {
+            const today = getTodayStr();
+            const evt = appData.dailyEvents[today];
+            if (!evt) return;
+            evt.status = 'accepted';
+            evt.acceptedAt = Date.now();
+            saveData();
+            renderDailyEvent();
+            
+            // Show dramatic acceptance
+            const _en = currentLang === 'en';
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(139,0,0,0.9);animation:scaryFadeIn 0.3s;cursor:pointer;';
+            overlay.innerHTML = `<div style="text-align:center;animation:coronationZoom 0.5s;">
+                <div style="font-size:80px;margin-bottom:16px;">${evt.icon}</div>
+                <h2 style="font-size:2rem;font-weight:900;color:#FFD700;margin-bottom:8px;">${_en ? 'Challenge Accepted!' : '领旨！'}</h2>
+                <p style="font-size:1.2rem;color:#F9C74F;">${_en ? evt.titleEn : evt.title}</p>
+                <p style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:16px;">${_en ? 'Click to begin' : '点击开始征战'}</p>
+            </div>`;
+            overlay.onclick = () => overlay.remove();
+            document.body.appendChild(overlay);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+            setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 4000);
+        }
+
+        function rejectEvent() {
+            const today = getTodayStr();
+            const evt = appData.dailyEvents[today];
+            if (!evt) return;
+            const _en = currentLang === 'en';
+            if (!confirm(_en ? 'Decline this challenge? You won\'t get the bonus points.' : '确定回避此事件？将无法获得额外积分。')) return;
+            evt.status = 'rejected';
+            saveData();
+            renderDailyEvent();
+        }
+
+        function checkEventProgress(evt) {
+            const today = getTodayStr();
+            let current = 0, target = 1;
+            
+            if (evt.type === 'pomodoro') {
+                target = 1;
+                const todaySessions = appData.focusSessions.filter(s => s.dateStr === today && s.durationMinutes >= evt.requirement);
+                current = todaySessions.length > 0 ? 1 : 0;
+            } else if (evt.type === 'tasks') {
+                target = evt.requirement;
+                current = appData.tasks.filter(t => t.status === '已完成' && formatDateToYMD(t.completedAt) === today).length;
+            } else if (evt.type === 'checkin') {
+                target = 1;
+                const rec = appData.checkRecords[today];
+                current = rec ? Object.values(rec).filter(v => v.start).length : 0;
+            } else if (evt.type === 'decrees') {
+                const decrees = appData.decrees?.[today] || [];
+                target = decrees.length || 1;
+                current = decrees.filter(d => d.done).length;
+            } else if (evt.type === 'combo') {
+                target = 2;
+                const hasPomo = appData.focusSessions.filter(s => s.dateStr === today && s.durationMinutes >= evt.requirement.pomodoro).length > 0;
+                const decrees = appData.decrees?.[today] || [];
+                const allDecrees = decrees.length > 0 && decrees.every(d => d.done);
+                current = (hasPomo ? 1 : 0) + (allDecrees ? 1 : 0);
+            }
+            
+            return { current, target };
+        }
+
+        function claimEventReward() {
+            const today = getTodayStr();
+            const evt = appData.dailyEvents[today];
+            if (!evt || evt.bonusAwarded) return;
+            
+            evt.bonusAwarded = true;
+            evt.status = 'completed';
+            evt.completedAt = Date.now();
+            
+            // Store bonus points
+            if (!appData.eventBonusPoints) appData.eventBonusPoints = 0;
+            appData.eventBonusPoints += evt.bonus;
+            
+            saveData();
+            syncLeaderboard(); // Push updated stats
+            renderDailyEvent();
+            
+            // Victory celebration
+            const _en = currentLang === 'en';
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,100,0,0.9);animation:scaryFadeIn 0.3s;cursor:pointer;';
+            overlay.innerHTML = `<div style="text-align:center;animation:coronationZoom 0.6s;">
+                <div style="font-size:80px;margin-bottom:16px;">🎉</div>
+                <h2 style="font-size:2.5rem;font-weight:900;color:#FFD700;margin-bottom:8px;">${_en ? 'Victory!' : '大捷！'}</h2>
+                <p style="font-size:1.5rem;color:#F9C74F;margin-bottom:8px;">${evt.icon} ${_en ? evt.titleEn : evt.title}</p>
+                <div style="font-size:2rem;color:#FFD700;font-weight:900;margin-bottom:16px;">+${evt.bonus} ${_en ? 'bonus points!' : '积分！'}</div>
+                <div style="font-size:3rem;">🎆🏮✨🏮🎆</div>
+                <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:20px;">${_en ? 'Click to close' : '点击关闭'}</p>
+            </div>`;
+            overlay.onclick = () => overlay.remove();
+            document.body.appendChild(overlay);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+            setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 8000);
+        }
+
         // ================= 江山万里图 =================
         const KINGDOM_BUILDINGS = [
             { icon: '🏚️', name: '茅草屋', req: '完成第1个番茄钟', check: s => s.totalPomodoros >= 1, x: 80, y: 320 },
@@ -2777,7 +3033,7 @@
             document.getElementById("todayFocusMinutes").innerText = getTodayFocusMinutes(); 
             renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
             updateMoodUI(); updateStreakBadge(); renderCalendar(); renderMoodCalendar(); renderTrendChart(); 
-            renderPieChart(); updateFocusButtons(); renderKingdom(); renderDecrees();
+            renderPieChart(); updateFocusButtons(); renderKingdom(); renderDecrees(); renderDailyEvent();
             if (currentLang === 'en') setTimeout(applyLang, 50);
         }
 
@@ -2961,7 +3217,17 @@
             const wStart = new Date(now); 
             wStart.setDate(now.getDate() - (now.getDay() || 7) + 1); 
             wStart.setHours(0, 0, 0, 0);
-            const weekFocus = appData.focusSessions.filter(fs => fs.startTimestamp >= wStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0);
+            let weekFocus = appData.focusSessions.filter(fs => fs.startTimestamp >= wStart.getTime()).reduce((sum, fs) => sum + fs.durationMinutes, 0);
+            
+            // Add event bonus points for this week
+            if (appData.dailyEvents) {
+                Object.entries(appData.dailyEvents).forEach(([date, evt]) => {
+                    if (evt.bonusAwarded && new Date(date) >= wStart) {
+                        weekFocus += evt.bonus;
+                    }
+                });
+            }
+            
             let weekCheckDays = 0;
             for (let d = new Date(wStart); d <= now; d.setDate(d.getDate() + 1)) {
                 const dStr = formatDateToYMD(d.getTime());
