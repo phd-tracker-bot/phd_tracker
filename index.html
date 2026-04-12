@@ -10,16 +10,34 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="养成日记">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/3.0.23/tailwind.min.js"></script>
+    <link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Lazy-load Google/Firebase scripts (not needed for China users)
+        function loadGoogleScripts() {
+            const scripts = [
+                'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+                'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
+                'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
+                'https://accounts.google.com/gsi/client',
+                'https://apis.google.com/js/api.js'
+            ];
+            let loaded = 0;
+            scripts.forEach(src => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.async = true;
+                s.onload = () => { loaded++; if (loaded === scripts.length) { console.log('✅ Google/Firebase loaded'); initFirebase(); } };
+                s.onerror = () => { loaded++; console.log('⚠️ Skip:', src); if (loaded === scripts.length) initFirebase(); };
+                document.head.appendChild(s);
+            });
+        }
+        // Start loading after page renders
+        window.addEventListener('load', () => setTimeout(loadGoogleScripts, 500));
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -3058,29 +3076,38 @@
         function getCurrentUid() { return fbUser ? fbUser.uid : (sbUser ? sbUser.id : null); }
 
         function initFirebase() {
+            // Firebase (may fail in China - that's OK)
             try {
-                fbApp = firebase.initializeApp(firebaseConfig);
-                fbDb = firebase.database();
-                
-                firebase.auth().onAuthStateChanged(async (user) => {
-                    fbUser = user;
-                    if (user) {
-                        authProvider = 'google';
-                        if (!localStorage.getItem('phd_nickname')) {
-                            const name = prompt('👑 给自己起个名号吧：', user.displayName || '无名侠客');
-                            localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                if (typeof firebase !== 'undefined') {
+                    fbApp = firebase.initializeApp(firebaseConfig);
+                    fbDb = firebase.database();
+                    
+                    firebase.auth().onAuthStateChanged(async (user) => {
+                        fbUser = user;
+                        if (user) {
+                            authProvider = 'google';
+                            if (!localStorage.getItem('phd_nickname')) {
+                                const name = prompt('👑 给自己起个名号吧：', user.displayName || '无名侠客');
+                                localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                            }
+                            updateNicknameDisplay();
+                            loadDataFromFirebase();
+                            syncLeaderboard();
                         }
-                        updateNicknameDisplay();
-                        loadDataFromFirebase();
-                        syncLeaderboard();
-                    }
-                    updateLeaderboardAuthUI();
-                });
-            } catch(e) { console.log('Firebase init (may fail in China):', e.message); }
+                        updateLeaderboardAuthUI();
+                    });
+                    
+                    // Init Google Calendar after Firebase
+                    setTimeout(initGCalAuth, 500);
+                } else {
+                    console.log('⚠️ Firebase not available (China mode)');
+                }
+            } catch(e) { console.log('Firebase init:', e.message); }
 
-            // Init Supabase
+            // Supabase (works everywhere via proxy)
             try {
-                sbClient = window.supabase.createClient(SB_PROXY, SB_KEY);
+                if (!sbClient && typeof window.supabase !== 'undefined') {
+                    sbClient = window.supabase.createClient(SB_PROXY, SB_KEY);
                 sbClient.auth.onAuthStateChange((event, session) => {
                     if (session?.user) {
                         sbUser = session.user;
@@ -3757,19 +3784,24 @@
 
       function init() { 
             loadData(); loadAvatar(); loadTitle(); loadNightMode(); loadICSUrl(); loadStatsCollapse(); loadRoutineCollapse(); loadOuraToken(); bindEvents();
-            setTimeout(initGCalAuth, 1000); // Wait for Google scripts to load
             document.getElementById("currentDate").innerText = new Date().toLocaleDateString(); 
             renderAll(); 
             initDragAndDrop(); 
             loadLayout(); 
-            initDrawer(); // <--- 加上这一行，激活智能抽屉的位置记忆！
+            initDrawer();
             applyGuardState();
-            initFirebase();
+            
+            // Init Supabase immediately (works in China)
+            try {
+                if (typeof window.supabase !== 'undefined') initFirebase();
+                else setTimeout(() => { if (typeof window.supabase !== 'undefined') initFirebase(); }, 2000);
+            } catch(e) {}
+            
             checkMorningCourt();
             setInterval(() => renderAll(), 60000);
             setInterval(() => { syncLeaderboard(); if (authProvider === 'email') saveDataToSupabase(); }, 300000);
             requestAnimationFrame(patrolGuard);
-            setTimeout(applyLang, 500); // Apply language after render
+            setTimeout(applyLang, 500);
         }
         
         // 陛下驾到，系统启动！
