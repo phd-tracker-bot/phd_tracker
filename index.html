@@ -3152,32 +3152,33 @@
             try {
                 if (!sbClient && typeof window.supabase !== 'undefined') {
                     sbClient = window.supabase.createClient(SB_PROXY, SB_KEY);
-                sbClient.auth.onAuthStateChange((event, session) => {
-                    if (session?.user) {
-                        sbUser = session.user;
-                        authProvider = 'email';
-                        if (!localStorage.getItem('phd_nickname')) {
-                            const name = prompt('👑 给自己起个名号吧：', '无名侠客');
-                            localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                    sbClient.auth.onAuthStateChange((event, session) => {
+                        if (session?.user) {
+                            sbUser = session.user;
+                            authProvider = 'email';
+                            if (!localStorage.getItem('phd_nickname')) {
+                                const name = prompt('👑 给自己起个名号吧：', '无名侠客');
+                                localStorage.setItem('phd_nickname', (name && name.trim()) ? name.trim() : '无名侠客');
+                            }
+                            updateNicknameDisplay();
+                            loadDataFromSupabase();
+                            syncLeaderboard();
+                        } else if (authProvider === 'email') {
+                            sbUser = null;
+                            authProvider = null;
                         }
-                        updateNicknameDisplay();
-                        loadDataFromSupabase();
-                        syncLeaderboard();
-                    } else if (authProvider === 'email') {
-                        sbUser = null;
-                        authProvider = null;
-                    }
-                    updateLeaderboardAuthUI();
-                });
-                sbClient.auth.getSession().then(({ data }) => {
-                    if (data.session?.user) {
-                        sbUser = data.session.user;
-                        authProvider = 'email';
                         updateLeaderboardAuthUI();
-                        loadDataFromSupabase();
-                        syncLeaderboard();
-                    }
-                });
+                    });
+                    sbClient.auth.getSession().then(({ data }) => {
+                        if (data.session?.user) {
+                            sbUser = data.session.user;
+                            authProvider = 'email';
+                            updateLeaderboardAuthUI();
+                            loadDataFromSupabase();
+                            syncLeaderboard();
+                        }
+                    });
+                }
             } catch(e) { console.log('Supabase init:', e.message); }
 
             loadLeaderboard();
