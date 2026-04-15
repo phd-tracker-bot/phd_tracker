@@ -666,6 +666,27 @@ input, select, textarea {
   border-bottom-color: rgba(212,175,55,0.12);
 }
 
+/* ===== Mobile Tab Bar ===== */
+#mobileTabBar { display: none; }
+@media (max-width: 1023px) {
+    #mobileTabBar { 
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+        background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(0,0,0,0.08); padding: 4px 0 env(safe-area-inset-bottom, 4px); 
+        justify-content: space-around;
+    }
+    .night-mode #mobileTabBar { background: rgba(30,30,40,0.95); border-color: rgba(255,255,255,0.1); }
+    #mobileTabBar .tab-item { 
+        display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 12px;
+        font-size: 10px; font-weight: 700; color: #9CA3AF; cursor: pointer; transition: color 0.2s; 
+        -webkit-tap-highlight-color: transparent;
+    }
+    #mobileTabBar .tab-item.active { color: #FF6B8B; }
+    #mobileTabBar .tab-item .tab-icon { font-size: 20px; }
+    body { padding-bottom: 80px !important; }
+    [data-tab].tab-hidden { display: none !important; }
+}
+
     </style>
 </head>
 <body class="font-sans p-4 md:p-6 lg:p-8 relative" data-theme="ios" id="appBody">
@@ -870,7 +891,7 @@ input, select, textarea {
                 </div>
             </div>
 
-            <div id="module-decrees" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid #D4AF37;">
+            <div id="module-decrees" data-tab="focus" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid #D4AF37;">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2"><span class="text-lg">🔱</span><h2 class="text-sm font-black text-yellow-800" style="font-family:'楷体','STKaiti',serif;">今日圣旨</h2><span id="decreesDone" class="text-[10px] bg-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-full"></span></div>
                     <button onclick="openMorningCourt()" class="text-yellow-600 text-[10px] hover:text-yellow-800 transition"><i class="fas fa-edit"></i> 重拟</button>
@@ -878,7 +899,7 @@ input, select, textarea {
                 <div id="decreesDisplay" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
             </div>
 
-            <div id="module-daily-event" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFF1F2,#FEE2E2);border:2px solid #F87171;">
+            <div id="module-daily-event" data-tab="focus" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#FFF1F2,#FEE2E2);border:2px solid #F87171;">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2"><span class="text-lg">⚔️</span><h2 class="text-sm font-black text-red-800" style="font-family:'楷体','STKaiti',serif;" id="eventTitle">八百里加急</h2></div>
                     <div class="flex items-center gap-1">
@@ -889,7 +910,7 @@ input, select, textarea {
                 <div id="eventContent"></div>
             </div>
 
-            <div id="module-oura" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:2px solid #34D399;">
+            <div id="module-oura" data-tab="me" class="col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-3 md:p-4 hidden" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:2px solid #34D399;">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2"><span class="text-lg">🐲</span><h2 class="text-sm font-black text-green-800" style="font-family:'楷体','STKaiti',serif;">龙体状况</h2><span id="ouraDate" class="text-[10px] text-green-600"></span></div>
                     <div class="flex items-center gap-2">
@@ -902,7 +923,7 @@ input, select, textarea {
                 </div>
             </div>
             
-            <div id="module-focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #FF6B8B;">
+            <div id="module-focus" data-tab="focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #FF6B8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-dopamine-sky/20 text-gray-500 flex items-center justify-center" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex flex-wrap items-center justify-between gap-4 mt-2">
                     <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-dopamine-yellow/20 flex items-center justify-center"><i class="fas fa-hourglass-half text-dopamine-orange text-2xl"></i></div><div><h2 class="text-xl font-bold text-gray-800">今日理政时间</h2><p class="text-gray-500 text-xs">番茄工作法 · 累积能量</p></div></div>
@@ -923,7 +944,7 @@ input, select, textarea {
                 </div>
             </div>
 
-            <div id="module-routine" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-left: 8px solid #43AA8B;">
+            <div id="module-routine" data-tab="calendar" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-left: 8px solid #43AA8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-sky flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange flex items-center justify-center cursor-grab"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between mb-4 pb-2 border-b border-dopamine-yellow/30 mt-2"><div class="flex items-center gap-2 cursor-pointer" onclick="toggleRoutineCollapse()"><i class="fas fa-check-circle text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">作息起居 · 真实四段式</h2><i id="routineCollapseIcon" class="fas fa-chevron-up text-gray-400 text-sm ml-1 transition-transform"></i></div></div>
                 <div id="routineContent" class="transition-all duration-300 overflow-hidden">
@@ -974,14 +995,14 @@ input, select, textarea {
         <div id="tab-calendar" class="tab-panel">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
             <div class="col-span-1 lg:col-span-1 flex flex-col gap-6">
-            <div id="module-ideas" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
+            <div id="module-ideas" data-tab="me" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col" style="border-bottom: 4px solid #43AA8B;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-mint/30 pb-2 mb-3 mt-1"><div class="flex items-center gap-2"><i class="fas fa-lightbulb text-dopamine-yellow text-lg drop-shadow-md"></i><h2 class="text-lg font-bold text-gray-800">天恩闪念</h2></div><button onclick="showIdeaHistory()" class="text-dopamine-mint hover:bg-dopamine-mint hover:text-white border border-green-100 transition text-[10px] font-semibold bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 shadow-sm"><i class="fas fa-history"></i> 归档</button></div>
                 <div class="flex gap-2 mb-3 items-stretch"><div class="relative flex-1"><textarea id="ideaInput" rows="1" placeholder="记录瞬间的想法(回车保存)..." class="w-full h-full p-2 rounded-xl border border-dopamine-mint/40 bg-green-50/20 focus:border-dopamine-mint outline-none resize-none text-sm"></textarea></div><button onclick="addIdea()" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-3 rounded-xl shadow-sm flex flex-col items-center justify-center transition"><i class="fas fa-bolt"></i></button></div>
                 <div class="flex-1 overflow-y-auto pr-1 max-h-[120px]"><ul id="ideaList" class="space-y-2"></ul></div>
             </div>
 
-            <div id="module-mood-cal" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col flex-1" style="border-bottom: 4px solid #F9C74F;">
+            <div id="module-mood-cal" data-tab="me" class="draggable-module rounded-2xl shadow-colorful p-3 md:p-4 flex flex-col flex-1" style="border-bottom: 4px solid #F9C74F;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-yellow/30 pb-2 mb-2 mt-1">
                     <div class="flex items-center gap-2"><i class="far fa-smile text-dopamine-yellow text-lg"></i><h2 class="text-lg font-bold text-gray-800">龙体圣意月历</h2></div>
@@ -999,7 +1020,7 @@ input, select, textarea {
             </div>
             </div>
 
-            <div id="module-calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-top: 4px solid #4D9DE0;">
+            <div id="module-calendar" data-tab="calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-top: 4px solid #4D9DE0;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-sky/30 pb-3 mb-4 mt-2">
                     <div class="flex items-center gap-2"><i class="fas fa-map-marked-alt text-dopamine-sky text-xl"></i><h2 class="text-xl font-bold text-gray-800">江山社稷图</h2><span id="icsCountBadge" class="hidden text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full ml-1 cursor-pointer" onclick="if(confirm('清除所有导入的外部日程？')){appData.calendarEvents=[];saveData();renderCalendar();}" title="点击清除外部日程">📅 <span id="icsCount">0</span>条 ×</span></div>
@@ -1030,7 +1051,7 @@ input, select, textarea {
         <!-- 标签4: 统计 -->
         <div id="tab-stats" class="tab-panel">
         <div class="grid grid-cols-1 gap-6">
-            <div id="module-stats" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col relative" style="background: linear-gradient(135deg, #FFF9F0, #FFF5E6);">
+            <div id="module-stats" data-tab="stats" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col relative" style="background: linear-gradient(135deg, #FFF9F0, #FFF5E6);">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-yellow/40 pb-3 mb-5 mt-2">
                     <div class="flex items-center gap-2 cursor-pointer" onclick="toggleStatsCollapse()"><i class="fas fa-chart-pie text-dopamine-purple text-xl"></i><h2 class="text-xl font-bold text-gray-800">司天监 · 统计看板</h2><span class="text-xs bg-dopamine-lime/30 text-dopamine-mint px-2 py-0.5 rounded-full ml-1">汇总</span><i id="statsCollapseIcon" class="fas fa-chevron-up text-gray-400 text-sm ml-1 transition-transform"></i></div>
@@ -1059,7 +1080,7 @@ input, select, textarea {
                 </div>
             </div>
 
-            <div id="module-kingdom" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 overflow-hidden" style="border-top: 4px solid #D4AF37; background: linear-gradient(145deg, #FFF8E7, #F5E6C8);">
+            <div id="module-kingdom" data-tab="kingdom" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6 overflow-hidden" style="border-top: 4px solid #D4AF37; background: linear-gradient(145deg, #FFF8E7, #F5E6C8);">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-yellow-700/20 pb-3 mb-4 mt-2">
                     <div class="flex items-center gap-2"><span class="text-xl">🏯</span><h2 class="text-xl font-bold text-yellow-900" style="font-family:'楷体','STKaiti',serif;">开疆拓土 · 江山万里图</h2><span id="kingdomProgress" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-1"></span></div>
@@ -1080,7 +1101,7 @@ input, select, textarea {
         <!-- 标签5: 排行 -->
         <div id="tab-leaderboard" class="tab-panel">
         <div class="grid grid-cols-1 gap-6">
-            <div id="module-leaderboard" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #9B5DE5; background: linear-gradient(135deg, #F8F0FF, #FFF5F8);">
+            <div id="module-leaderboard" data-tab="kingdom" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #9B5DE5; background: linear-gradient(135deg, #F8F0FF, #FFF5F8);">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
                 <div class="flex items-center justify-between border-b border-dopamine-purple/30 pb-3 mb-4 mt-2">
                     <div class="flex items-center gap-2"><i class="fas fa-trophy text-dopamine-yellow text-xl"></i><h2 class="text-xl font-bold text-gray-800">群臣排行榜</h2><span class="text-xs bg-dopamine-purple/20 text-dopamine-purple px-2 py-0.5 rounded-full ml-1">本周</span></div>
@@ -1586,20 +1607,28 @@ input, select, textarea {
                 remote.focusSessions.forEach(s => { if (!existing.has(s.startTimestamp)) appData.focusSessions.push(s); });
             }
 
-            // Merge tasks: combine by id
+            // Merge tasks: combine by id, skip deleted
             if (remote.tasks) {
                 const existing = new Set(appData.tasks.map(t => t.id));
+                const deleted = new Set(appData.deletedTaskIds || []);
                 remote.tasks.forEach(t => {
+                    if (deleted.has(t.id)) return; // Skip deleted tasks
                     if (!existing.has(t.id)) {
                         appData.tasks.push(t);
                     } else {
-                        // If task exists, use the one that's completed (or more recently updated)
                         const local = appData.tasks.find(lt => lt.id === t.id);
                         if (local && t.status === '已完成' && local.status !== '已完成') {
                             Object.assign(local, t);
                         }
                     }
                 });
+            }
+            // Merge deletedTaskIds
+            if (remote.deletedTaskIds) {
+                if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
+                remote.deletedTaskIds.forEach(id => { if (!appData.deletedTaskIds.includes(id)) appData.deletedTaskIds.push(id); });
+                // Remove any tasks that were deleted on the other device
+                appData.tasks = appData.tasks.filter(t => !appData.deletedTaskIds.includes(t.id));
             }
 
             // Merge ideas: combine by text + time
@@ -2152,7 +2181,7 @@ input, select, textarea {
         // ================= 奏折与杂项 =================
         function addTask() { const name = document.getElementById("taskInput").value.trim(); if (!name) return; appData.tasks.push({ id: Date.now(), name, priority: document.getElementById("taskPriority").value, category: document.getElementById("taskCategory").value, status: "未开始", createdAt: Date.now(), completedAt: null }); saveData(); document.getElementById("taskInput").value = ""; renderTasks(); updateStatistics(); renderPieChart(); }
         function changeTaskStatus(id) { const t = appData.tasks.find(x => x.id === id); if (!t) return; if (t.status === "未开始") t.status = "进行中"; else if (t.status === "进行中") { t.status = "已完成"; t.completedAt = Date.now(); } else { t.status = "未开始"; t.completedAt = null; } saveData(); renderTasks(); updateStatistics(); renderPieChart(); }
-        function deleteTask(id) { if (confirm(currentLang==='en'?"Delete this task?":"陛下确定要抹去此奏折？")) { appData.tasks = appData.tasks.filter(t => t.id !== id); saveData(); renderTasks(); updateStatistics(); renderPieChart(); } }
+        function deleteTask(id) { if (confirm(currentLang==='en'?"Delete this task?":"陛下确定要抹去此奏折？")) { appData.tasks = appData.tasks.filter(t => t.id !== id); if (!appData.deletedTaskIds) appData.deletedTaskIds = []; appData.deletedTaskIds.push(id); saveData(); renderTasks(); updateStatistics(); renderPieChart(); } }
         function updateTaskTime(taskId, newTimeString) { const task = appData.tasks.find(t => t.id === taskId); if (task) { task.createdAt = new Date(newTimeString).getTime(); saveData(); } }
        function renderTasks() {
             const container = document.getElementById("taskList"), empty = document.getElementById("emptyTaskHint");
@@ -6582,5 +6611,12 @@ input, select, textarea {
     });
     </script>
 
+    <div id="mobileTabBar">
+        <div class="tab-item active" onclick="switchMobileTab('focus')"><span class="tab-icon">🍅</span><span>理政</span></div>
+        <div class="tab-item" onclick="switchMobileTab('calendar')"><span class="tab-icon">📅</span><span>日历</span></div>
+        <div class="tab-item" onclick="switchMobileTab('kingdom')"><span class="tab-icon">🏯</span><span>江山</span></div>
+        <div class="tab-item" onclick="switchMobileTab('stats')"><span class="tab-icon">📊</span><span>统计</span></div>
+        <div class="tab-item" onclick="switchMobileTab('me')"><span class="tab-icon">👤</span><span>我的</span></div>
+    </div>
+
 </body>
-</html>
