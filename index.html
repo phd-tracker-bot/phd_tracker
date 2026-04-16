@@ -1939,7 +1939,18 @@ input, select, textarea {
             // Request notification permission for lock screen alerts
             if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
             if (currentFocusMode === 'free') { 
-                document.getElementById("focusActiveState").innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 🔥 自由理政中...'; document.getElementById("countdownDisplay").classList.add("hidden"); const _fc = document.getElementById("floatingCountdown"); if(_fc) _fc.innerText = "无极";
+                document.getElementById("focusActiveState").innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 🔥 自由理政中...'; 
+                document.getElementById("countdownDisplay").classList.remove("hidden");
+                const updateFreeTime = () => {
+                    const elapsed = Math.floor((Date.now() - activeFocusStart) / 1000);
+                    const m = Math.floor(elapsed / 60);
+                    const s = elapsed % 60;
+                    const timeStr = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    document.getElementById("countdownDisplay").innerText = timeStr;
+                    const fc = document.getElementById("floatingCountdown"); if(fc) fc.innerText = timeStr;
+                };
+                updateFreeTime();
+                focusTimerInterval = setInterval(updateFreeTime, 1000);
             } else {
                 const totalSeconds = parseInt(currentFocusMode) * 60;
                 window._focusEndTime = Date.now() + totalSeconds * 1000;
@@ -1947,16 +1958,18 @@ input, select, textarea {
                 document.getElementById("countdownDisplay").classList.remove("hidden"); updateCountdownDisplay(); 
                 document.getElementById("focusActiveState").innerHTML = `<i class="fas fa-spinner fa-pulse"></i> 🍅 ${parseInt(currentFocusMode)}分钟理政中...`;
                 focusTimerInterval = setInterval(() => { 
-                    remainingSeconds = Math.max(0, Math.round((window._focusEndTime - Date.now()) / 1000));
+                    const now = Date.now();
+                    remainingSeconds = Math.max(0, Math.round((window._focusEndTime - now) / 1000));
                     updateCountdownDisplay(); 
-                    if (remainingSeconds <= 0) { 
+                    if (now >= window._focusEndTime) { 
                         clearInterval(focusTimerInterval); 
+                        focusTimerInterval = null;
                         notifyTimerComplete(parseInt(currentFocusMode));
                         showPomodoroComplete(parseInt(currentFocusMode)); 
                         saveFocusSession(parseInt(currentFocusMode)); 
                         resetFocusUI(); 
                     } 
-                }, 1000);
+                }, 500); // Run twice per second for more reliability
             }
         }
         function stopFocus() { 
