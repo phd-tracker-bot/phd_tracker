@@ -1528,26 +1528,160 @@ input, select, textarea {
 
         function interactWithGuard() {
             const bubble = document.getElementById('guardSpeechBubble');
-            const head = document.getElementById('guardHead');
-            const messages = [
-                "⚔️ 锦衣卫在此，已斩断四周科研刺客！", 
-                "🛡️ 龙甲御盾护体，陛下请安心理政！", 
-                "📖 前方发现论文瓶颈？臣这就去劈碎它！", 
-                "👀 臣日夜兼程，绝不让史册遗失一字！", 
-                "🍅 陛下龙体要紧，番茄钟响切记退朝！",
-                "🐉 皇恩浩荡，锦衣卫誓死追随陛下！"
-            ];
+            const _en = currentLang === 'en';
+            const todayMin = getTodayFocusMinutes();
+            const isFocusing = activeFocusStart !== null;
+            
+            let messages;
+            if (isFocusing) {
+                // During focus: encouraging messages
+                messages = _en ? [
+                    "⚔️ Guard on duty! All distractions eliminated!",
+                    "🛡️ Shield activated, focus in peace!",
+                    "🔥 You're on fire! Keep going!",
+                    "💪 The empire grows stronger with every minute!",
+                    "📖 I'll guard the door, you guard your focus!",
+                ] : [
+                    "⚔️ 锦衣卫在此，已斩断四周科研刺客！",
+                    "🛡️ 龙甲御盾护体，陛下请安心理政！",
+                    "🔥 陛下专注如炬，臣深感钦佩！",
+                    "💪 江山社稷因陛下勤勉日益强盛！",
+                    "📖 臣守门，陛下守心！",
+                ];
+            } else if (todayMin >= 60) {
+                // After lots of focus: proud messages
+                messages = _en ? [
+                    `👑 ${todayMin} minutes today! Truly an emperor!`,
+                    "🌟 Your majesty's diligence is unmatched!",
+                    "🏆 The historians are writing about you!",
+                    "🐉 Even the dragon bows to your discipline!",
+                ] : [
+                    `👑 今日已理政${todayMin}分钟！真乃千古一帝！`,
+                    "🌟 陛下之勤勉，臣自愧不如！",
+                    "🏆 史官已将陛下之功绩载入青史！",
+                    "🐉 神龙都为陛下的自律折服！",
+                ];
+            } else if (todayMin > 0) {
+                // Some focus: encouraging more
+                messages = _en ? [
+                    `📊 ${todayMin} minutes so far. Want to do more?`,
+                    "🍅 Ready for another pomodoro, your majesty?",
+                    "📖 The books await your attention!",
+                    "⏰ A good start! Keep the momentum!",
+                ] : [
+                    `📊 今日已理政${todayMin}分钟，再来一轮？`,
+                    "🍅 陛下，再来一个番茄钟如何？",
+                    "📖 奏折堆积如山，请陛下批阅！",
+                    "⏰ 好的开始！保持势头！",
+                ];
+            } else {
+                // No focus yet: gentle nudging
+                messages = _en ? [
+                    "☀️ Good day, your majesty! Ready to rule?",
+                    "📜 The morning court awaits! Start a pomodoro?",
+                    "🐟 No fishing today, right? RIGHT?",
+                    "⚔️ Your loyal guard awaits your command!",
+                    "🏯 The empire needs your attention!",
+                ] : [
+                    "☀️ 陛下早安！今日可有理政计划？",
+                    "📜 早朝等候多时！开始一个番茄钟？",
+                    "🐟 今天不摸鱼对吧？对吧？！",
+                    "⚔️ 锦衣卫候命！等待陛下旨意！",
+                    "🏯 江山社稷需要陛下操心！",
+                ];
+            }
+            
             bubble.innerText = messages[Math.floor(Math.random() * messages.length)];
             bubble.classList.remove('opacity-0');
             isGuardResting = true;
             document.getElementById('imperialGuardPet').style.bottom = '20px';
-            if(head) head.style.transform = 'translateY(-4px)';
+            
+            // Guard does a little jump
+            const guardEl = document.getElementById('imperialGuardPet');
+            guardEl.style.transition = 'transform 0.3s ease';
+            guardEl.style.transform = 'translateY(-15px)';
+            setTimeout(() => { guardEl.style.transform = 'translateY(0)'; }, 300);
+            
             setTimeout(() => {
                 bubble.classList.add('opacity-0');
-                if(head) head.style.transform = 'translateY(0)';
+                isGuardResting = false;
+            }, 3500);
+        }
+
+        function guardCelebrate() {
+            if (isGuardHidden) return;
+            const bubble = document.getElementById('guardSpeechBubble');
+            const guardEl = document.getElementById('imperialGuardPet');
+            if (!bubble || !guardEl) return;
+            
+            const _en = currentLang === 'en';
+            const celebs = _en ? [
+                "🎊 Brilliant work, your majesty!",
+                "🎉 Another victory for the empire!",
+                "👑 Long live the emperor!",
+                "🏆 Recorded in the annals of history!",
+            ] : [
+                "🎊 陛下英明神武！",
+                "🎉 又一次大捷！江山永固！",
+                "👑 吾皇万岁万万岁！",
+                "🏆 此功已载入史册！",
+            ];
+            
+            bubble.innerText = celebs[Math.floor(Math.random() * celebs.length)];
+            bubble.classList.remove('opacity-0');
+            isGuardResting = true;
+            
+            // Guard does celebration dance
+            guardEl.style.transition = 'transform 0.2s ease';
+            let jumpCount = 0;
+            const jumpInterval = setInterval(() => {
+                guardEl.style.transform = jumpCount % 2 === 0 ? 'translateY(-20px) rotate(5deg)' : 'translateY(0) rotate(-5deg)';
+                jumpCount++;
+                if (jumpCount >= 6) {
+                    clearInterval(jumpInterval);
+                    guardEl.style.transform = 'translateY(0) rotate(0deg)';
+                }
+            }, 200);
+            
+            setTimeout(() => {
+                bubble.classList.add('opacity-0');
+                isGuardResting = false;
+            }, 4000);
+        }
+
+        function guardRandomChat() {
+            if (isGuardHidden || activeFocusStart !== null) return;
+            const bubble = document.getElementById('guardSpeechBubble');
+            if (!bubble) return;
+            
+            const _en = currentLang === 'en';
+            const idleChats = _en ? [
+                "💤 *yawn* ... quiet today...",
+                "🧹 *sweeps the courtyard*",
+                "👀 *looks around suspiciously*",
+                "🎵 *hums an ancient tune*",
+                "🍵 Tea time for the guard...",
+                "📝 *scribbles in patrol log*",
+            ] : [
+                "💤 *打哈欠* ... 今天好安静...",
+                "🧹 *扫着院子*",
+                "👀 *警惕地四处张望*",
+                "🎵 *哼着小曲巡逻*",
+                "🍵 偷偷喝口茶...",
+                "📝 *在巡逻日志上涂鸦*",
+            ];
+            
+            bubble.innerText = idleChats[Math.floor(Math.random() * idleChats.length)];
+            bubble.classList.remove('opacity-0');
+            isGuardResting = true;
+            setTimeout(() => {
+                bubble.classList.add('opacity-0');
                 isGuardResting = false;
             }, 3000);
         }
+        
+        // Guard chats randomly every 2-5 minutes when idle
+        setInterval(() => { if (Math.random() < 0.3) guardRandomChat(); }, 120000);
 
         // ================= 基础工具 =================
         function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1976,8 +2110,13 @@ input, select, textarea {
             if (activeFocusStart === null) return;
             const actualMinutes = Math.floor((Date.now() - activeFocusStart) / 60000); 
             isShowingAlert = true;
-            if (currentFocusMode !== 'free' && remainingSeconds > 0) { if (!confirm("⚠️ 番茄钟尚未结束，确定退朝吗？（满1分钟才会记录）")) { isShowingAlert = false; return; } }
-            if (actualMinutes > 0) { saveFocusSession(actualMinutes); alert(`✅ 退朝！记录了 ${actualMinutes} 分钟。`); } 
+            const _en = currentLang === 'en';
+            if (currentFocusMode !== 'free' && remainingSeconds > 0) { if (!confirm(_en ? "⚠️ Timer not finished. Stop? (min 1 min to record)" : "⚠️ 番茄钟尚未结束，确定退朝吗？（满1分钟才会记录）")) { isShowingAlert = false; return; } }
+            if (actualMinutes > 0) { 
+                const adjust = prompt(_en ? `✅ Recorded ${actualMinutes} min. Adjust? (Enter to keep)` : `✅ 记录了 ${actualMinutes} 分钟。需要修改吗？（直接回车保留）`, actualMinutes);
+                const finalMinutes = (adjust !== null && adjust.trim() !== '' && !isNaN(parseInt(adjust)) && parseInt(adjust) >= 1) ? parseInt(adjust) : actualMinutes;
+                saveFocusSession(finalMinutes); 
+            } 
             isShowingAlert = false;
             resetFocusUI(); 
         }
@@ -1985,10 +2124,27 @@ input, select, textarea {
             const session = { startTimestamp: activeFocusStart, endTimestamp: Date.now(), durationMinutes: minutes, dateStr: formatDateToYMD(activeFocusStart) };
             appData.focusSessions.push(session); 
             saveData(); 
-            // Auto push to Google Calendar if connected
             pushFocusToGCal(session.startTimestamp, session.endTimestamp, minutes);
-            // Sync to leaderboard
             syncToFirebase();
+            // Guard reacts to completion
+            guardCelebrate();
+        }
+
+        function editLastFocusTime(originalMinutes) {
+            const _en = currentLang === 'en';
+            const newMin = prompt(_en ? `Adjust focus time (current: ${originalMinutes} min):` : `修改专注时长（当前：${originalMinutes} 分钟）：`, originalMinutes);
+            if (newMin === null) return;
+            const parsed = parseInt(newMin);
+            if (isNaN(parsed) || parsed < 1) { alert(_en ? 'Please enter a valid number (min 1)' : '请输入有效数字（最少1分钟）'); return; }
+            // Find and update the last session
+            const lastSession = appData.focusSessions[appData.focusSessions.length - 1];
+            if (lastSession) {
+                lastSession.durationMinutes = parsed;
+                saveData();
+                syncToFirebase();
+                renderAll();
+                alert(_en ? `✅ Updated to ${parsed} min` : `✅ 已修改为 ${parsed} 分钟`);
+            }
         }
         function getTodayFocusMinutes() { return appData.focusSessions.filter(s => s.dateStr === getTodayStr()).reduce((sum, s) => sum + s.durationMinutes, 0); }
         function updateCountdownDisplay() { const timeStr = `${Math.floor(remainingSeconds / 60).toString().padStart(2, '0')}:${(remainingSeconds % 60).toString().padStart(2, '0')}`; document.getElementById("countdownDisplay").innerText = timeStr; const fc = document.getElementById("floatingCountdown"); if(fc) fc.innerText = timeStr; }
@@ -4398,6 +4554,9 @@ input, select, textarea {
                         <div style="font-size:3rem;font-weight:900;color:#FFD700;">${minutes} <span style="font-size:1.2rem;">${_en?'min':'分钟'}</span></div>
                         <div style="font-size:0.75rem;color:#B8860B;margin-top:4px;">${_en?'Today total: '+totalToday+' min':'今日累计 '+totalToday+' 分钟'}</div>
                     </div>
+                    <div style="margin-bottom:16px;">
+                        <button onclick="event.stopPropagation();editLastFocusTime(${minutes});" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,215,0,0.3);color:#D4AF37;padding:8px 20px;border-radius:12px;font-size:13px;cursor:pointer;font-weight:600;">✏️ ${_en?'Adjust time':'修改时长'}</button>
+                    </div>
                     <div style="font-size:3rem;margin-bottom:16px;">🎆🏮🎇🏮🎆</div>
                     <p style="font-size:1.5rem;color:#FFD700;font-weight:900;letter-spacing:0.2em;text-shadow:0 0 15px rgba(253,224,71,0.5);">${_en?'You are the Emperor!':'可以称帝了！'}</p>
                     <p style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:20px;">${_en?'Click anywhere to close':'点击任意处退朝歇息'}</p>
@@ -6075,9 +6234,11 @@ input, select, textarea {
         const now = Date.now();
         const last = d.pet.lastFed || now;
         const hoursPassed = (now - last) / 3600000;
-        if (hoursPassed > 1) {
+        if (hoursPassed > 0.5) {
             d.pet.hunger = Math.max(0, d.pet.hunger - hoursPassed * 2);
-            d.pet.mood = Math.max(0, d.pet.mood - hoursPassed * 1);
+            // Mood drops faster when hungry
+            const moodDecay = d.pet.hunger <= 0 ? hoursPassed * 3 : hoursPassed * 1;
+            d.pet.mood = Math.max(0, d.pet.mood - moodDecay);
             d.pet.lastFed = now;
             savePetData(d);
         }
@@ -6222,32 +6383,54 @@ input, select, textarea {
         if (t2 && t2.status === '已完成' && !wasDone) {
             const coins = t2.priority === 'high' ? 15 : (t2.priority === 'medium' ? 10 : 5);
             earnCoins(coins, currentLang === 'en' ? 'Task completed' : '完成任务');
-            // Also give pet exp
             const d = getPetData();
-            d.pet.exp += coins;
+            d.pet.exp += coins * 2; // Extra XP for tasks
+            d.pet.mood = Math.min(100, d.pet.mood + 5); // Mood boost from task
             if (!d.pet.hatched && d.pet.exp >= PET_EVOLUTIONS[1].req) d.pet.hatched = true;
             savePetData(d);
+            showPetMsg(currentLang === 'en' ? `⭐ +${coins*2} XP for task!` : `⭐ 完成奏折 +${coins*2} 经验！`);
         }
     };
 
-    // Hook into focus session completion
+    // Hook into focus session completion (manual stop)
     const _origStopFocus = window.stopFocus;
     if (typeof _origStopFocus === 'function') {
         window.stopFocus = function() {
-            const startTs = (typeof activeFocusStart !== 'undefined') ? activeFocusStart : null;
             _origStopFocus.apply(this, arguments);
-            if (startTs) {
-                const mins = Math.floor((Date.now() - startTs) / 60000);
-                if (mins >= 5) {
-                    const coins = Math.floor(mins / 5) * 2;
-                    earnCoins(coins, currentLang === 'en' ? `Focus ${mins}min` : `专注${mins}分钟`);
-                    const d = getPetData();
-                    d.pet.exp += Math.floor(mins / 2);
-                    savePetData(d);
-                }
-            }
+            // XP and coins handled by saveFocusSession hook
         };
     }
+
+    // Hook into auto-completion (saveFocusSession)
+    const _origSaveFocus = window.saveFocusSession;
+    if (typeof _origSaveFocus === 'function') {
+        window.saveFocusSession = function(minutes) {
+            _origSaveFocus.apply(this, arguments);
+            const d = getPetData();
+            const xp = minutes * 2;
+            const coins = Math.max(1, Math.floor(minutes / 5) * 2);
+            d.pet.exp += xp;
+            d.pet.mood = Math.min(100, d.pet.mood + Math.min(20, Math.floor(minutes / 5) * 3)); // Mood boost from focus
+            if (d.pet.hunger > 0) d.pet.hunger = Math.min(100, d.pet.hunger + Math.floor(minutes / 5));
+            if (!d.pet.hatched && d.pet.exp >= PET_EVOLUTIONS[1].req) d.pet.hatched = true;
+            savePetData(d);
+            earnCoins(coins, currentLang === 'en' ? `Focus ${minutes}min` : `专注${minutes}分钟`);
+            showPetMsg(currentLang === 'en' ? `🔥 +${xp} XP, mood ↑` : `🔥 +${xp}经验，心情↑`);
+        };
+    }
+
+    // Passive XP: 1 XP per minute when hunger > 0
+    setInterval(() => {
+        const d = getPetData();
+        if (d.pet.hunger > 0 && d.pet.hatched) {
+            const isFocusing = (typeof activeFocusStart !== 'undefined') && activeFocusStart !== null;
+            const passiveXp = isFocusing ? 2 : 1; // 2x during focus
+            d.pet.exp += passiveXp;
+            d.pet.hunger = Math.max(0, d.pet.hunger - 0.5); // Slow hunger drain
+            savePetData(d);
+            renderPetUI();
+        }
+    }, 60000); // Every minute
 
     // Init pet UI when switching to pet tab or on load
     const _origSwitchTab = window.switchTab;
