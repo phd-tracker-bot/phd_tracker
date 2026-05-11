@@ -666,6 +666,288 @@ input, select, textarea {
   border-bottom-color: rgba(212,175,55,0.12);
 }
 
+/* ═══════════════════════════════════════════════
+   Swipeable Pomo Pages
+   ═══════════════════════════════════════════════ */
+.pomo-swipe-container {
+    overflow: hidden;
+    position: relative;
+}
+.pomo-swipe-track {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    will-change: transform;
+}
+.pomo-swipe-track.dragging { transition: none; }
+.pomo-page {
+    min-width: 100%;
+    flex-shrink: 0;
+}
+.pomo-page-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 0 4px;
+}
+.pomo-page-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--th-text3);
+    opacity: 0.3;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.pomo-page-dot.active {
+    opacity: 1;
+    background: var(--th-accent);
+    transform: scale(1.3);
+}
+
+/* ── Timer Page ── */
+.pomo-timer-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 8px;
+}
+.pomo-ring-wrap {
+    position: relative;
+    width: 220px; height: 220px;
+    margin: 8px auto 20px;
+}
+@media (min-width: 640px) { .pomo-ring-wrap { width: 260px; height: 260px; } }
+.pomo-ring-bg { fill: none; stroke: var(--th-border); stroke-width: 6; }
+.pomo-ring-progress {
+    fill: none; stroke-width: 6; stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease;
+    filter: drop-shadow(0 0 6px rgba(255,107,53,0.25));
+}
+.pomo-ring-progress.active { stroke: url(#pomoGrad); }
+.pomo-time-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; user-select: none;
+}
+.pomo-time-center .digits {
+    font-size: 3.2rem; font-weight: 200; letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums; color: var(--th-text);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    line-height: 1;
+}
+.pomo-time-center .label {
+    font-size: 0.72rem; font-weight: 600; color: var(--th-text3);
+    margin-top: 4px; letter-spacing: 0.06em;
+}
+.pomo-mode-seg {
+    display: flex; gap: 0; margin-bottom: 20px;
+    background: var(--th-surface2); border-radius: 10px;
+    padding: 2px; border: 1px solid var(--th-border);
+}
+.pomo-mode-seg button {
+    padding: 7px 16px; border-radius: 8px; font-size: 0.78rem;
+    font-weight: 600; color: var(--th-text2); cursor: pointer;
+    transition: all 0.2s; border: none; background: transparent;
+    white-space: nowrap;
+}
+.pomo-mode-seg button.active {
+    background: white; color: var(--th-text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.04);
+}
+[data-theme="imperial"] .pomo-mode-seg button.active {
+    background: var(--th-surface); color: var(--th-accent);
+}
+.pomo-actions { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.pomo-btn-main {
+    width: 60px; height: 60px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.pomo-btn-main.start {
+    background: linear-gradient(135deg, #FF6B35, #FF9F0A);
+    color: white; box-shadow: 0 4px 16px rgba(255,107,53,0.35);
+}
+.pomo-btn-main.stop {
+    background: var(--th-surface); color: #FF3B30;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid var(--th-border);
+}
+.pomo-btn-main:active { transform: scale(0.9); }
+.pomo-btn-sec {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--th-border); background: var(--th-surface);
+    color: var(--th-text2); display: flex; align-items: center;
+    justify-content: center; font-size: 0.9rem; cursor: pointer;
+}
+.pomo-btn-sec:active { transform: scale(0.9); }
+.pomo-stats-row {
+    display: flex; gap: 0; width: 100%; max-width: 300px;
+    justify-content: space-around; padding-top: 12px;
+    border-top: 1px solid var(--th-border);
+}
+.pomo-stats-row .si { text-align: center; }
+.pomo-stats-row .sv { font-size: 1.3rem; font-weight: 700; color: var(--th-text); }
+.pomo-stats-row .sl { font-size: 0.65rem; color: var(--th-text3); margin-top: 1px; }
+
+/* ── Records Page ── */
+.pomo-records-page { padding: 8px 12px; min-height: 320px; }
+.pomo-rec-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+}
+.pomo-rec-header h3 {
+    font-size: 1.1rem; font-weight: 700; color: var(--th-text);
+}
+.pomo-rec-date-nav {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+}
+.pomo-rec-date-nav .date-label {
+    font-size: 0.82rem; font-weight: 700; color: var(--th-text);
+    flex: 1;
+}
+.pomo-rec-date-nav button {
+    background: none; border: none; color: var(--th-text3);
+    cursor: pointer; padding: 4px; font-size: 0.85rem;
+}
+.pomo-rec-summary {
+    display: flex; gap: 12px; margin-bottom: 14px;
+    padding: 12px 14px; background: var(--th-surface2);
+    border-radius: 14px; border: 1px solid var(--th-border);
+}
+.pomo-rec-summary .rs { text-align: center; flex: 1; }
+.pomo-rec-summary .rv {
+    font-size: 1.6rem; font-weight: 800; color: var(--th-accent);
+}
+.pomo-rec-summary .rl {
+    font-size: 0.65rem; color: var(--th-text3); margin-top: 2px;
+}
+.pomo-rec-list { display: flex; flex-direction: column; gap: 4px; }
+.pomo-rec-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--th-surface2);
+    border-radius: 12px; border: 1px solid var(--th-border);
+}
+.pomo-rec-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.pomo-rec-dot.d25 { background: #FF6B35; }
+.pomo-rec-dot.d50 { background: #AF52DE; }
+.pomo-rec-dot.dfree { background: #34C759; }
+.pomo-rec-body { flex: 1; min-width: 0; }
+.pomo-rec-body .rt { font-size: 0.78rem; font-weight: 600; color: var(--th-text); }
+.pomo-rec-body .rr { font-size: 0.68rem; color: var(--th-text3); }
+.pomo-rec-dur {
+    font-size: 0.85rem; font-weight: 700; color: var(--th-accent);
+    flex-shrink: 0; font-variant-numeric: tabular-nums;
+}
+.pomo-rec-empty {
+    text-align: center; padding: 40px 0; color: var(--th-text3);
+    font-size: 0.82rem;
+}
+
+/* ═══════════════════════════════════════════════
+   Apple Calendar — exact clone
+   ═══════════════════════════════════════════════ */
+.acal-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 4px 2px 8px;
+}
+.acal-year { font-size: 0.72rem; font-weight: 600; color: var(--th-accent); }
+.acal-month {
+    font-size: 1.55rem; font-weight: 800; color: var(--th-text);
+    letter-spacing: -0.03em; line-height: 1.1;
+}
+.acal-nav { display: flex; gap: 2px; align-items: center; }
+.acal-nav button {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: transparent; color: var(--th-accent);
+    font-size: 0.9rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+}
+.acal-nav button:active { background: var(--th-surface2); }
+.acal-today-btn {
+    font-size: 0.72rem; font-weight: 700; color: var(--th-accent);
+    background: none; border: none; cursor: pointer; padding: 4px 8px;
+}
+.acal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    text-align: center; padding: 0 0 6px;
+}
+.acal-weekdays span {
+    font-size: 0.65rem; font-weight: 600; color: var(--th-text3);
+}
+.acal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+}
+.acal-cell {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 4px 0 6px; cursor: pointer; position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+.acal-cell .dn {
+    width: 32px; height: 32px; display: flex; align-items: center;
+    justify-content: center; border-radius: 50%;
+    font-size: 0.82rem; font-weight: 400; color: var(--th-text);
+    transition: background 0.15s;
+    line-height: 1;
+}
+.acal-cell.today .dn {
+    background: #FF3B30; color: white; font-weight: 600;
+}
+.acal-cell.selected:not(.today) .dn {
+    background: var(--th-text3); color: white; font-weight: 600;
+    opacity: 0.55;
+}
+.acal-cell.other .dn { color: var(--th-text3); opacity: 0.35; }
+.acal-cell.weekend .dn { color: var(--th-text3); }
+.acal-cell .dots {
+    display: flex; gap: 3px; margin-top: 2px; height: 5px;
+}
+.acal-cell .dots .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+}
+.acal-cell .dots .dot.focus { background: #FF9500; }
+.acal-cell .dots .dot.event { background: #007AFF; }
+.acal-cell .dots .dot.task { background: #34C759; }
+
+/* ── Event list below calendar ── */
+.acal-divider {
+    height: 1px; background: var(--th-border); margin: 8px 0 0;
+}
+.acal-events-list {
+    flex: 1; overflow-y: auto; padding: 0 2px;
+    max-height: 300px;
+}
+.acal-date-label {
+    font-size: 1.3rem; font-weight: 800; color: var(--th-text);
+    padding: 12px 4px 4px; line-height: 1;
+    display: flex; align-items: baseline; gap: 8px;
+}
+.acal-date-label .weekday {
+    font-size: 0.78rem; font-weight: 600; color: var(--th-text3);
+}
+.acal-ev-item {
+    display: flex; align-items: stretch; gap: 10px;
+    padding: 8px 4px; min-height: 38px;
+}
+.acal-ev-bar {
+    width: 3.5px; border-radius: 2px; flex-shrink: 0;
+}
+.acal-ev-bar.bf { background: #FF9500; }
+.acal-ev-bar.be { background: #007AFF; }
+.acal-ev-bar.bt { background: #34C759; }
+.acal-ev-content { flex: 1; }
+.acal-ev-content .ev-title {
+    font-size: 0.82rem; font-weight: 600; color: var(--th-text); line-height: 1.3;
+}
+.acal-ev-content .ev-time {
+    font-size: 0.7rem; color: var(--th-text3); margin-top: 1px;
+}
+.acal-ev-empty {
+    text-align: center; padding: 30px 0; color: var(--th-text3);
+    font-size: 0.8rem;
+}
+
 /* ===== Mobile Tab Bar ===== */
 #mobileTabBar { display: none; }
 @media (max-width: 1023px) {
@@ -923,25 +1205,76 @@ input, select, textarea {
                 </div>
             </div>
             
-            <div id="module-focus" data-tab="focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-top: 4px solid #FF6B8B;">
+            <div id="module-focus" data-tab="focus" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-0 md:p-0" style="border-top: none; overflow:hidden;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-dopamine-sky/20 text-gray-500 flex items-center justify-center" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-dopamine-orange cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
-                <div class="flex flex-wrap items-center justify-between gap-4 mt-2">
-                    <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-dopamine-yellow/20 flex items-center justify-center"><i class="fas fa-hourglass-half text-dopamine-orange text-2xl"></i></div><div><h2 class="text-xl font-bold text-gray-800">今日理政时间</h2><p class="text-gray-500 text-xs">番茄工作法 · 累积能量</p></div></div>
-                    <div class="bg-dopamine-yellow/10 px-6 py-3 rounded-2xl text-center"><span id="todayFocusMinutes" class="text-4xl md:text-5xl font-black text-dopamine-orange">0</span><span class="text-xl font-semibold text-dopamine-orange/80 ml-1">分钟</span></div>
-                </div>
-                <div class="mt-5 flex flex-wrap gap-4 items-center justify-between border-t border-dopamine-yellow/20 pt-4">
-                    <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
-                        <select id="focusMode" class="px-3 py-2.5 rounded-xl border border-dopamine-yellow/50 bg-amber-50/30 focus:border-dopamine-orange outline-none text-sm text-gray-600 font-medium transition-colors"><option value="free">♾️ 自由理政</option><option value="25">🍅 25分钟番茄钟</option><option value="50">🧠 50分钟深度钟</option></select>
-                        <button onclick="startFocus()" id="startFocusBtn" class="bg-dopamine-orange hover:bg-dopamine-orange/85 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-play-circle"></i> 开始审阅</button>
-                        <button onclick="stopFocus()" id="stopFocusBtn" class="bg-dopamine-mint hover:bg-dopamine-mint/80 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium opacity-50 cursor-not-allowed" disabled><i class="fas fa-stop-circle"></i> 歇息片刻</button>
-                        <button onclick="openPiP()" id="pipBtn" class="bg-white border border-dopamine-orange/40 text-dopamine-orange hover:bg-orange-50 px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition font-medium opacity-50 cursor-not-allowed" disabled title="开始审阅后可置顶显示"><i class="fas fa-external-link-alt"></i> 置顶</button>
-                        <button onclick="openScheduleModal()" class="bg-dopamine-purple hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition font-medium"><i class="fas fa-magic"></i> 智能排程</button>
+
+                <!-- Swipe container -->
+                <div class="pomo-swipe-container" id="pomoSwipeContainer">
+                    <div class="pomo-swipe-track" id="pomoSwipeTrack">
+
+                        <!-- PAGE 1: Timer -->
+                        <div class="pomo-page">
+                            <div class="pomo-timer-wrap">
+                                <div class="pomo-mode-seg">
+                                    <button class="active" data-mode="25" onclick="selPomoMode(this,'25')">🍅 25分钟</button>
+                                    <button data-mode="50" onclick="selPomoMode(this,'50')">🧠 50分钟</button>
+                                    <button data-mode="free" onclick="selPomoMode(this,'free')">♾️ 自由</button>
+                                </div>
+                                <div class="pomo-ring-wrap">
+                                    <svg viewBox="0 0 200 200" width="100%" height="100%">
+                                        <defs><linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF6B35"/><stop offset="100%" stop-color="#FF9F0A"/></linearGradient></defs>
+                                        <circle cx="100" cy="100" r="88" class="pomo-ring-bg"/>
+                                        <circle id="pomoRing" cx="100" cy="100" r="88" class="pomo-ring-progress active" stroke-dasharray="553" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+                                    </svg>
+                                    <div class="pomo-time-center">
+                                        <div id="pomoDigits" class="digits">25:00</div>
+                                        <div id="pomoLabel" class="label">准备开始</div>
+                                    </div>
+                                </div>
+                                <div class="pomo-actions">
+                                    <button onclick="openScheduleModal()" class="pomo-btn-sec" title="智能排程"><i class="fas fa-magic"></i></button>
+                                    <button onclick="pomoToggle()" id="pomoMainBtn" class="pomo-btn-main start"><i class="fas fa-play"></i></button>
+                                    <button onclick="openPiP()" id="pomoPipBtn" class="pomo-btn-sec" style="opacity:0.35;pointer-events:none;" title="置顶"><i class="fas fa-external-link-alt"></i></button>
+                                </div>
+                                <div class="pomo-stats-row">
+                                    <div class="si"><div id="psTodayMin" class="sv">0</div><div class="sl">分钟</div></div>
+                                    <div class="si"><div id="psTodayCount" class="sv">0</div><div class="sl">番茄</div></div>
+                                    <div class="si"><div id="psStreak" class="sv">0</div><div class="sl">连续天</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PAGE 2: Records -->
+                        <div class="pomo-page">
+                            <div class="pomo-records-page">
+                                <div class="pomo-rec-header"><h3>专注记录</h3></div>
+                                <div class="pomo-rec-date-nav">
+                                    <button onclick="recNavPrev()"><i class="fas fa-chevron-left"></i></button>
+                                    <div id="recDateLabel" class="date-label">今天</div>
+                                    <button onclick="recNavNext()"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <div id="recSummary" class="pomo-rec-summary">
+                                    <div class="rs"><div id="recTotalMin" class="rv">0</div><div class="rl">分钟</div></div>
+                                    <div class="rs"><div id="recTotalCount" class="rv">0</div><div class="rl">次专注</div></div>
+                                </div>
+                                <div id="recList" class="pomo-rec-list"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div id="countdownDisplay" class="hidden text-2xl font-black text-dopamine-orange bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">25:00</div>
-                        <div id="focusStatusBadge" class="text-sm bg-dopamine-lime/10 text-dopamine-mint px-3 py-1.5 rounded-full flex items-center gap-2"><i class="fas fa-info-circle"></i> <span id="focusActiveState">⏸️ 暂无专注</span></div>
+                    <div class="pomo-page-dots">
+                        <div class="pomo-page-dot active" onclick="goPomoPage(0)"></div>
+                        <div class="pomo-page-dot" onclick="goPomoPage(1)"></div>
                     </div>
                 </div>
+
+                <!-- Hidden compat elements -->
+                <select id="focusMode" class="hidden"><option value="25" selected>25</option><option value="50">50</option><option value="free">free</option></select>
+                <div id="countdownDisplay" class="hidden">25:00</div>
+                <div id="focusStatusBadge" class="hidden"><span id="focusActiveState">⏸️ 暂无专注</span></div>
+                <button id="startFocusBtn" class="hidden"></button>
+                <button id="stopFocusBtn" class="hidden" disabled></button>
+                <button id="pipBtn" class="hidden" disabled></button>
+                <span id="todayFocusMinutes" class="hidden">0</span>
             </div>
 
             <div id="module-routine" data-tab="calendar" class="draggable-module col-span-1 lg:col-span-2 rounded-2xl shadow-colorful p-5 md:p-6" style="border-left: 8px solid #43AA8B;">
@@ -1020,26 +1353,31 @@ input, select, textarea {
             </div>
             </div>
 
-            <div id="module-calendar" data-tab="calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-5 md:p-6 flex flex-col" style="border-top: 4px solid #4D9DE0;">
+            <div id="module-calendar" data-tab="calendar" class="draggable-module col-span-1 lg:col-span-1 rounded-2xl shadow-colorful p-4 md:p-5 flex flex-col" style="border-top: none;">
                 <div class="module-controls absolute top-3 right-3 flex gap-2 z-10"><button class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center transition" onclick="toggleModuleSize(this)"><i class="fas fa-expand-arrows-alt"></i></button><div class="drag-handle w-8 h-8 rounded-full bg-gray-100 text-gray-500 cursor-grab flex items-center justify-center"><i class="fas fa-grip-horizontal"></i></div></div>
-                <div class="flex items-center justify-between border-b border-dopamine-sky/30 pb-3 mb-4 mt-2">
-                    <div class="flex items-center gap-2"><i class="fas fa-map-marked-alt text-dopamine-sky text-xl"></i><h2 class="text-xl font-bold text-gray-800">江山社稷图</h2><span id="icsCountBadge" class="hidden text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full ml-1 cursor-pointer" onclick="if(confirm('清除所有导入的外部日程？')){appData.calendarEvents=[];saveData();renderCalendar();}" title="点击清除外部日程">📅 <span id="icsCount">0</span>条 ×</span></div>
-                    <div class="flex items-center gap-2">
-                        <div class="bg-gray-100 rounded-lg p-0.5 flex gap-0.5 text-[10px] font-bold">
-                            <button onclick="setCalView('day')" id="calViewDay" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">日</button>
-                            <button onclick="setCalView('week')" id="calViewWeek" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">周</button>
-                            <button onclick="setCalView('month')" id="calViewMonth" class="px-2 py-1 rounded bg-white text-dopamine-sky shadow-sm">月</button>
-                            <button onclick="setCalView('year')" id="calViewYear" class="px-2 py-1 rounded text-gray-500 hover:bg-white transition">年</button>
-                        </div>
-                        <button id="prevMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-left"></i></button>
-                        <span id="calendarMonthYear" class="font-bold text-gray-700 text-xs w-20 text-center"></span>
-                        <button id="nextMonthBtn" class="text-gray-400 hover:text-dopamine-sky transition p-1"><i class="fas fa-chevron-right"></i></button>
+                
+                <div class="acal-header">
+                    <div>
+                        <div id="acalYear" class="acal-year"></div>
+                        <div id="acalMonth" class="acal-month"></div>
+                    </div>
+                    <div class="acal-nav">
+                        <button class="acal-today-btn" onclick="acalGoToday()">今天</button>
+                        <button id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+                        <button id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
-                <div id="calViewMonthContainer">
-                    <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-xs font-bold text-gray-400 mb-2"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
-                    <div id="calendarGrid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
+                <div class="acal-weekdays">
+                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
                 </div>
+                <div id="calendarGrid" class="acal-grid"></div>
+                <div class="acal-divider"></div>
+                <div id="acalDateLabel" class="acal-date-label"></div>
+                <div id="acalEventsList" class="acal-events-list"></div>
+
+                <!-- Hidden compat -->
+                <span id="calendarMonthYear" class="hidden"></span>
+                <span id="icsCountBadge" class="hidden"><span id="icsCount">0</span></span>
                 <div id="calViewDayContainer" class="hidden"></div>
                 <div id="calViewWeekContainer" class="hidden"></div>
                 <div id="calViewYearContainer" class="hidden"></div>
@@ -2463,81 +2801,123 @@ input, select, textarea {
             document.getElementById("weekCheckDays").innerText = countCheckDays(wStart) + (currentLang==='en'?' days':' 天'); document.getElementById("monthCheckDays").innerText = countCheckDays(mStart) + (currentLang==='en'?' days':' 天'); document.getElementById("yearCheckDays").innerText = countCheckDays(yStart) + (currentLang==='en'?' days':' 天');
         }
 
-        // 恢复 0403 版精美热力日历与详情弹窗
+        // ═══════════════════ Apple Calendar ═══════════════════
+        let acalSelectedDate = getTodayStr();
+
         function renderCalendar() {
-            const y = currentCalendarDate.getFullYear(); const m = currentCalendarDate.getMonth(); document.getElementById("calendarMonthYear").innerText = currentLang === 'en' ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]} ${y}` : `${y}年${m + 1}月`;
+            const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth();
+            const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+            const enMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const yearEl = document.getElementById('acalYear');
+            const monthEl = document.getElementById('acalMonth');
+            if (yearEl) yearEl.textContent = y + '年';
+            if (monthEl) monthEl.textContent = currentLang === 'en' ? enMonths[m] : monthNames[m];
+            document.getElementById("calendarMonthYear").innerText = `${y}年${m+1}月`;
+
             const grid = document.getElementById("calendarGrid"); grid.innerHTML = "";
-            for (let i = 0; i < new Date(y, m, 1).getDay(); i++) { const empty = document.createElement("div"); empty.className = "min-h-[70px] md:min-h-[85px]"; grid.appendChild(empty); }
-            
-            for (let day = 1; day <= new Date(y, m + 1, 0).getDate(); day++) {
-                const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
-                const isToday = dStr === getTodayStr(); 
-                const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
-                const icsEvts = getCalendarEventsForDate(dStr);
-                
-                let bg = "bg-gray-50 text-gray-500"; 
-                if (mins > 180) bg = "bg-dopamine-orange text-white font-bold transform hover:scale-110 shadow-md"; 
-                else if (mins > 60) bg = "bg-orange-300 text-white font-bold"; 
-                else if (mins > 0) bg = "bg-orange-100 text-orange-700 font-bold";
-                
-                const cell = document.createElement("div"); 
-                cell.className = `min-h-[70px] md:min-h-[85px] rounded-xl flex flex-col items-stretch p-1 md:p-1.5 cursor-pointer transition-all border border-gray-100 ${bg} ${isToday?'ring-2 ring-dopamine-sky':''}`;
-                
-                // Day number row
-                let html = `<div class="text-center font-semibold text-xs leading-none mb-0.5">${day}</div>`;
-                
-                // Event items (max 3, then "+N more")
-                const items = [];
-                // Focus time
-                if (mins > 0) items.push(`<div class="cal-event cal-event-focus">⏱${mins}m</div>`);
-                // Completed tasks
-                tks.slice(0, 1).forEach(t => items.push(`<div class="cal-event cal-event-task" title="${escapeHtml(t.name)}">✅${escapeHtml(t.name)}</div>`));
-                // ICS events
-                icsEvts.slice(0, 2).forEach(ev => items.push(`<div class="cal-event cal-event-ics" title="${ev.startTime} ${escapeHtml(ev.summary)}">📅${escapeHtml(ev.summary)}</div>`));
-                
-                const maxShow = 3;
-                const totalExtra = (tks.length > 1 ? tks.length - 1 : 0) + (icsEvts.length > 2 ? icsEvts.length - 2 : 0);
-                html += items.slice(0, maxShow).join('');
-                if (items.length > maxShow || totalExtra > 0) {
-                    const moreCount = Math.max(0, items.length - maxShow) + totalExtra;
-                    if (moreCount > 0) html += `<div class="text-[8px] text-gray-400 text-center leading-none">+${moreCount}项</div>`;
-                }
-                
-                cell.innerHTML = html;
-                cell.onclick = () => showDayDetail(dStr, mins, tks, icsEvts); 
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const daysInPrevMonth = new Date(y, m, 0).getDate();
+            const todayStr = getTodayStr();
+
+            // Prev month padding
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const cell = document.createElement('div');
+                cell.className = 'acal-cell other';
+                cell.innerHTML = `<span class="dn">${day}</span><div class="dots"></div>`;
                 grid.appendChild(cell);
             }
-            // Update ICS badge
+
+            // Current month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const mins = appData.focusSessions.filter(s => s.dateStr === dStr).reduce((sum, s) => sum + s.durationMinutes, 0);
+                const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
+                const icsEvts = getCalendarEventsForDate(dStr);
+                const isToday = dStr === todayStr;
+                const isSel = dStr === acalSelectedDate;
+                const isWeekend = new Date(y, m, day).getDay() === 0 || new Date(y, m, day).getDay() === 6;
+
+                let cls = 'acal-cell';
+                if (isToday) cls += ' today';
+                if (isSel && !isToday) cls += ' selected';
+                if (isWeekend && !isToday) cls += ' weekend';
+
+                let dots = '';
+                if (mins > 0) dots += '<div class="dot focus"></div>';
+                if (icsEvts.length > 0) dots += '<div class="dot event"></div>';
+                if (tks.length > 0) dots += '<div class="dot task"></div>';
+
+                const cell = document.createElement('div');
+                cell.className = cls;
+                cell.innerHTML = `<span class="dn">${day}</span><div class="dots">${dots}</div>`;
+                cell.onclick = () => { acalSelectedDate = dStr; renderCalendar(); };
+                grid.appendChild(cell);
+            }
+
+            // Next month padding
+            const totalCells = firstDay + daysInMonth;
+            const rem = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= rem; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'acal-cell other';
+                cell.innerHTML = `<span class="dn">${i}</span><div class="dots"></div>`;
+                grid.appendChild(cell);
+            }
+
+            // Render event list for selected date
+            acalRenderEvents(acalSelectedDate);
+
+            // ICS badge
             const icsTotal = (appData.calendarEvents || []).length;
             const badge = document.getElementById('icsCountBadge');
             if (badge) { if (icsTotal > 0) { badge.classList.remove('hidden'); document.getElementById('icsCount').innerText = icsTotal; } else { badge.classList.add('hidden'); } }
         }
 
-        // ================= 日历多视图 =================
-        let calendarView = 'month';
-        
-        function setCalView(view) {
-            calendarView = view;
-            ['day','week','month','year'].forEach(v => {
-                const cId = 'calView'+v.charAt(0).toUpperCase()+v.slice(1)+'Container';
-                const c = document.getElementById(cId);
-                if (c) c.classList.toggle('hidden', v !== view);
-                const btn = document.getElementById('calView'+v.charAt(0).toUpperCase()+v.slice(1));
-                if (btn) {
-                    if (v === view) { btn.classList.add('bg-white','text-dopamine-sky','shadow-sm'); btn.classList.remove('text-gray-500'); }
-                    else { btn.classList.remove('bg-white','text-dopamine-sky','shadow-sm'); btn.classList.add('text-gray-500'); }
-                }
-            });
-            renderCalendarView();
+        function acalGoToday() {
+            currentCalendarDate = new Date();
+            acalSelectedDate = getTodayStr();
+            renderCalendar();
         }
 
-        function renderCalendarView() {
-            if (calendarView === 'month') renderCalendar();
-            else if (calendarView === 'day') renderCalendarDay();
-            else if (calendarView === 'week') renderCalendarWeek();
-            else if (calendarView === 'year') renderCalendarYear();
+        function acalRenderEvents(dStr) {
+            const labelEl = document.getElementById('acalDateLabel');
+            const listEl = document.getElementById('acalEventsList');
+            if (!labelEl || !listEl) return;
+
+            const d = new Date(dStr + 'T00:00:00');
+            const wkNames = currentLang === 'en'
+                ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+                : ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            labelEl.innerHTML = `${d.getDate()}<span class="weekday">${wkNames[d.getDay()]}</span>`;
+
+            const sessions = appData.focusSessions.filter(s => s.dateStr === dStr).sort((a,b) => a.startTimestamp - b.startTimestamp);
+            const icsEvts = getCalendarEventsForDate(dStr);
+            const tks = appData.tasks.filter(t => t.status === "已完成" && formatDateToYMD(t.completedAt) === dStr);
+
+            let html = '';
+            sessions.forEach(s => {
+                const st = new Date(s.startTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                const et = new Date(s.endTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                html += `<div class="acal-ev-item"><div class="acal-ev-bar bf"></div><div class="acal-ev-content"><div class="ev-title">🍅 专注 ${s.durationMinutes}分钟</div><div class="ev-time">${st} – ${et}</div></div></div>`;
+            });
+            icsEvts.forEach(ev => {
+                html += `<div class="acal-ev-item"><div class="acal-ev-bar be"></div><div class="acal-ev-content"><div class="ev-title">${escapeHtml(ev.summary)}</div><div class="ev-time">${ev.startTime||''}${ev.endTime?' – '+ev.endTime:''}</div></div></div>`;
+            });
+            tks.forEach(t => {
+                const tm = t.completedAt ? new Date(t.completedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+                html += `<div class="acal-ev-item"><div class="acal-ev-bar bt"></div><div class="acal-ev-content"><div class="ev-title">✅ ${escapeHtml(t.name)}</div><div class="ev-time">${tm}</div></div></div>`;
+            });
+
+            if (!html) html = '<div class="acal-ev-empty">没有事件</div>';
+            listEl.innerHTML = html;
         }
+
+        // Keep compat — setCalView / renderCalendarView stubs
+        let calendarView = 'month';
+        function setCalView(view) { calendarView = view; renderCalendar(); }
+        function renderCalendarView() { renderCalendar(); }
 
         function renderCalendarDay() {
             const container = document.getElementById('calViewDayContainer');
@@ -4158,7 +4538,167 @@ input, select, textarea {
             renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
             updateMoodUI(); updateStreakBadge(); renderCalendar(); renderMoodCalendar(); renderTrendChart(); 
             renderPieChart(); updateFocusButtons(); renderKingdom(); renderDecrees(); renderDailyEvent();
+            updatePomoStats(); renderRecPage();
             if (currentLang === 'en') setTimeout(applyLang, 50);
+        }
+
+        // ═══════════════════ Pomo Swipe ═══════════════════
+        let pomoPage = 0;
+        const CIRC = 2 * Math.PI * 88;
+        (function initPomoSwipe() {
+            function setup() {
+                let startX = 0, curX = 0, dragging = false;
+                const el = document.getElementById('pomoSwipeContainer');
+                const track = document.getElementById('pomoSwipeTrack');
+                if (!el || !track) return;
+                el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; curX = startX; dragging = true; track.classList.add('dragging'); }, {passive:true});
+                el.addEventListener('touchmove', e => { if (!dragging) return; curX = e.touches[0].clientX; const dx = curX - startX; const base = -pomoPage * el.offsetWidth; track.style.transform = `translateX(${base + dx}px)`; }, {passive:true});
+                el.addEventListener('touchend', () => { if (!dragging) return; dragging = false; track.classList.remove('dragging'); const dx = curX - startX; if (Math.abs(dx) > 60) { if (dx < 0 && pomoPage < 1) pomoPage++; else if (dx > 0 && pomoPage > 0) pomoPage--; } goPomoPage(pomoPage); startX = 0; curX = 0; });
+                // Also support mouse drag on desktop
+                el.addEventListener('mousedown', e => { startX = e.clientX; curX = startX; dragging = true; track.classList.add('dragging'); e.preventDefault(); });
+                document.addEventListener('mousemove', e => { if (!dragging) return; curX = e.clientX; const dx = curX - startX; const base = -pomoPage * el.offsetWidth; track.style.transform = `translateX(${base + dx}px)`; });
+                document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; track.classList.remove('dragging'); const dx = curX - startX; if (Math.abs(dx) > 60) { if (dx < 0 && pomoPage < 1) pomoPage++; else if (dx > 0 && pomoPage > 0) pomoPage--; } goPomoPage(pomoPage); startX = 0; curX = 0; });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+            else setup();
+        })();
+        function goPomoPage(p) {
+            pomoPage = p;
+            const track = document.getElementById('pomoSwipeTrack');
+            const container = document.getElementById('pomoSwipeContainer');
+            if (track && container) track.style.transform = `translateX(-${p * container.offsetWidth}px)`;
+            document.querySelectorAll('.pomo-page-dot').forEach((d,i) => d.classList.toggle('active', i === p));
+            if (p === 1) renderRecPage();
+        }
+
+        // ── Timer mode select ──
+        function selPomoMode(btn, mode) {
+            document.querySelectorAll('.pomo-mode-seg button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('focusMode').value = mode;
+            if (activeFocusStart === null) {
+                document.getElementById('pomoDigits').textContent = mode === 'free' ? '00:00' : mode + ':00';
+                document.getElementById('pomoLabel').textContent = '准备开始';
+                document.getElementById('pomoRing').style.strokeDashoffset = '0';
+            }
+        }
+
+        function pomoToggle() { if (activeFocusStart !== null) stopFocus(); else startFocus(); }
+
+        // ── Override updateFocusButtons for pomo UI ──
+        const _origUFB = updateFocusButtons;
+        updateFocusButtons = function() {
+            _origUFB();
+            const mb = document.getElementById('pomoMainBtn');
+            const pb = document.getElementById('pomoPipBtn');
+            if (activeFocusStart !== null) {
+                mb.className = 'pomo-btn-main stop'; mb.innerHTML = '<i class="fas fa-stop"></i>';
+                if (pb) { pb.style.opacity='1'; pb.style.pointerEvents='auto'; }
+            } else {
+                mb.className = 'pomo-btn-main start'; mb.innerHTML = '<i class="fas fa-play"></i>';
+                if (pb) { pb.style.opacity='0.35'; pb.style.pointerEvents='none'; }
+            }
+        };
+
+        // ── Override countdown display for ring ──
+        const _origUCD = updateCountdownDisplay;
+        updateCountdownDisplay = function() {
+            _origUCD();
+            const ts = `${Math.floor(remainingSeconds/60).toString().padStart(2,'0')}:${(remainingSeconds%60).toString().padStart(2,'0')}`;
+            document.getElementById('pomoDigits').textContent = ts;
+            document.getElementById('pomoLabel').textContent = '🍅 专注中';
+            const total = parseInt(currentFocusMode) * 60;
+            const off = CIRC * (1 - remainingSeconds / total);
+            const r = document.getElementById('pomoRing');
+            r.style.strokeDasharray = CIRC; r.style.strokeDashoffset = off;
+        };
+
+        // ── Patch startFocus for free mode ring ──
+        const _origSF = startFocus;
+        startFocus = function() {
+            _origSF();
+            if (currentFocusMode === 'free' && activeFocusStart !== null) {
+                if (focusTimerInterval) clearInterval(focusTimerInterval);
+                const tick = () => {
+                    if (activeFocusStart === null) return;
+                    const el = Math.floor((Date.now() - activeFocusStart) / 1000);
+                    const mm = Math.floor(el/60), ss = el%60;
+                    const ts = `${mm.toString().padStart(2,'0')}:${ss.toString().padStart(2,'0')}`;
+                    document.getElementById("countdownDisplay").innerText = ts;
+                    const fc = document.getElementById("floatingCountdown"); if(fc) fc.innerText = ts;
+                    document.getElementById('pomoDigits').textContent = ts;
+                    document.getElementById('pomoLabel').textContent = '🔥 自由理政中';
+                    const r = document.getElementById('pomoRing');
+                    r.style.strokeDasharray = CIRC;
+                    r.style.strokeDashoffset = CIRC * (1 - (el % 3600) / 3600);
+                };
+                tick(); focusTimerInterval = setInterval(tick, 1000);
+            }
+        };
+
+        // ── Patch resetFocusUI for ring reset ──
+        const _origRFUI = resetFocusUI;
+        resetFocusUI = function() {
+            _origRFUI();
+            const r = document.getElementById('pomoRing');
+            if (r) { r.style.strokeDashoffset = '0'; r.style.strokeDasharray = CIRC; }
+            const mode = document.getElementById('focusMode').value;
+            document.getElementById('pomoDigits').textContent = mode === 'free' ? '00:00' : mode + ':00';
+            document.getElementById('pomoLabel').textContent = '准备开始';
+        };
+
+        function updatePomoStats() {
+            const ts = getTodayStr();
+            const s = appData.focusSessions.filter(x => x.dateStr === ts);
+            const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+            el('psTodayMin', s.reduce((a,x) => a + x.durationMinutes, 0));
+            el('psTodayCount', s.length);
+            el('psStreak', typeof calculateStreak === 'function' ? calculateStreak() : 0);
+        }
+
+        // ═══════════════════ Records Page ═══════════════════
+        let recViewDate = new Date();
+
+        function recNavPrev() { recViewDate.setDate(recViewDate.getDate() - 1); renderRecPage(); }
+        function recNavNext() { recViewDate.setDate(recViewDate.getDate() + 1); renderRecPage(); }
+
+        function renderRecPage() {
+            const dStr = formatDateToYMD(recViewDate.getTime());
+            const todayStr = getTodayStr();
+            const yesterdayD = new Date(); yesterdayD.setDate(yesterdayD.getDate()-1);
+            const yStr = formatDateToYMD(yesterdayD.getTime());
+            const lbl = document.getElementById('recDateLabel');
+            if (lbl) {
+                if (dStr === todayStr) lbl.textContent = '今天';
+                else if (dStr === yStr) lbl.textContent = '昨天';
+                else {
+                    const d = new Date(dStr+'T00:00:00');
+                    lbl.textContent = `${d.getMonth()+1}月${d.getDate()}日`;
+                }
+            }
+
+            const sessions = appData.focusSessions.filter(s => s.dateStr === dStr).sort((a,b) => b.startTimestamp - a.startTimestamp);
+            const totalMin = sessions.reduce((a,s) => a + s.durationMinutes, 0);
+
+            const el = (id,v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+            el('recTotalMin', totalMin);
+            el('recTotalCount', sessions.length);
+
+            const list = document.getElementById('recList');
+            if (!list) return;
+            if (sessions.length === 0) {
+                list.innerHTML = '<div class="pomo-rec-empty">🍅 这天还没有专注记录</div>';
+                return;
+            }
+            let html = '';
+            sessions.forEach(s => {
+                const st = new Date(s.startTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                const et = new Date(s.endTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                const dc = s.durationMinutes >= 50 ? 'd50' : (s.durationMinutes >= 20 ? 'd25' : 'dfree');
+                const label = s.durationMinutes >= 50 ? '🧠 深度专注' : (s.durationMinutes >= 20 ? '🍅 番茄钟' : '♾️ 自由模式');
+                html += `<div class="pomo-rec-item"><div class="pomo-rec-dot ${dc}"></div><div class="pomo-rec-body"><div class="rt">${label}</div><div class="rr">${st} → ${et}</div></div><div class="pomo-rec-dur">${s.durationMinutes}min</div></div>`;
+            });
+            list.innerHTML = html;
         }
 
         // ================= 双通道认证 + 统一排行榜 =================
