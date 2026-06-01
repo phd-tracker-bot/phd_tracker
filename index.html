@@ -6532,6 +6532,56 @@ window.addEventListener('unhandledrejection', function(e){
             }
         }
 
+        // ═══ 同时段事件并排分列布局 ═══
+        // items: [{ startMin, endMin, el }]，为重叠的块分配列并设置 left/width
+        function layoutOverlappingEvents(items, gapPx) {
+            if (!items || items.length === 0) return;
+            gapPx = gapPx || 2;
+            // 按开始时间排序，相同则按结束时间
+            items.sort((a, b) => (a.startMin - b.startMin) || (a.endMin - b.endMin));
+
+            // 分组：把时间上有重叠链的块归到同一“簇”，每簇独立分列
+            let cluster = [];
+            let clusterEnd = -1;
+            const flush = () => {
+                if (cluster.length === 0) return;
+                assignColumns(cluster, gapPx);
+                cluster = [];
+                clusterEnd = -1;
+            };
+            for (const it of items) {
+                if (cluster.length > 0 && it.startMin >= clusterEnd) {
+                    // 与当前簇不再重叠，结算上一簇
+                    flush();
+                }
+                cluster.push(it);
+                clusterEnd = Math.max(clusterEnd, it.endMin);
+            }
+            flush();
+        }
+        function assignColumns(cluster, gapPx) {
+            // 贪心分列：每个块放进第一个“最后结束时间 <= 它开始时间”的列
+            const colEnds = []; // 每列当前的结束时间
+            cluster.forEach(it => {
+                let placed = -1;
+                for (let c = 0; c < colEnds.length; c++) {
+                    if (it.startMin >= colEnds[c]) { placed = c; break; }
+                }
+                if (placed === -1) { placed = colEnds.length; colEnds.push(it.endMin); }
+                else colEnds[placed] = it.endMin;
+                it._col = placed;
+            });
+            const totalCols = colEnds.length;
+            cluster.forEach(it => {
+                const widthPct = 100 / totalCols;
+                const leftPct = it._col * widthPct;
+                // 用 calc 给列间留缝隙
+                it.el.style.left = `calc(${leftPct}% + ${it._col === 0 ? 2 : gapPx}px)`;
+                it.el.style.right = 'auto';
+                it.el.style.width = `calc(${widthPct}% - ${gapPx + 2}px)`;
+            });
+        }
+
         function acalRenderDay() {
             const d = new Date(acalSelectedDate + 'T00:00:00');
             const wkNames = currentLang === 'en'
@@ -6620,6 +6670,16 @@ window.addEventListener('unhandledrejection', function(e){
                     chip.onclick = () => openEventEditor('task', t.id);
                     allDayEl.appendChild(chip);
                 });
+                // 外部订阅的全天事件
+                icsEvts.filter(ev => ev.startTime === '全天').forEach(ev => {
+                    const chip = document.createElement('span');
+                    chip.className = 'allday-chip';
+                    chip.style.borderLeftColor = '#0EA5E9';
+                    chip.style.background = 'rgba(14,165,233,0.10)';
+                    chip.textContent = ev.summary;
+                    chip.title = (ev.calendarName ? ev.calendarName + ' · ' : '') + '外部订阅,只读';
+                    allDayEl.appendChild(chip);
+                });
             }
 
             if (sessions.length === 0 && icsEvts.length === 0 && tks.length === 0 && timedTasks.length === 0 && allDayTasks.length === 0) {
@@ -6629,6 +6689,9 @@ window.addEventListener('unhandledrejection', function(e){
                 eventsEl.appendChild(noEventsDiv);
                 return;
             }
+
+            // 收集所有时间块用于并排布局
+            const layoutItems = [];
 
             // 有时间的任务块(在时间轴上)
             timedTasks.forEach(t => {
@@ -6667,6 +6730,7 @@ window.addEventListener('unhandledrejection', function(e){
                     el.appendChild(handle);
                 }
                 eventsEl.appendChild(el);
+                layoutItems.push({ startMin: Math.max(0, topPx), endMin: Math.max(0, topPx) + Math.max(28, dur), el });
             });
 
             // Position events with proper timing
@@ -6683,8 +6747,10 @@ window.addEventListener('unhandledrejection', function(e){
                 ev.style.pointerEvents = 'none'; // 番茄钟记录是历史事实,只读
                 ev.title = new Date(s.startTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' - ' + new Date(s.endTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
                 eventsEl.appendChild(ev);
+                layoutItems.push({ startMin: topPx, endMin: topPx + Math.max(28, hPx), el: ev });
             });
             icsEvts.forEach((ev) => {
+                if (ev.startTime === '全天') return; // 全天事件已在全天栏渲染
                 const el = document.createElement('div');
                 el.className = 'acal-event event';
                 el.textContent = escapeHtml(ev.summary);
@@ -6694,7 +6760,7 @@ window.addEventListener('unhandledrejection', function(e){
                 let hPx = 30;
                 if (ev.endTime) {
                     const [endH, endM] = ev.endTime.split(':').map(x => parseInt(x) || 0);
-                    hPx = Math.max(24, (endH - eh) * 60 + (endM - em));
+                    hPx = Math.min(900, Math.max(24, (endH - eh) * 60 + (endM - em)));
                 }
                 el.style.height = hPx + 'px';
                 const editable = !ev.source || ev.source === 'manual';
@@ -6703,7 +6769,11 @@ window.addEventListener('unhandledrejection', function(e){
                 if (editable) el.dataset.eventId = ev.id;
                 else el.style.pointerEvents = 'none';
                 eventsEl.appendChild(el);
+                layoutItems.push({ startMin: Math.max(0, topPx), endMin: Math.max(0, topPx) + hPx, el });
             });
+
+            // 同时段事件并排分列
+            layoutOverlappingEvents(layoutItems);
             // ═══ 当前时间红线(只在今天显示) ═══
             if (acalSelectedDate === getTodayStr()) {
                 const now = new Date();
@@ -6792,6 +6862,17 @@ window.addEventListener('unhandledrejection', function(e){
                         chip.onclick = () => openEventEditor('task', t.id);
                         col.appendChild(chip);
                     });
+                    // 外部订阅的全天事件
+                    getCalendarEventsForDate(ds).filter(ev => ev.startTime === '全天').forEach(ev => {
+                        hasAllDay = true;
+                        const chip = document.createElement('div');
+                        chip.className = 'allday-chip';
+                        chip.style.borderLeftColor = '#0EA5E9'; chip.style.background = 'rgba(14,165,233,0.10)';
+                        chip.style.maxWidth = '100%'; chip.style.fontSize = '0.6rem';
+                        chip.textContent = (ev.summary || '').slice(0, 6);
+                        chip.title = (ev.calendarName ? ev.calendarName + ' · ' : '') + ev.summary + ' (外部订阅,只读)';
+                        col.appendChild(chip);
+                    });
                     cols.appendChild(col);
                 }
                 weekAllDayEl.appendChild(cols);
@@ -6875,6 +6956,7 @@ window.addEventListener('unhandledrejection', function(e){
                 }
 
                 // Events
+                const dayLayoutItems = [];
                 sessions.forEach(s => {
                     const st = new Date(s.startTimestamp);
                     const et = new Date(s.endTimestamp);
@@ -6889,15 +6971,18 @@ window.addEventListener('unhandledrejection', function(e){
                     const _tm = new Date(s.startTimestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
                     ev.title = s.category ? `${s.category} · ${_tm}` : _tm;
                     dayCol.appendChild(ev);
+                    dayLayoutItems.push({ startMin: topPx, endMin: topPx + Math.max(24, hPx), el: ev });
                 });
 
                 icsEvts.forEach((ev) => {
+                    if (ev.startTime === '全天') return; // 全天事件已在全天栏渲染
                     const el = document.createElement('div');
                     el.className = 'acal-event event';
                     const [eh, em] = (ev.startTime || '09:00').split(':').map(x => parseInt(x) || 0);
-                    el.style.top = Math.max(0, (eh - 9) * 60 + em) + 'px';
+                    const topPx = Math.max(0, (eh - 9) * 60 + em);
+                    el.style.top = topPx + 'px';
                     let hPx = 28;
-                    if (ev.endTime) { const [endH, endM] = ev.endTime.split(':').map(x => parseInt(x) || 0); hPx = Math.max(20, (endH - eh) * 60 + (endM - em)); }
+                    if (ev.endTime) { const [endH, endM] = ev.endTime.split(':').map(x => parseInt(x) || 0); hPx = Math.min(900, Math.max(20, (endH - eh) * 60 + (endM - em))); }
                     el.style.height = hPx + 'px';
                     el.style.fontSize = '0.6rem'; el.style.padding = '2px 4px';
                     el.textContent = escapeHtml(ev.summary).slice(0, 8);
@@ -6907,6 +6992,7 @@ window.addEventListener('unhandledrejection', function(e){
                     if (editable) el.onclick = (e) => { e.stopPropagation(); openEventEditor('event', ev.id); };
                     else el.style.pointerEvents = 'none';
                     dayCol.appendChild(el);
+                    dayLayoutItems.push({ startMin: topPx, endMin: topPx + hPx, el });
                 });
 
 
@@ -6935,7 +7021,11 @@ window.addEventListener('unhandledrejection', function(e){
                         calTaskMouseDown(e, t.id, el, dayCol, dStr);
                     };
                     dayCol.appendChild(el);
+                    dayLayoutItems.push({ startMin: Math.max(0, topPx), endMin: Math.max(0, topPx) + Math.max(24, dur), el });
                 });
+
+                // 同时段事件并排分列（每列内部）
+                layoutOverlappingEvents(dayLayoutItems, 1);
 
                 // 当前时间红线(只在今天的列)
                 if (dStr === getTodayStr()) {
