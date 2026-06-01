@@ -7522,7 +7522,7 @@ window.addEventListener('unhandledrejection', function(e){
 
         // ================= Google Calendar API 集成 =================
         const GCAL_CLIENT_ID = '747124411986-66lnp8m0ekokb27h44qj753bfhdj3iiq.apps.googleusercontent.com';
-        const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
+        const GCAL_SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
         let gcalTokenClient = null;
         let gcalAccessToken = localStorage.getItem('phd_gcal_token') || null;
 
@@ -7535,15 +7535,24 @@ window.addEventListener('unhandledrejection', function(e){
                         if (response.error) { console.error('GCal auth error:', response); return; }
                         gcalAccessToken = response.access_token;
                         localStorage.setItem('phd_gcal_token', gcalAccessToken);
+                        localStorage.setItem('phd_gcal_scope_ver', '2');
                         updateGCalButton(true);
                         await pullEventsFromGCal();
-                        alert('✅ Google 日历已连接！\n• 日程已自动同步到江山社稷图\n• 番茄钟结束后将自动上传到日历');
+                        alert('✅ Google 日历已连接！\n• 已同步全部日历的日程到江山社稷图\n• 番茄钟结束后将自动上传到日历');
                     },
                 });
                 // If we have a stored token, verify it's still valid
                 if (gcalAccessToken) {
                     updateGCalButton(true);
-                    verifyGCalToken();
+                    // 检测授权 scope 版本：旧版本（缺少多日历读取 + 写入权限）需重新授权
+                    const SCOPE_VERSION = '2';
+                    if (localStorage.getItem('phd_gcal_scope_ver') !== SCOPE_VERSION) {
+                        console.log('🔄 GCal 授权范围已升级，需要重新授权以读取全部日历并支持写回');
+                        // 静默尝试拿新 scope 的 token；失败则下次用户点同步时会走完整授权
+                        try { gcalTokenClient.requestAccessToken({ prompt: 'consent' }); } catch(e) {}
+                    } else {
+                        verifyGCalToken();
+                    }
                 }
             } catch(e) { console.log('Google Identity Services not loaded yet'); }
         }
@@ -7610,46 +7619,85 @@ window.addEventListener('unhandledrejection', function(e){
         // ===== 从 Google Calendar 拉取日程 =====
         async function pullEventsFromGCal() {
             if (!gcalAccessToken) return;
-            
-            // 拉取前后3个月的日程
+
+            // 拉取前后6个月的日程
             const now = new Date();
-            const timeMin = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString();
-            const timeMax = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
+            const timeMin = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString();
+            const timeMax = new Date(now.getFullYear(), now.getMonth() + 6, 0).toISOString();
+
+            // 401 统一处理
+            const handle401 = () => {
+                gcalAccessToken = null;
+                localStorage.removeItem('phd_gcal_token');
+                updateGCalButton(false);
+            };
 
             try {
-                const resp = await fetch(
-                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=500`,
+                // 1) 先列出账号下所有日历
+                let calendars = [];
+                const listResp = await fetch(
+                    'https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250',
                     { headers: { 'Authorization': `Bearer ${gcalAccessToken}` } }
                 );
-                
-                if (resp.status === 401) {
-                    gcalAccessToken = null;
-                    localStorage.removeItem('phd_gcal_token');
-                    updateGCalButton(false);
-                    return;
+                if (listResp.status === 401) { handle401(); return; }
+                if (listResp.ok) {
+                    const listData = await listResp.json();
+                    calendars = (listData.items || [])
+                        // 跳过被用户隐藏的日历
+                        .filter(c => c.selected !== false)
+                        .map(c => ({ id: c.id, name: c.summaryOverride || c.summary || '' }));
                 }
-                
-                if (!resp.ok) { console.error('GCal pull failed:', resp.status); return; }
-                
-                const data = await resp.json();
-                const events = (data.items || []).map(ev => {
-                    const start = ev.start.dateTime ? new Date(ev.start.dateTime) : new Date(ev.start.date);
-                    const end = ev.end.dateTime ? new Date(ev.end.dateTime) : new Date(ev.end.date);
-                    return {
-                        summary: ev.summary || '(无标题)',
-                        dateStr: `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`,
-                        startTime: ev.start.dateTime ? start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '全天',
-                        endTime: ev.end.dateTime ? end.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '',
-                        location: ev.location || '',
-                        description: ev.description || '',
-                        source: 'gcal'
-                    };
-                });
-                
-                appData.calendarEvents = events;
+                // 兜底：列表失败或为空时至少同步主日历
+                if (calendars.length === 0) calendars = [{ id: 'primary', name: '主日历' }];
+
+                // 2) 逐个日历拉取（带翻页）
+                const allEvents = [];
+                for (const cal of calendars) {
+                    let pageToken = '';
+                    let guard = 0; // 防止极端情况下死循环
+                    do {
+                        const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`
+                            + `?timeMin=${timeMin}&timeMax=${timeMax}`
+                            + `&singleEvents=true&orderBy=startTime&maxResults=2500&showDeleted=false`
+                            + (pageToken ? `&pageToken=${pageToken}` : '');
+                        const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${gcalAccessToken}` } });
+                        if (resp.status === 401) { handle401(); return; }
+                        if (!resp.ok) { console.error('GCal pull failed:', cal.id, resp.status); break; }
+                        const data = await resp.json();
+                        (data.items || []).forEach(ev => {
+                            if (ev.status === 'cancelled') return;
+                            if (!ev.start) return;
+                            const start = ev.start.dateTime ? new Date(ev.start.dateTime) : new Date(ev.start.date + 'T00:00:00');
+                            const end = ev.end ? (ev.end.dateTime ? new Date(ev.end.dateTime) : new Date(ev.end.date + 'T00:00:00')) : null;
+                            allEvents.push({
+                                summary: ev.summary || '(无标题)',
+                                dateStr: `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`,
+                                startTime: ev.start.dateTime ? start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '全天',
+                                endTime: (end && ev.end && ev.end.dateTime) ? end.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '',
+                                location: ev.location || '',
+                                description: ev.description || '',
+                                calendarName: cal.name,
+                                source: 'gcal'
+                            });
+                        });
+                        pageToken = data.nextPageToken || '';
+                    } while (pageToken && ++guard < 20);
+                }
+
+                // 3) 去重（同标题+同日期+同开始时间视为重复，避免跨日历重复事件）
+                const seen = new Set();
+                const merged = [];
+                for (const ev of allEvents) {
+                    const k = `${ev.summary}|${ev.dateStr}|${ev.startTime}`;
+                    if (seen.has(k)) continue;
+                    seen.add(k);
+                    merged.push(ev);
+                }
+
+                appData.calendarEvents = merged;
                 saveData();
                 renderCalendar();
-                console.log(`✅ 已从 Google Calendar 拉取 ${events.length} 条日程`);
+                console.log(`✅ 已从 ${calendars.length} 个日历拉取 ${merged.length} 条日程`);
             } catch(e) { console.error('GCal pull error:', e); }
         }
 
@@ -7684,6 +7732,15 @@ window.addEventListener('unhandledrejection', function(e){
                     gcalAccessToken = null;
                     localStorage.removeItem('phd_gcal_token');
                     updateGCalButton(false);
+                } else if (resp.status === 403) {
+                    // 权限不足（旧授权没有写入权限）→ 引导重新授权
+                    console.error('GCal push 403:', await resp.text());
+                    if (confirm('⚠️ 无法把专注记录写回 Google 日历，可能是授权权限不足。\n\n点「确定」重新授权（会请求写入权限），授权后即可自动同步。')) {
+                        gcalAccessToken = null;
+                        localStorage.removeItem('phd_gcal_token');
+                        if (!gcalTokenClient) initGCalAuth();
+                        if (gcalTokenClient) gcalTokenClient.requestAccessToken({ prompt: 'consent' });
+                    }
                 } else {
                     console.error('GCal push failed:', resp.status, await resp.text());
                 }
