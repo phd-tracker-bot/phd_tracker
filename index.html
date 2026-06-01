@@ -6241,6 +6241,16 @@ window.addEventListener('unhandledrejection', function(e){
             const filtered = appData.tasks.filter(t => {
                 if (t.isRepeatTemplate) return false; // 重复模板不显示
                 if ((t.space || 'work') !== currentSpace) return false;
+                // 重复任务实例:只显示今天及以前的,未来的不在列表出现
+                if (t.repeatFromId) {
+                    if (t.status === '已完成') {
+                        const c = t.completedAt ? new Date(t.completedAt) : null;
+                        if (c) { c.setHours(0,0,0,0); return c.getTime() === todayMs; }
+                        return false;
+                    }
+                    const sd = t.scheduledDate ? new Date(t.scheduledDate + 'T00:00:00').getTime() : null;
+                    if (sd !== null && sd > todayMs) return false; // 未来实例隐藏
+                }
                 if (taskFilter === 'today') {
                     // 今日+逾期:有截止日且<=今天,或今天创建且无截止日,或状态进行中
                     if (t.status === '已完成') return false;
@@ -10723,6 +10733,16 @@ window.addEventListener('unhandledrejection', function(e){
         const filtered = appData.tasks.filter(t => {
             if (t.isRepeatTemplate) return false; // 重复模板不显示
             if ((t.space || 'work') !== space) return false;
+            // 重复任务实例:只显示今天及以前的
+            if (t.repeatFromId) {
+                if (t.status === '已完成') {
+                    const c = t.completedAt ? new Date(t.completedAt) : null;
+                    if (c) { c.setHours(0,0,0,0); return c.getTime() === todayMs; }
+                    return false;
+                }
+                const sd = t.scheduledDate ? new Date(t.scheduledDate + 'T00:00:00').getTime() : null;
+                if (sd !== null && sd > todayMs) return false;
+            }
             if (taskFilter === 'today') {
                 if (t.status === '已完成') return false;
                 if (t.dueDate && t.dueDate <= todayMs + 86400000 - 1) return true;
