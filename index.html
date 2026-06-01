@@ -19,8 +19,8 @@
       @keyframes li-spin { to { transform: rotate(360deg); } }
       .li-spin > svg { animation: li-spin 0.9s linear infinite; transform-origin:center; }
       /* emoji 转成的图标：跟随文字大小，略增右间距以替代 emoji 自带的空格观感 */
-      .emoji-ico { width:1em; height:1em; margin-right:0.08em; }
-      .emoji-ico > svg { width:1em; height:1em; }
+      .emoji-ico { width:1em; height:1em; margin-right:0.08em; pointer-events:none; }
+      .emoji-ico > svg { width:1em; height:1em; pointer-events:none; }
     </style>
     <script id="lucide-shim">
     (function(){
@@ -106,7 +106,7 @@
       }
       function convertTextNode(tn){
         var txt = tn.nodeValue;
-        if (!txt) return;
+        if (!txt || !tn.parentNode) return;
         RE.lastIndex = 0;
         if (!RE.test(txt)) return;
         if (inSkip(tn)) return;
@@ -126,7 +126,7 @@
           last = m.index + emo.length;
         }
         if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
-        tn.parentNode.replaceChild(frag, tn);
+        if (tn.parentNode) tn.parentNode.replaceChild(frag, tn);
       }
       function walk(root){
         if (!root) return;
@@ -2242,7 +2242,7 @@ input, select, textarea {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.3);
-    z-index: 1000;
+    z-index: 10000;
     backdrop-filter: blur(2px);
 }
 .acal-modal-overlay.active { display: flex; align-items: center; justify-content: center; }
@@ -7182,6 +7182,7 @@ window.addEventListener('unhandledrejection', function(e){
         }
 
         function saveEventFromModal() {
+          try {
             const name = document.getElementById('acalEventName').value.trim();
             if (!name) { alert('请输入名称'); return; }
             const type = acalModalContext.type;
@@ -7262,6 +7263,7 @@ window.addEventListener('unhandledrejection', function(e){
             refreshCalendarViews();
             if (typeof renderTasks === 'function') renderTasks();
             if (typeof renderTodayList === 'function') renderTodayList();
+          } catch(e) { console.error('创建失败:', e); alert('创建失败: ' + e.message); try{closeEventModal();}catch(ee){} }
         }
 
         function deleteEventFromModal() {
@@ -7298,6 +7300,16 @@ window.addEventListener('unhandledrejection', function(e){
         document.addEventListener('click', (e) => {
             const modal = document.getElementById('acalEventModal');
             if (modal && e.target === modal) closeEventModal();
+        });
+
+        // 修复: position:fixed 模态框内的按钮在某些浏览器/环境下 click 事件
+        // 的 mouseup 可能命中错误元素。用 pointerdown 拦截并手动触发 .click()
+        document.addEventListener('pointerdown', function(e) {
+            const btn = e.target.closest('.acal-modal-overlay.active button, .modal-overlay.active button');
+            if (btn && (btn.getAttribute('onclick') || btn.id === 'acalSaveBtn')) {
+                e.preventDefault();
+                setTimeout(function(){ btn.click(); }, 10);
+            }
         });
 
         function renderCalendarDay() {
