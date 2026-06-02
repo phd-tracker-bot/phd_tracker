@@ -1898,6 +1898,129 @@ input, select, textarea {
 /* 桌面端把球放右下偏上,避开移动 tab 栏 */
 @media (min-width: 768px) { #pomoFab { bottom: 28px; right: 28px; } }
 
+/* ═══ 速记悬浮按钮 ═══ */
+#quickCaptureFab {
+    position: fixed; left: 18px; bottom: 88px; z-index: 9000;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg,#6366F1,#818CF8);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+#quickCaptureFab:active { transform: scale(0.9); }
+@media (min-width: 768px) { #quickCaptureFab { bottom: 28px; left: 28px; } }
+#quickCaptureOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    z-index: 9500; backdrop-filter: blur(2px);
+}
+#quickCaptureOverlay.active { display: block; }
+#quickCapturePanel {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 9600; background: var(--th-surface, #fff);
+    padding: 20px 20px calc(env(safe-area-inset-bottom, 16px) + 16px);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.12);
+    transform: translateY(100%);
+    transition: transform 0.25s ease-out;
+}
+#quickCapturePanel.active { display: block; transform: translateY(0); }
+#quickCaptureInput {
+    width: 100%; padding: 16px 18px; font-size: 17px;
+    border: 1.5px solid var(--th-border, #ddd); border-radius: 14px;
+    background: var(--th-bg, #f9f6f0); outline: none;
+    -webkit-appearance: none;
+}
+#quickCaptureInput:focus { border-color: #6366F1; }
+.qc-hint { text-align: center; font-size: 12px; color: var(--th-text3, #999); margin-top: 10px; }
+
+/* ═══ 日历全屏模式(手机端) ═══ */
+.acal-fs-btn {
+    display: none; /* 桌面端隐藏 */
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--th-border, #ddd);
+    background: var(--th-surface, #fff);
+    color: var(--th-text2, #666);
+    align-items: center; justify-content: center; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.acal-fs-btn:active { background: var(--th-bg, #f0f0f0); }
+@media (max-width: 768px) {
+    .acal-fs-btn { display: inline-flex; }
+}
+
+#module-calendar.cal-fullscreen {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    z-index: 8000 !important;
+    width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+    max-width: none !important; max-height: none !important;
+    margin: 0 !important; padding: 0 !important;
+    border-radius: 0 !important;
+    background: var(--th-bg, #FFF7E8) !important;
+    overflow: hidden !important;
+    display: flex !important; flex-direction: column !important;
+    grid-column: unset !important;
+    inset: 0 !important;
+}
+#module-calendar.cal-fullscreen .module-controls { display: none; }
+#module-calendar.cal-fullscreen .acal-container { height: 100%; display: flex; flex-direction: column; }
+#module-calendar.cal-fullscreen .acal-toolbar { 
+    padding: 12px 16px; flex-shrink: 0;
+    padding-top: calc(env(safe-area-inset-top, 8px) + 8px);
+}
+#module-calendar.cal-fullscreen .acal-month-view,
+#module-calendar.cal-fullscreen .acal-day-view,
+#module-calendar.cal-fullscreen .acal-week-view,
+#module-calendar.cal-fullscreen .acal-year-view { flex: 1; overflow: auto; }
+
+/* 全屏时日视图/周视图时间列宽度优化 */
+#module-calendar.cal-fullscreen .acal-day-view .acal-time-col { min-width: 48px; }
+#module-calendar.cal-fullscreen .acal-event { font-size: 13px; padding: 4px 8px; }
+
+/* 全屏时隐藏底部导航和其他浮动元素 */
+body.cal-fs-active #bottom-tab-nav,
+body.cal-fs-active #pomoFab,
+body.cal-fs-active #quickCaptureFab { display: none !important; }
+
+/* 全屏按钮在全屏模式时变成缩小图标 */
+#module-calendar.cal-fullscreen .acal-fs-btn svg {
+    transform: rotate(180deg);
+}
+
+/* ═══ 移动端触摸优化 ═══ */
+@media (max-width: 640px) {
+    /* 全局字号提升 */
+    body { font-size: 15px; -webkit-text-size-adjust: 100%; }
+    /* 按钮最小触摸面积 44×44 */
+    button, .btn, [onclick], .tab-item, .nv, .allday-chip,
+    .q-task-check, .q-del, .habit-del {
+        min-height: 44px; min-width: 44px;
+    }
+    /* 四象限任务卡加大 */
+    .q-item { padding: 12px 14px; font-size: 14px; min-height: 48px; }
+    .q-item .q-del { width: 36px; height: 36px; font-size: 16px; }
+    /* 底部导航加大 */
+    #bottom-tab-nav { height: 64px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    #bottom-tab-nav .tab-item { font-size: 11px; padding: 6px 0 4px; }
+    #bottom-tab-nav .tab-item svg, #bottom-tab-nav .tab-item i { font-size: 22px; }
+    /* 日历事件加大 */
+    .acal-event { font-size: 12px; padding: 4px 6px; min-height: 28px; }
+    /* 模态框按钮加大 */
+    .acal-modal-btn { min-height: 48px; font-size: 16px; padding: 12px 24px; }
+    /* 输入框加大 */
+    input[type="text"], input[type="date"], input[type="time"],
+    input[type="number"], select, textarea {
+        font-size: 16px !important; /* 防 iOS 自动缩放 */
+        min-height: 44px;
+        padding: 10px 12px;
+    }
+    /* 设置页按钮 */
+    .settings-item, .setting-row { min-height: 48px; padding: 12px; }
+    /* 标题字号 */
+    .court-title { font-size: 1.2rem; }
+}
+
 #pomoFloatOverlay {
     position: fixed; inset: 0; z-index: 9001;
     background: rgba(0,0,0,0.18); backdrop-filter: blur(2px);
@@ -2801,6 +2924,7 @@ window.addEventListener('unhandledrejection', function(e){
                             <div class="acal-nav">
                                 <button id="acalPrevBtn" onclick="acalNavigate(-1)"><i class="fas fa-chevron-left"></i></button>
                                 <button id="acalNextBtn" onclick="acalNavigate(1)"><i class="fas fa-chevron-right"></i></button>
+                                <button id="acalFullscreenBtn" class="acal-fs-btn" onclick="toggleCalendarFullscreen()" title="全屏"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
                             </div>
                         </div>
                     </div>
@@ -4021,7 +4145,9 @@ window.addEventListener('unhandledrejection', function(e){
                 return scheduleDate ? new Date(scheduleDate + 'T00:00:00').getTime() : null;
             };
 
+            const deleted = new Set(appData.deletedTaskIds || []);
             const pool = appData.tasks.filter(t => {
+                if (deleted.has(t.id)) return false;
                 if (t.isRepeatTemplate) return false;
                 if (todayListScope !== 'all' && (t.space || 'work') !== todayListScope) return false;
                 // 重复任务实例:只显示今天及以前的,未来的不进"计划中"格
@@ -4206,6 +4332,54 @@ window.addEventListener('unhandledrejection', function(e){
             saveData();
             syncAllTaskViews();
         }
+
+        // ═══ 速记(Quick Capture) ═══
+        function openQuickCapture() {
+            document.getElementById('quickCaptureOverlay').classList.add('active');
+            document.getElementById('quickCapturePanel').classList.add('active');
+            const inp = document.getElementById('quickCaptureInput');
+            inp.value = '';
+            setTimeout(() => inp.focus(), 100);
+        }
+        function closeQuickCapture() {
+            document.getElementById('quickCaptureOverlay').classList.remove('active');
+            document.getElementById('quickCapturePanel').classList.remove('active');
+            document.getElementById('quickCaptureInput').blur();
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.getElementById('quickCapturePanel').classList.contains('active')) {
+                closeQuickCapture();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            var inp = document.getElementById('quickCaptureInput');
+            if (!inp) return;
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && inp.value.trim()) {
+                    e.preventDefault();
+                    var name = inp.value.trim();
+                    var task = {
+                        id: Date.now() + Math.floor(Math.random() * 1000),
+                        name: name,
+                        priority: 'medium',
+                        status: '未开始',
+                        createdAt: Date.now(),
+                        completedAt: null,
+                        space: 'work',
+                        focusMinutes: 0
+                    };
+                    appData.tasks.push(task);
+                    saveData();
+                    syncAllTaskViews();
+                    inp.value = '';
+                    inp.placeholder = '✓ 已添加「' + name.slice(0,8) + '」';
+                    setTimeout(function() {
+                        inp.placeholder = '随手记一个想法或任务...';
+                        closeQuickCapture();
+                    }, 600);
+                }
+            });
+        });
 
         // ═══ 统一刷新所有任务相关视图 ═══
         function syncAllTaskViews() {
@@ -4514,7 +4688,8 @@ window.addEventListener('unhandledrejection', function(e){
 
         // 取出某天已排程的任务(供日历渲染)
         function getScheduledTasksForDate(dateStr) {
-            return (appData.tasks || []).filter(t => !t.isRepeatTemplate && t.scheduledDate === dateStr);
+            const deleted = new Set(appData.deletedTaskIds || []);
+            return (appData.tasks || []).filter(t => !t.isRepeatTemplate && t.scheduledDate === dateStr && !deleted.has(t.id));
         }
         let activeFocusStart = null; let focusTimerInterval = null; let remainingSeconds = 0; let currentFocusMode = 'free'; 
         let currentFocusCategory = '';
@@ -4880,14 +5055,24 @@ window.addEventListener('unhandledrejection', function(e){
                 remote.focusSessions.forEach(s => { if (!existing.has(s.startTimestamp)) appData.focusSessions.push(s); });
             }
 
+            // ═══ 先合并 deletedTaskIds,再合并 tasks ═══
+            // 这样远程的删除操作在任务合并前就生效,不会把已删的任务又加回来
+            if (remote.deletedTaskIds) {
+                if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
+                remote.deletedTaskIds.forEach(id => { if (!appData.deletedTaskIds.includes(id)) appData.deletedTaskIds.push(id); });
+            }
+
             // Merge tasks: combine by id, skip deleted
             if (remote.tasks) {
                 const existing = new Set(appData.tasks.map(t => t.id));
                 const deleted = new Set(appData.deletedTaskIds || []);
+                let skipped = 0, added = 0;
                 remote.tasks.forEach(t => {
-                    if (deleted.has(t.id)) return; // Skip deleted tasks
+                    if (deleted.has(t.id)) { skipped++; return; }
                     if (!existing.has(t.id)) {
                         appData.tasks.push(t);
+                        added++;
+                        console.log('📥 云端新增任务:', t.name, 'id:', t.id);
                     } else {
                         const local = appData.tasks.find(lt => lt.id === t.id);
                         if (local && t.status === '已完成' && local.status !== '已完成') {
@@ -4896,13 +5081,15 @@ window.addEventListener('unhandledrejection', function(e){
                     }
                 });
             }
-            // Merge deletedTaskIds
-            if (remote.deletedTaskIds) {
-                if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
-                remote.deletedTaskIds.forEach(id => { if (!appData.deletedTaskIds.includes(id)) appData.deletedTaskIds.push(id); });
-                // Remove any tasks that were deleted on the other device
-                appData.tasks = appData.tasks.filter(t => !appData.deletedTaskIds.includes(t.id));
+            // ═══ 最终兜底:确保已删除任务不可能存在 ═══
+            if (Array.isArray(appData.deletedTaskIds) && appData.deletedTaskIds.length > 0) {
+                const allDeleted = new Set(appData.deletedTaskIds);
+                const before = appData.tasks.length;
+                appData.tasks = appData.tasks.filter(t => !allDeleted.has(t.id));
+                const removed = before - appData.tasks.length;
+                if (removed > 0) console.log('🗑️ 兜底清理了', removed, '条已删除任务');
             }
+            console.log('📊 合并完成: 本地任务', appData.tasks.length, '条, deletedIds', (appData.deletedTaskIds||[]).length, '个');
 
             // Merge ideas: combine by text + time
             if (remote.ideas) {
@@ -5093,6 +5280,11 @@ window.addEventListener('unhandledrejection', function(e){
             // 首次加载:填充模版数据
             if (isFirstLoad) loadTemplateData();
             if (!Array.isArray(appData.tasks)) appData.tasks = [];
+            // ═══ 强制清除已删除的任务(防止云端同步带回来) ═══
+            if (Array.isArray(appData.deletedTaskIds) && appData.deletedTaskIds.length > 0) {
+                const deleted = new Set(appData.deletedTaskIds);
+                appData.tasks = appData.tasks.filter(t => !deleted.has(t.id));
+            }
             if (!Array.isArray(appData.projects)) appData.projects = [];
             if (appData.tasks.some(t => !t.id)) appData.tasks.forEach((t, idx) => { if(!t.id) t.id = Date.now() + idx; });
             appData.tasks.forEach(t => { if(!t.createdAt) t.createdAt = Date.now(); });
@@ -6490,6 +6682,39 @@ window.addEventListener('unhandledrejection', function(e){
             else if (view === 'year') acalRenderYear();
         }
 
+        // ═══ 日历全屏模式 ═══
+        let _calOrigParent = null;
+        let _calOrigNext = null;
+        function toggleCalendarFullscreen() {
+            const cal = document.getElementById('module-calendar');
+            const isFS = cal.classList.contains('cal-fullscreen');
+            if (isFS) {
+                // 退出全屏:移回原位
+                cal.classList.remove('cal-fullscreen');
+                document.body.classList.remove('cal-fs-active');
+                document.body.style.overflow = '';
+                if (_calOrigParent) {
+                    if (_calOrigNext) _calOrigParent.insertBefore(cal, _calOrigNext);
+                    else _calOrigParent.appendChild(cal);
+                }
+                _calOrigParent = null; _calOrigNext = null;
+            } else {
+                // 进入全屏:记住原位,移到 body(绕过祖先 transform)
+                _calOrigParent = cal.parentElement;
+                _calOrigNext = cal.nextElementSibling;
+                document.body.appendChild(cal);
+                cal.classList.add('cal-fullscreen');
+                document.body.classList.add('cal-fs-active');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => {
+                    if (acalView === 'month') acalRenderMonth();
+                    else if (acalView === 'day') acalRenderDay();
+                    else if (acalView === 'week') acalRenderWeek();
+                    else if (acalView === 'year') acalRenderYear();
+                }, 50);
+            }
+        }
+
         function acalRenderMonth() {
             const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth();
             const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -7673,14 +7898,13 @@ window.addEventListener('unhandledrejection', function(e){
                 // If we have a stored token, verify it's still valid
                 if (gcalAccessToken) {
                     updateGCalButton(true);
-                    // 检测授权 scope 版本：旧版本（缺少多日历读取 + 写入权限）需重新授权
+                    // 不管 scope 版本,先用现有 token 拉取日程(旧 token 至少能读主日历)
+                    verifyGCalToken();
+                    // scope 升级检测:旧版本需重新授权以获取多日历 + 写入权限
                     const SCOPE_VERSION = '2';
                     if (localStorage.getItem('phd_gcal_scope_ver') !== SCOPE_VERSION) {
                         console.log('🔄 GCal 授权范围已升级，需要重新授权以读取全部日历并支持写回');
-                        // 静默尝试拿新 scope 的 token；失败则下次用户点同步时会走完整授权
                         try { gcalTokenClient.requestAccessToken({ prompt: 'consent' }); } catch(e) {}
-                    } else {
-                        verifyGCalToken();
                     }
                 }
             } catch(e) { console.log('Google Identity Services not loaded yet'); }
@@ -7823,7 +8047,9 @@ window.addEventListener('unhandledrejection', function(e){
                     merged.push(ev);
                 }
 
-                appData.calendarEvents = merged;
+                // 只替换 gcal 来源的事件,保留手动创建的
+                const manual = (appData.calendarEvents || []).filter(e => e.source !== 'gcal');
+                appData.calendarEvents = manual.concat(merged);
                 saveData();
                 renderCalendar();
                 console.log(`✅ 已从 ${calendars.length} 个日历拉取 ${merged.length} 条日程`);
@@ -12248,6 +12474,16 @@ window.addEventListener('unhandledrejection', function(e){
 
 
     <!-- ═══ 悬浮番茄钟 ═══ -->
+    <!-- ═══ 速记按钮 ═══ -->
+    <div id="quickCaptureFab" onclick="openQuickCapture()" title="速记">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <div id="quickCaptureOverlay" onclick="closeQuickCapture()"></div>
+    <div id="quickCapturePanel">
+        <input id="quickCaptureInput" type="text" placeholder="随手记一个想法或任务..." autocomplete="off" autofocus>
+        <div class="qc-hint">回车添加 · Esc 关闭</div>
+    </div>
+
     <div id="pomoFab" onclick="togglePomoFloat()" title="番茄钟">
         <svg class="fab-ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" class="fab-ring-bg"/><circle id="pomoFabRing" cx="22" cy="22" r="20" class="fab-ring-fg" stroke-dasharray="125.6" stroke-dashoffset="125.6" transform="rotate(-90 22 22)"/></svg>
         <span id="pomoFabIcon" class="fab-icon">🍅</span>
