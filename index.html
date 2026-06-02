@@ -4438,6 +4438,7 @@ window.addEventListener('unhandledrejection', function(e){
             }
             if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
             appData.deletedTaskIds.push(id);
+            addTombstone(id);
             saveData(true);
             syncAllTaskViews();
         }
@@ -4994,25 +4995,23 @@ window.addEventListener('unhandledrejection', function(e){
             else if (authProvider === 'email') saveDataToSupabase();
         }
         let firebaseSaveTimer = null;
+        let _saveGeneration = 0; // 代际锁:防止旧的异步 save 覆盖新数据
         function saveDataToFirebase(immediate) {
             if (!fbDb || !fbUser) return;
             if (firebaseSaveTimer) clearTimeout(firebaseSaveTimer);
+            const myGen = ++_saveGeneration;
             const doSave = async () => {
+                // 如果已经有更新的 save 请求,放弃这次(数据已过时)
+                if (myGen !== _saveGeneration) { console.log('⏭️ 跳过过时的云端保存 gen', myGen); return; }
                 try {
-                    // Read cloud data first, merge, then write
-                    const snap = await fbDb.ref('userData/' + fbUser.uid).once('value');
-                    const cloudData = snap.val();
-                    if (cloudData && cloudData.appData) {
-                        const remoteData = JSON.parse(cloudData.appData);
-                        mergeAppData(remoteData);
-                        localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
-                    }
+                    // 直接写入,不再读取-合并-写入(合并只在 loadDataFromFirebase 时做)
+                    // 这避免了旧云端数据把已删除的任务带回来的竞态条件
                     await fbDb.ref('userData/' + fbUser.uid).set({
                         appData: JSON.stringify(appData),
                         lastSync: Date.now()
                     });
-                    console.log('✅ 云端合并同步成功');
-                } catch(e) { console.error('Firebase data sync error:', e); }
+                    if (myGen === _saveGeneration) console.log('✅ 云端保存成功');
+                } catch(e) { console.error('Firebase save error:', e); }
             };
             if (immediate) { doSave(); } 
             else { firebaseSaveTimer = setTimeout(doSave, 3000); }
@@ -5059,7 +5058,7 @@ window.addEventListener('unhandledrejection', function(e){
             // 这样远程的删除操作在任务合并前就生效,不会把已删的任务又加回来
             if (remote.deletedTaskIds) {
                 if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
-                remote.deletedTaskIds.forEach(id => { if (!appData.deletedTaskIds.includes(id)) appData.deletedTaskIds.push(id); });
+                remote.deletedTaskIds.forEach(id => { if (!appData.deletedTaskIds.includes(id)) appData.deletedTaskIds.push(id); addTombstone(id); });
             }
 
             // Merge tasks: combine by id, skip deleted
@@ -5090,6 +5089,8 @@ window.addEventListener('unhandledrejection', function(e){
                 if (removed > 0) console.log('🗑️ 兜底清理了', removed, '条已删除任务');
             }
             console.log('📊 合并完成: 本地任务', appData.tasks.length, '条, deletedIds', (appData.deletedTaskIds||[]).length, '个');
+            // 独立墓碑系统最终兜底
+            purgeDeletedTasks();
 
             // Merge ideas: combine by text + time
             if (remote.ideas) {
@@ -5273,6 +5274,36 @@ window.addEventListener('unhandledrejection', function(e){
             location.reload();
         }
 
+        // ═══ 独立删除墓碑系统 ═══
+        // 用独立 localStorage key 存删除记录,完全不受 Firebase 同步/合并影响
+        // 这是最后一道防线:不管数据怎么被同步覆盖,已删除的任务绝不会再出现
+        const _TOMBSTONE_KEY = 'phd_deleted_tombstones';
+        function getTombstones() {
+            try { return new Set(JSON.parse(localStorage.getItem(_TOMBSTONE_KEY) || '[]')); }
+            catch(e) { return new Set(); }
+        }
+        function addTombstone(id) {
+            const set = getTombstones();
+            set.add(id);
+            // 同时加字符串版和数字版,彻底消除类型不匹配
+            set.add(String(id));
+            if (typeof id === 'string' && !isNaN(id)) set.add(Number(id));
+            localStorage.setItem(_TOMBSTONE_KEY, JSON.stringify([...set]));
+        }
+        function purgeDeletedTasks() {
+            const tomb = getTombstones();
+            if (tomb.size === 0) return;
+            const before = appData.tasks.length;
+            appData.tasks = appData.tasks.filter(t => !tomb.has(t.id) && !tomb.has(String(t.id)));
+            // 也清理日历事件缓存里的手动创建事件(source=manual 且被删的)
+            if (appData.calendarEvents) {
+                appData.calendarEvents = appData.calendarEvents.filter(e => !e.id || (!tomb.has(e.id) && !tomb.has(String(e.id))));
+            }
+            if (appData.tasks.length < before) {
+                console.log('🪦 墓碑系统清理了', before - appData.tasks.length, '条已删除任务');
+            }
+        }
+
         function loadData() {
             const stored = localStorage.getItem("phd_pro_v2");
             const isFirstLoad = !stored;
@@ -5281,6 +5312,11 @@ window.addEventListener('unhandledrejection', function(e){
             if (isFirstLoad) loadTemplateData();
             if (!Array.isArray(appData.tasks)) appData.tasks = [];
             // ═══ 强制清除已删除的任务(防止云端同步带回来) ═══
+            // 把 appData.deletedTaskIds 迁移到独立墓碑(一次性)
+            if (Array.isArray(appData.deletedTaskIds)) {
+                appData.deletedTaskIds.forEach(id => addTombstone(id));
+            }
+            purgeDeletedTasks();
             if (Array.isArray(appData.deletedTaskIds) && appData.deletedTaskIds.length > 0) {
                 const deleted = new Set(appData.deletedTaskIds);
                 appData.tasks = appData.tasks.filter(t => !deleted.has(t.id));
@@ -6435,6 +6471,7 @@ window.addEventListener('unhandledrejection', function(e){
             }
             if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
             appData.deletedTaskIds.push(id);
+            addTombstone(id);
             if ((t.space || 'work') === 'work') logWorkActivity('删除任务', t, '');
             saveData(true); syncAllTaskViews();
         }
@@ -8960,7 +8997,14 @@ window.addEventListener('unhandledrejection', function(e){
             }
         }
 
+        // 页面刷新/关闭前确保 localStorage 是最新的
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem("phd_pro_v2", JSON.stringify(appData));
+        });
+
         function renderAll() { 
+            // ═══ 渲染前兜底:墓碑系统最终清理 ═══
+            purgeDeletedTasks();
             const todayFocusEl = document.getElementById("todayFocusMinutes");
             if (todayFocusEl) todayFocusEl.innerText = getTodayFocusMinutes();
             renderCheckDisplay(); renderTasks(); renderIdeas(); updateStatistics(); 
@@ -10810,6 +10854,7 @@ window.addEventListener('unhandledrejection', function(e){
         appData.tasks = (appData.tasks || []).filter(t => t.id !== id);
         if (!appData.deletedTaskIds) appData.deletedTaskIds = [];
         appData.deletedTaskIds.push(id);
+        addTombstone(id);
         if (t) logWorkActivity('删除任务', t, '');
         saveData(true);
         syncAllTaskViews();
