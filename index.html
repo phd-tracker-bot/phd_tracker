@@ -1936,17 +1936,22 @@ input, select, textarea {
 
 /* ═══ 日历全屏模式(手机端) ═══ */
 .acal-fs-btn {
-    display: none; /* 桌面端隐藏 */
-    width: 32px; height: 32px; border-radius: 8px;
+    display: none;
+    width: 36px; height: 36px; border-radius: 8px;
     border: 1px solid var(--th-border, #ddd);
     background: var(--th-surface, #fff);
     color: var(--th-text2, #666);
     align-items: center; justify-content: center; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
 }
 .acal-fs-btn:active { background: var(--th-bg, #f0f0f0); }
 @media (max-width: 768px) {
     .acal-fs-btn { display: inline-flex; }
+    /* 工具栏紧凑布局 */
+    .acal-toolbar { padding: 8px 10px !important; gap: 4px; }
+    .acal-toolbar .acal-nav { gap: 2px; }
+    .acal-toolbar button { min-width: 36px; min-height: 36px; padding: 4px 8px; font-size: 13px; }
 }
 
 #module-calendar.cal-fullscreen {
@@ -1992,14 +1997,73 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
 @media (max-width: 640px) {
     /* 全局字号提升 */
     body { font-size: 15px; -webkit-text-size-adjust: 100%; }
+    /* ═══ 防止任何元素撑出横向滚动 ═══ */
+    html, body { overflow-x: hidden; max-width: 100vw; }
+    .tab-panel, #dashboard-container, .life-bento { max-width: 100vw; overflow-x: hidden; }
     /* 按钮最小触摸面积 44×44 */
     button, .btn, [onclick], .tab-item, .nv, .allday-chip,
     .q-task-check, .q-del, .habit-del {
         min-height: 44px; min-width: 44px;
     }
-    /* 四象限任务卡加大 */
-    .q-item { padding: 12px 14px; font-size: 14px; min-height: 48px; }
-    .q-item .q-del { width: 36px; height: 36px; font-size: 16px; }
+    /* ═══ 今日任务列表:日期输入紧凑 + 行换行 ═══ */
+    .q-item {
+        flex-wrap: wrap; /* 允许换行 */
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 48px;
+        gap: 6px;
+    }
+    .q-text { 
+        flex: 1 1 120px; /* 名称至少 120px 才换行 */
+        min-width: 0;
+        font-size: 14px;
+        word-break: break-word;
+    }
+    .q-schedule-input {
+        font-size: 12px !important;
+        padding: 4px 6px !important;
+        min-height: 32px !important;
+        max-width: 110px;
+        min-width: 0 !important;
+        /* iOS 日期输入紧凑显示 */
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .q-due { font-size: 0.65rem; padding: 2px 6px; }
+    .q-del { 
+        width: 32px; height: 32px; font-size: 14px;
+        min-width: 32px !important; min-height: 32px !important;
+    }
+    .q-space { font-size: 12px; }
+    /* ═══ 习惯打卡:防溢出 ═══ */
+    .habit-row {
+        padding: 10px 12px; gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto; /* 横向滚动而非撑破页面 */
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    .habit-name { 
+        font-size: 0.9rem; 
+        min-width: 64px; max-width: 72px;
+        flex-shrink: 0;
+        word-break: break-all;
+    }
+    .habit-days { 
+        flex-shrink: 0;
+        gap: 4px;
+    }
+    .habit-day {
+        width: 34px; height: 34px; font-size: 0.7rem;
+        border-width: 2px;
+        flex-shrink: 0;
+    }
+    .habit-streak { font-size: 0.75rem; min-width: 36px; flex-shrink: 0; }
+    .habit-del { 
+        font-size: 0.9rem; min-width: 28px; min-height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
     /* 底部导航加大 */
     #bottom-tab-nav { height: 64px; padding-bottom: env(safe-area-inset-bottom, 0px); }
     #bottom-tab-nav .tab-item { font-size: 11px; padding: 6px 0 4px; }
@@ -2019,6 +2083,69 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
     .settings-item, .setting-row { min-height: 48px; padding: 12px; }
     /* 标题字号 */
     .court-title { font-size: 1.2rem; }
+
+    /* ═══ 起居页移动端适配 ═══ */
+    /* 卡片防溢出 */
+    .life-card { padding: 14px 12px; border-radius: 14px; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+    .life-card-head { font-size: 1rem; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+    .life-add-btn { font-size: 0.8rem; padding: 6px 12px; min-height: 36px; border-radius: 10px; flex-shrink: 0; }
+
+    /* 习惯打卡 */
+    .habit-row {
+        padding: 10px 12px; gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto; -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    .habit-name { font-size: 0.9rem; min-width: 64px; max-width: 72px; flex-shrink: 0; word-break: break-all; }
+    .habit-day { width: 34px; height: 34px; font-size: 0.7rem; border-width: 2px; flex-shrink: 0; }
+    .habit-days { gap: 4px; flex-shrink: 0; }
+    .habit-streak { font-size: 0.75rem; min-width: 36px; flex-shrink: 0; }
+    .habit-del { font-size: 0.9rem; min-width: 28px; min-height: 28px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* 生活分区标签 */
+    .life-area-tab {
+        padding: 6px 14px; font-size: 0.85rem;
+        min-height: 38px; display: inline-flex; align-items: center;
+    }
+    .life-area-tabs { gap: 6px; }
+
+    /* 输入行:input 必须 min-width:0 才能被 flex 收缩 */
+    .life-area-input { gap: 6px; max-width: 100%; }
+    .life-area-input input, .life-area-input textarea {
+        font-size: 15px !important; padding: 10px 12px; min-height: 44px;
+        border-radius: 10px;
+        flex: 1 1 0; min-width: 0 !important; /* 关键:允许 flex 收缩 */
+    }
+    .life-area-input .life-add-btn,
+    .life-area-input button {
+        flex: 0 0 auto; min-width: 40px;
+    }
+
+    /* 任务/购物条 */
+    .qadd-input { font-size: 1rem !important; padding: 12px 14px; min-height: 48px; }
+    .qadd-sel { font-size: 0.9rem; padding: 12px 10px; min-height: 48px; }
+    .qadd-btn { font-size: 1rem; padding: 12px 20px; min-height: 48px; }
+
+    /* 任务项 */
+    .life-task-item, #tab-life .q-item {
+        padding: 14px 16px; font-size: 0.95rem; min-height: 52px;
+        gap: 12px;
+    }
+    .lt-check { width: 28px; height: 28px; font-size: 14px; border-width: 2.5px; }
+    .lt-del { font-size: 1rem; min-width: 36px; min-height: 36px;
+        display: flex; align-items: center; justify-content: center; }
+    .lt-text { font-size: 1rem; }
+
+    /* 购物清单项 */
+    .shopping-item { padding: 10px 14px; font-size: 0.95rem; min-height: 44px; }
+
+    /* 日记输入框 */
+    .journal-textarea { font-size: 1rem !important; padding: 14px; min-height: 120px; }
+
+    /* 模块标题 */
+    .module-head span, .module-head .module-title { font-size: 1.1rem; }
 }
 
 #pomoFloatOverlay {
@@ -2212,6 +2339,14 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
     display: flex; flex-direction: column; flex: 1;
     overflow: hidden; min-height: 0;
 }
+.acal-day-view .acal-timeline {
+    min-height: 200px; /* 保证时间轴有足够高度触发滚动 */
+}
+@media (max-width: 768px) {
+    .acal-day-view .acal-timeline,
+    .acal-week-view .acal-timeline { min-height: 300px; max-height: 55vh; }
+    #module-calendar { overflow: visible !important; touch-action: pan-y; }
+}
 .acal-day-header {
     padding: 6px 4px 8px; border-bottom: 1px solid var(--th-border);
 }
@@ -2226,6 +2361,10 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
     display: flex; flex: 1 1 0; overflow-y: auto;
     min-height: 0;
     font-size: 0.7rem; line-height: 1.2;
+    -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
+    overscroll-behavior: contain; /* 防止滚动穿透到外层 */
+    scroll-behavior: smooth;
+    touch-action: pan-y; /* 允许垂直滚动,不拦截 */
 }
 /* 当前时间线 */
 .acal-now-line {
@@ -2342,6 +2481,11 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
 .acal-week-view {
     display: flex; flex-direction: column; flex: 1;
     overflow: hidden; min-height: 0;
+}
+.acal-week-view .acal-timeline {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 .acal-week-header {
     display: grid; grid-template-columns: 44px repeat(7, 1fr);
@@ -6751,6 +6895,50 @@ window.addEventListener('unhandledrejection', function(e){
                 }, 50);
             }
         }
+
+        // ═══ 日历触摸滑动手势(左右划切换日期/周/月) ═══
+        (function initCalendarSwipe() {
+            let startX = 0, startY = 0, swiping = false;
+            const MIN_SWIPE = 50; // 最小滑动距离
+            const MAX_Y = 30;     // 垂直偏移超过这个就不算横滑
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const cal = document.getElementById('module-calendar');
+                if (!cal) return;
+
+                cal.addEventListener('touchstart', function(e) {
+                    // 如果触摸在时间轴滚动区域内,不拦截(让它上下滚动)
+                    if (e.target.closest('.acal-timeline')) return;
+                    const t = e.touches[0];
+                    startX = t.clientX;
+                    startY = t.clientY;
+                    swiping = true;
+                }, { passive: true });
+
+                cal.addEventListener('touchmove', function(e) {
+                    if (!swiping) return;
+                    // 如果垂直移动太多,取消横滑判定
+                    const dy = Math.abs(e.touches[0].clientY - startY);
+                    if (dy > MAX_Y) swiping = false;
+                }, { passive: true });
+
+                cal.addEventListener('touchend', function(e) {
+                    if (!swiping) return;
+                    swiping = false;
+                    const endX = e.changedTouches[0].clientX;
+                    const dx = endX - startX;
+                    if (Math.abs(dx) < MIN_SWIPE) return;
+
+                    if (dx < 0) {
+                        // 左滑 → 下一天/周/月
+                        if (typeof acalNavigate === 'function') acalNavigate(1);
+                    } else {
+                        // 右滑 → 上一天/周/月
+                        if (typeof acalNavigate === 'function') acalNavigate(-1);
+                    }
+                }, { passive: true });
+            });
+        })();
 
         function acalRenderMonth() {
             const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth();
