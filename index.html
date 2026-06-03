@@ -2362,10 +2362,18 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
     display: flex; flex: 1 1 0; overflow-y: auto;
     min-height: 0;
     font-size: 0.7rem; line-height: 1.2;
-    -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
-    overscroll-behavior: contain; /* 防止滚动穿透到外层 */
-    scroll-behavior: smooth;
-    touch-action: pan-y; /* 允许垂直滚动,不拦截 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+}
+
+/* ═══ 全天栏折叠 ═══ */
+.acal-allday { transition: max-height 0.25s ease, opacity 0.2s; overflow: hidden; }
+.acal-allday.collapsed { max-height: 28px !important; opacity: 0.7; }
+.acal-allday.collapsed .allday-chip { display: none; }
+.acal-allday-toggle {
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 /* 当前时间线 */
 .acal-now-line {
@@ -7267,6 +7275,18 @@ window.addEventListener('unhandledrejection', function(e){
                     eventsEl.appendChild(line);
                 }
             }
+
+            // 时间轴滚动时自动折叠全天栏
+            const dayTimeline = eventsEl.closest('.acal-timeline');
+            if (dayTimeline) {
+                dayTimeline.onscroll = function() {
+                    if (!window.matchMedia('(max-width: 768px)').matches) return;
+                    const allDay = document.getElementById('acalDayAllDay');
+                    if (!allDay) return;
+                    if (dayTimeline.scrollTop > 20) allDay.classList.add('collapsed');
+                    else allDay.classList.remove('collapsed');
+                };
+            }
         }
 
         function acalRenderWeek() {
@@ -7321,6 +7341,8 @@ window.addEventListener('unhandledrejection', function(e){
                 const spacer = document.createElement('div');
                 spacer.style.cssText = 'width:44px;flex-shrink:0;text-align:right;padding-right:4px;font-size:0.68rem;font-weight:700;color:var(--th-text3);display:flex;align-items:center;justify-content:flex-end;';
                 spacer.textContent = '全天';
+                spacer.className = 'acal-allday-toggle';
+                spacer.onclick = function() { if (window.matchMedia('(max-width: 768px)').matches) weekAllDayEl.classList.toggle('collapsed'); };
                 weekAllDayEl.appendChild(spacer);
                 const cols = document.createElement('div');
                 cols.style.cssText = 'display:flex;flex:1;gap:2px;';
@@ -7523,6 +7545,15 @@ window.addEventListener('unhandledrejection', function(e){
             }
 
             body.appendChild(eventsCols);
+
+            // 时间轴滚动时自动折叠/展开全天栏(仅手机端)
+            body.onscroll = function() {
+                if (!window.matchMedia('(max-width: 768px)').matches) return;
+                const allDay = document.getElementById('acalWeekAllDay');
+                if (!allDay) return;
+                if (body.scrollTop > 20) allDay.classList.add('collapsed');
+                else allDay.classList.remove('collapsed');
+            };
         }
 
         function acalRenderYear() {
