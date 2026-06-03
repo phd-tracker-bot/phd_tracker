@@ -2025,9 +2025,10 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
         min-height: 32px !important;
         max-width: 110px;
         min-width: 0 !important;
-        /* iOS 日期输入紧凑显示 */
         -webkit-appearance: none;
         appearance: none;
+        /* 手机端直接隐藏日期选择器 */
+        display: none !important;
     }
     .q-due { font-size: 0.65rem; padding: 2px 6px; }
     .q-del { 
