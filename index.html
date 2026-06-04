@@ -1988,10 +1988,7 @@ body.cal-fs-active #bottom-tab-nav,
 body.cal-fs-active #pomoFab,
 body.cal-fs-active #quickCaptureFab { display: none !important; }
 
-/* 全屏按钮在全屏模式时变成缩小图标 */
-#module-calendar.cal-fullscreen .acal-fs-btn svg {
-    transform: rotate(180deg);
-}
+/* 全屏按钮在全屏模式时不需要额外样式(已用两个独立 SVG 切换) */
 
 /* ═══ 移动端触摸优化 ═══ */
 @media (max-width: 640px) {
@@ -3077,7 +3074,10 @@ window.addEventListener('unhandledrejection', function(e){
                             <div class="acal-nav">
                                 <button id="acalPrevBtn" onclick="acalNavigate(-1)"><i class="fas fa-chevron-left"></i></button>
                                 <button id="acalNextBtn" onclick="acalNavigate(1)"><i class="fas fa-chevron-right"></i></button>
-                                <button id="acalFullscreenBtn" class="acal-fs-btn" onclick="toggleCalendarFullscreen()" title="全屏"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                                <button id="acalFullscreenBtn" class="acal-fs-btn" title="全屏">
+                                    <svg id="acalFsIconExpand" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                                    <svg id="acalFsIconShrink" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -6878,8 +6878,9 @@ window.addEventListener('unhandledrejection', function(e){
         function toggleCalendarFullscreen() {
             const cal = document.getElementById('module-calendar');
             const isFS = cal.classList.contains('cal-fullscreen');
+            const expandIcon = document.getElementById('acalFsIconExpand');
+            const shrinkIcon = document.getElementById('acalFsIconShrink');
             if (isFS) {
-                // 退出全屏:移回原位
                 cal.classList.remove('cal-fullscreen');
                 document.body.classList.remove('cal-fs-active');
                 document.body.style.overflow = '';
@@ -6888,14 +6889,17 @@ window.addEventListener('unhandledrejection', function(e){
                     else _calOrigParent.appendChild(cal);
                 }
                 _calOrigParent = null; _calOrigNext = null;
+                if (expandIcon) expandIcon.style.display = '';
+                if (shrinkIcon) shrinkIcon.style.display = 'none';
             } else {
-                // 进入全屏:记住原位,移到 body(绕过祖先 transform)
                 _calOrigParent = cal.parentElement;
                 _calOrigNext = cal.nextElementSibling;
                 document.body.appendChild(cal);
                 cal.classList.add('cal-fullscreen');
                 document.body.classList.add('cal-fs-active');
                 document.body.style.overflow = 'hidden';
+                if (expandIcon) expandIcon.style.display = 'none';
+                if (shrinkIcon) shrinkIcon.style.display = '';
                 setTimeout(() => {
                     if (acalView === 'month') acalRenderMonth();
                     else if (acalView === 'day') acalRenderDay();
@@ -6904,6 +6908,14 @@ window.addEventListener('unhandledrejection', function(e){
                 }, 50);
             }
         }
+        // pointerdown 确保全屏按钮在任何布局下都可点
+        document.addEventListener('DOMContentLoaded', function() {
+            var fsBtn = document.getElementById('acalFullscreenBtn');
+            if (fsBtn) fsBtn.addEventListener('pointerdown', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                setTimeout(toggleCalendarFullscreen, 10);
+            });
+        });
 
         // ═══ 日历触摸滑动手势(左右划切换日期/周/月) ═══
         (function initCalendarSwipe() {
@@ -7276,18 +7288,8 @@ window.addEventListener('unhandledrejection', function(e){
                 }
             }
 
-            // 时间轴滚动时自动折叠全天栏
-            const dayTimeline = eventsEl.closest('.acal-timeline');
-            if (dayTimeline) {
-                dayTimeline.onscroll = function() {
-                    if (!window.matchMedia('(max-width: 768px)').matches) return;
-                    const allDay = document.getElementById('acalDayAllDay');
-                    if (!allDay) return;
-                    if (dayTimeline.scrollTop > 20) allDay.classList.add('collapsed');
-                    else allDay.classList.remove('collapsed');
-                };
+            // 时间轴(日视图不需要滚动折叠，已有手动切换)
             }
-        }
 
         function acalRenderWeek() {
             const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth(), d = currentCalendarDate.getDate();
@@ -7342,7 +7344,13 @@ window.addEventListener('unhandledrejection', function(e){
                 spacer.style.cssText = 'width:44px;flex-shrink:0;text-align:right;padding-right:4px;font-size:0.68rem;font-weight:700;color:var(--th-text3);display:flex;align-items:center;justify-content:flex-end;';
                 spacer.textContent = '全天';
                 spacer.className = 'acal-allday-toggle';
-                spacer.onclick = function() { if (window.matchMedia('(max-width: 768px)').matches) weekAllDayEl.classList.toggle('collapsed'); };
+                spacer.innerHTML = '全天 <span class="allday-chevron" style="font-size:10px">▼</span>';
+                spacer.onclick = function() {
+                    if (!window.matchMedia('(max-width: 768px)').matches) return;
+                    weekAllDayEl.classList.toggle('collapsed');
+                    var chev = spacer.querySelector('.allday-chevron');
+                    if (chev) chev.textContent = weekAllDayEl.classList.contains('collapsed') ? '▶' : '▼';
+                };
                 weekAllDayEl.appendChild(spacer);
                 const cols = document.createElement('div');
                 cols.style.cssText = 'display:flex;flex:1;gap:2px;';
@@ -7545,15 +7553,6 @@ window.addEventListener('unhandledrejection', function(e){
             }
 
             body.appendChild(eventsCols);
-
-            // 时间轴滚动时自动折叠/展开全天栏(仅手机端)
-            body.onscroll = function() {
-                if (!window.matchMedia('(max-width: 768px)').matches) return;
-                const allDay = document.getElementById('acalWeekAllDay');
-                if (!allDay) return;
-                if (body.scrollTop > 20) allDay.classList.add('collapsed');
-                else allDay.classList.remove('collapsed');
-            };
         }
 
         function acalRenderYear() {
