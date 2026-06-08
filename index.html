@@ -1961,27 +1961,42 @@ input, select, textarea {
     width: 100vw !important; height: 100vh !important; height: 100dvh !important;
     max-width: none !important; max-height: none !important;
     margin: 0 !important; padding: 0 !important;
-    border-radius: 0 !important;
+    border: none !important; border-radius: 0 !important;
+    box-shadow: none !important;
     background: var(--th-bg, #FFF7E8) !important;
     overflow: hidden !important;
     display: flex !important; flex-direction: column !important;
     grid-column: unset !important;
     inset: 0 !important;
 }
-#module-calendar.cal-fullscreen .module-controls { display: none; }
-#module-calendar.cal-fullscreen .acal-container { height: 100%; display: flex; flex-direction: column; }
-#module-calendar.cal-fullscreen .acal-toolbar { 
-    padding: 12px 16px; flex-shrink: 0;
-    padding-top: calc(env(safe-area-inset-top, 8px) + 8px);
+#module-calendar.cal-fullscreen .module-controls { display: none !important; }
+#module-calendar.cal-fullscreen > * { max-width: 100% !important; }
+#module-calendar.cal-fullscreen .acal-container {
+    height: 100% !important; flex: 1 !important;
+    display: flex !important; flex-direction: column !important;
+    padding: 0 !important; margin: 0 !important;
+}
+#module-calendar.cal-fullscreen .acal-toolbar {
+    padding: 8px 12px !important; flex-shrink: 0 !important;
+    /* iOS 状态栏高度:刘海屏 ~50px,普通 ~20px,取 max 保证不遮挡 */
+    padding-top: max(env(safe-area-inset-top, 48px), 48px) !important;
 }
 #module-calendar.cal-fullscreen .acal-month-view,
 #module-calendar.cal-fullscreen .acal-day-view,
 #module-calendar.cal-fullscreen .acal-week-view,
-#module-calendar.cal-fullscreen .acal-year-view { flex: 1; overflow: auto; }
-
-/* 全屏时日视图/周视图时间列宽度优化 */
-#module-calendar.cal-fullscreen .acal-day-view .acal-time-col { min-width: 48px; }
-#module-calendar.cal-fullscreen .acal-event { font-size: 13px; padding: 4px 8px; }
+#module-calendar.cal-fullscreen .acal-year-view {
+    flex: 1 !important; overflow: auto !important; min-height: 0 !important;
+}
+#module-calendar.cal-fullscreen .acal-timeline {
+    flex: 1 !important; min-height: 0 !important; max-height: none !important;
+}
+/* 全屏时月视图格子撑满 */
+#module-calendar.cal-fullscreen .acal-month-grid {
+    flex: 1; min-height: 0;
+}
+#module-calendar.cal-fullscreen .acal-month-row {
+    flex: 1;
+}
 
 /* 全屏时隐藏底部导航和其他浮动元素 */
 body.cal-fs-active #bottom-tab-nav,
@@ -2365,13 +2380,19 @@ body.cal-fs-active #quickCaptureFab { display: none !important; }
 }
 
 /* ═══ 全天栏折叠 ═══ */
-.acal-allday { transition: max-height 0.25s ease, opacity 0.2s; overflow: hidden; }
-.acal-allday.collapsed { max-height: 28px !important; opacity: 0.7; }
+.acal-allday { transition: max-height 0.25s ease; overflow: hidden; }
+.acal-allday.collapsed { max-height: 32px !important; }
 .acal-allday.collapsed .allday-chip { display: none; }
+.acal-allday.collapsed > div:not(:first-child) { display: none; } /* 隐藏除了标签以外的列 */
 .acal-allday-toggle {
     cursor: pointer; -webkit-tap-highlight-color: transparent;
     user-select: none;
 }
+.allday-summary {
+    display: none; font-size: 0.65rem; color: var(--th-text3, #999);
+    margin-left: 4px;
+}
+.acal-allday.collapsed .allday-summary { display: inline; }
 /* 当前时间线 */
 .acal-now-line {
     position: absolute; left: 0; right: 0; height: 0;
@@ -4303,7 +4324,7 @@ window.addEventListener('unhandledrejection', function(e){
                 if (deleted.has(t.id)) return false;
                 if (t.isRepeatTemplate) return false;
                 if (todayListScope !== 'all' && (t.space || 'work') !== todayListScope) return false;
-                // 重复任务实例:只显示今天及以前的,未来的不进"计划中"格
+                // 重复任务实例:只显示今天的,过去的逾期实例不累积
                 if (t.repeatFromId) {
                     if (t.status === '已完成') {
                         const c = t.completedAt ? new Date(t.completedAt) : null;
@@ -4311,7 +4332,7 @@ window.addEventListener('unhandledrejection', function(e){
                         return false;
                     }
                     const s = schedMs(t);
-                    return s !== null && s <= todayMs;
+                    return s !== null && s === todayMs; // 只要今天的,不要过去的
                 }
                 return true;
             });
@@ -6650,7 +6671,7 @@ window.addEventListener('unhandledrejection', function(e){
                         return false;
                     }
                     const sd = t.scheduledDate ? new Date(t.scheduledDate + 'T00:00:00').getTime() : null;
-                    if (sd !== null && sd > todayMs) return false; // 未来实例隐藏
+                    if (sd === null || sd !== todayMs) return false; // 只显示今天的实例
                 }
                 if (taskFilter === 'today') {
                     // 今日+逾期:有截止日且<=今天,或今天创建且无截止日,或状态进行中
@@ -7288,8 +7309,23 @@ window.addEventListener('unhandledrejection', function(e){
                 }
             }
 
-            // 时间轴(日视图不需要滚动折叠，已有手动切换)
+            // 手机端:滚动方向检测折叠全天栏
+            const dayTimeline = eventsEl.closest('.acal-timeline');
+            if (dayTimeline && window.matchMedia('(max-width: 768px)').matches) {
+                let lastScrollY = 0;
+                dayTimeline.addEventListener('scroll', function() {
+                    const allDay = document.getElementById('acalDayAllDay');
+                    if (!allDay) return;
+                    const st = dayTimeline.scrollTop;
+                    if (st > lastScrollY + 5 && st > 30) {
+                        allDay.classList.add('collapsed');
+                    } else if (st < lastScrollY - 5 || st < 10) {
+                        allDay.classList.remove('collapsed');
+                    }
+                    lastScrollY = st;
+                }, { passive: true });
             }
+        }
 
         function acalRenderWeek() {
             const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth(), d = currentCalendarDate.getDate();
@@ -7344,23 +7380,18 @@ window.addEventListener('unhandledrejection', function(e){
                 spacer.style.cssText = 'width:44px;flex-shrink:0;text-align:right;padding-right:4px;font-size:0.68rem;font-weight:700;color:var(--th-text3);display:flex;align-items:center;justify-content:flex-end;';
                 spacer.textContent = '全天';
                 spacer.className = 'acal-allday-toggle';
-                spacer.innerHTML = '全天 <span class="allday-chevron" style="font-size:10px">▼</span>';
-                spacer.onclick = function() {
-                    if (!window.matchMedia('(max-width: 768px)').matches) return;
-                    weekAllDayEl.classList.toggle('collapsed');
-                    var chev = spacer.querySelector('.allday-chevron');
-                    if (chev) chev.textContent = weekAllDayEl.classList.contains('collapsed') ? '▶' : '▼';
-                };
+                spacer.innerHTML = '全天 <span class="allday-chevron" style="font-size:10px">▼</span><span class="allday-summary"></span>';
                 weekAllDayEl.appendChild(spacer);
                 const cols = document.createElement('div');
                 cols.style.cssText = 'display:flex;flex:1;gap:2px;';
+                let totalAllDay = 0;
                 for (let di = 0; di < 7; di++) {
                     const dd = dayDates[di]; const ds = formatDateToYMD(dd.getTime());
                     const untimed = getScheduledTasksForDate(ds).filter(t => typeof t.scheduledHour !== 'number');
                     const col = document.createElement('div');
                     col.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:2px;min-height:24px;border-left:1px solid var(--th-border);padding:2px 2px;';
                     untimed.forEach(t => {
-                        hasAllDay = true;
+                        hasAllDay = true; totalAllDay++;
                         const chip = document.createElement('div');
                         const p = t.projectId ? (appData.projects || []).find(x => x.id === t.projectId) : null;
                         const color = (p && p.color) || '#6366F1';
@@ -7374,7 +7405,7 @@ window.addEventListener('unhandledrejection', function(e){
                     });
                     // 外部订阅的全天事件
                     getCalendarEventsForDate(ds).filter(ev => ev.startTime === '全天').forEach(ev => {
-                        hasAllDay = true;
+                        hasAllDay = true; totalAllDay++;
                         const chip = document.createElement('div');
                         chip.className = 'allday-chip';
                         chip.style.borderLeftColor = '#0EA5E9'; chip.style.background = 'rgba(14,165,233,0.10)';
@@ -7386,6 +7417,9 @@ window.addEventListener('unhandledrejection', function(e){
                     cols.appendChild(col);
                 }
                 weekAllDayEl.appendChild(cols);
+                // 更新折叠摘要
+                const summary = spacer.querySelector('.allday-summary');
+                if (summary && totalAllDay > 0) summary.textContent = ' ' + totalAllDay + '项';
                 weekAllDayEl.style.display = hasAllDay ? '' : 'none';
             }
             const eventsCols = document.createElement('div');
@@ -7553,6 +7587,27 @@ window.addEventListener('unhandledrejection', function(e){
             }
 
             body.appendChild(eventsCols);
+
+            // 手机端:滚动方向检测折叠全天栏(往下滚折叠,往上滚展开)
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                let lastScrollY = 0;
+                body.addEventListener('scroll', function() {
+                    const allDay = document.getElementById('acalWeekAllDay');
+                    if (!allDay) return;
+                    const st = body.scrollTop;
+                    const chev = allDay.querySelector('.allday-chevron');
+                    if (st > lastScrollY + 5 && st > 30) {
+                        // 往下滚且已过阈值 → 折叠
+                        allDay.classList.add('collapsed');
+                        if (chev) chev.textContent = '▶';
+                    } else if (st < lastScrollY - 5 || st < 10) {
+                        // 往上滚 或 接近顶部 → 展开
+                        allDay.classList.remove('collapsed');
+                        if (chev) chev.textContent = '▼';
+                    }
+                    lastScrollY = st;
+                }, { passive: true });
+            }
         }
 
         function acalRenderYear() {
@@ -10900,7 +10955,7 @@ window.addEventListener('unhandledrejection', function(e){
                     return false;
                 }
                 const sd = t.scheduledDate ? new Date(t.scheduledDate + 'T00:00:00').getTime() : null;
-                if (sd !== null && sd > todayMs) return false;
+                if (sd === null || sd !== todayMs) return false;
             }
             if (workTaskFilter === 'today') {
                 if (t.status === '已完成') return false;
@@ -11255,7 +11310,7 @@ window.addEventListener('unhandledrejection', function(e){
                     return false;
                 }
                 const sd = t.scheduledDate ? new Date(t.scheduledDate + 'T00:00:00').getTime() : null;
-                if (sd !== null && sd > todayMs) return false;
+                if (sd === null || sd !== todayMs) return false;
             }
             if (taskFilter === 'today') {
                 if (t.status === '已完成') return false;
@@ -11651,7 +11706,7 @@ window.addEventListener('unhandledrejection', function(e){
         const container = document.getElementById('ganttTimeline');
         if (!container) return;
         // 甘特图只服务于「朝政」空间的长期追踪;起居模式不展示
-        const tasks = (appData.tasks || []).filter(t => (t.space || 'work') === 'work');
+        const tasks = (appData.tasks || []).filter(t => (t.space || 'work') === 'work' && t.status !== '已完成' && !t.isRepeatTemplate);
         const _en = (typeof currentLang !== 'undefined') && currentLang === 'en';
 
         const sub = document.getElementById('ganttSubtitle');
